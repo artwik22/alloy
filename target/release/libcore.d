@@ -1,0 +1,1 @@
+/home/artwik/.config/alloy/core/target/release/libcore.rlib: /home/artwik/.config/alloy/core/src/app.rs /home/artwik/.config/alloy/core/src/graph.rs /home/artwik/.config/alloy/core/src/lib.rs /home/artwik/.config/alloy/core/src/system.rs /home/artwik/.config/alloy/core/src/ui.rs /home/artwik/.config/alloy/core/src/update_checker.rs
