@@ -1045,7 +1045,7 @@ PanelWindow {
                                         Rectangle {
                                             width: 44
                                             height: 44
-                                            radius: 4
+                                            radius: 0
                                             color: prevAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                                 ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
@@ -1098,7 +1098,7 @@ PanelWindow {
                                         Rectangle {
                                             width: 52
                                             height: 44
-                                            radius: 4
+                                            radius: 0
                                             color: playAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                                 ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -1160,7 +1160,7 @@ PanelWindow {
                                         Rectangle {
                                             width: 44
                                             height: 44
-                                            radius: 4
+                                            radius: 0
                                             color: nextAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                                 ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")

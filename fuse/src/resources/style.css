@@ -101,7 +101,6 @@ headerbar button:hover {
     border-color: transparent;
     color: @index_fg;
     box-shadow: none;
-    transform: scale(1.02);
 }
 
 headerbar button:active,
@@ -166,26 +165,17 @@ headerbar button:hover image {
 
 .sidebar-switcher button:hover {
     background-color: @index_hover;
-    transform: translateX(3px) scale(1.01);
-    opacity: 1.0;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-switcher button:checked {
     background-color: @index_selection;
     color: @index_fg;
     opacity: 1.0;
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
     font-weight: 600;
-    border-left: 3px solid @index_fg;
-    padding-left: 15px;
 }
 
 .sidebar-switcher button:active {
-    transform: translateX(2px) scale(0.98);
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    background-color: @index_selection;
 }
 
 .version-label {
@@ -213,7 +203,6 @@ scrolledwindow {
 
 .title:hover {
     opacity: 1.0;
-    transform: translateX(2px);
 }
 
 .section-title {
@@ -228,7 +217,6 @@ scrolledwindow {
 
 .section-title:hover {
     opacity: 1.0;
-    transform: translateX(2px);
 }
 
 .section-description {
@@ -254,9 +242,7 @@ scrolledwindow {
 .settings-row:hover {
     background-color: rgba(30, 30, 30, 0.9);
     border: none;
-    transform: translateY(-2px);
     opacity: 1.0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .row-title {
@@ -302,12 +288,11 @@ switch:checked slider {
 }
 
 switch:hover slider {
-    transform: scale(1.1);
+    opacity: 1.0;
 }
 
 switch:checked:hover slider {
-    transform: scale(1.15);
-    box-shadow: 0 3px 8px rgba(255, 255, 255, 0.4);
+    opacity: 1.0;
 }
 
 /* ===== Color Presets ===== */
@@ -325,15 +310,11 @@ switch:checked:hover slider {
 .preset-button:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-4px) scale(1.04);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     opacity: 1.0;
 }
 
 .preset-button:active {
-    transform: translateY(-1px) scale(1.01);
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    background-color: @index_selection;
 }
 
 .preset-active {
@@ -368,7 +349,6 @@ switch:checked:hover slider {
 
 .preset-button:hover .color-bar {
     opacity: 1.0;
-    transform: scaleY(1.1);
 }
 
 .preset-name {
@@ -381,7 +361,6 @@ switch:checked:hover slider {
 
 .preset-button:hover .preset-name {
     opacity: 1.0;
-    transform: translateY(-1px);
 }
 
 /* ===== Custom Colors ===== */
@@ -393,8 +372,7 @@ switch:checked:hover slider {
 }
 
 .color-preview:hover {
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-    transform: scale(1.05);
+    opacity: 0.9;
 }
 
 .color-label {
@@ -423,9 +401,8 @@ switch:checked:hover slider {
 
 .color-entry:focus {
     border: none;
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
     background-color: @index_bg_secondary;
-    transform: scale(1.02);
 }
 
 .color-entry text {
@@ -451,8 +428,6 @@ switch:checked:hover slider {
 .apply-button:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .apply-button:active {
@@ -477,13 +452,10 @@ switch:checked:hover slider {
 .refresh-button:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .refresh-button:active {
-    transform: translateY(0px) scale(0.95);
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: @index_selection;
 }
 
 .wallpaper-tile {
@@ -500,15 +472,11 @@ switch:checked:hover slider {
 .wallpaper-tile:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     opacity: 1.0;
 }
 
 .wallpaper-tile:active {
-    transform: translateY(-2px) scale(1.01);
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    background-color: @index_selection;
 }
 
 .wallpaper-active {
@@ -542,8 +510,6 @@ switch:checked:hover slider {
 .sidebar-position-button:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .sidebar-position-button.position-active {
@@ -600,8 +566,6 @@ switch:checked:hover slider {
 .mute-button:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .volume-scale {
@@ -650,15 +614,10 @@ button.flat {
 button:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 button:active {
     background-color: @index_selection;
-    transform: translateY(0px) scale(0.98);
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 button.suggested-action {
@@ -672,8 +631,6 @@ button.suggested-action:hover {
     background-color: @index_fg;
     border: none;
     opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(47, 57, 65, 0.3);
 }
 
 button.destructive-action {
@@ -807,7 +764,6 @@ flowboxchild {
 
 flowboxchild:hover {
     opacity: 1.0;
-    transform: scale(1.01);
 }
 
 /* ===== Stack switcher ===== */
