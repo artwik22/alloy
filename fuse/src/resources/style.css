@@ -37,7 +37,8 @@ headerbar.titlebar {
     background: @index_bg;
     background-color: @index_bg;
     background-image: none;
-    border-bottom: 1px solid @index_border;
+    border: none;
+    border-bottom: none;
     padding: 10px 14px;
     min-height: 48px;
     box-shadow: none;
@@ -96,7 +97,8 @@ headerbar button:hover {
     background: @index_hover;
     background-color: @index_hover;
     background-image: none;
-    border-color: @index_border;
+    border: none;
+    border-color: transparent;
     color: @index_fg;
     box-shadow: none;
     transform: scale(1.02);
@@ -108,7 +110,8 @@ headerbar button:checked:hover {
     background: @index_selection;
     background-color: @index_selection;
     background-image: none;
-    border-color: @index_fg;
+    border: none;
+    border-color: transparent;
     color: @index_fg;
     box-shadow: none;
 }
@@ -133,7 +136,8 @@ headerbar button:hover image {
 .sidebar,
 .navigation-sidebar {
     background-color: @index_bg_secondary;
-    border-right: 1px solid @index_border;
+    border: none;
+    border-right: none;
     padding: 0;
     min-width: 220px;
     max-width: 220px;
@@ -144,23 +148,34 @@ headerbar button:hover image {
 }
 
 .sidebar-switcher button {
-    background-color: transparent;
+    background-color: @index_bg_tertiary;
     color: @index_fg;
     border: none;
     padding: 12px 16px;
-    margin: 2px 10px;
+    margin: 4px 8px;
     min-height: 38px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.9;
 }
 
 .sidebar-switcher button:hover {
     background-color: @index_hover;
-    transform: translateX(2px);
+    transform: translateX(4px) scale(1.02);
+    opacity: 1.0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-switcher button:checked {
-    background-color: @index_selection;
+    background-color: rgba(255, 255, 255, 0.15);
     color: @index_fg;
+    opacity: 1.0;
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-switcher button:active {
+    transform: translateX(2px) scale(0.98);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .version-label {
@@ -178,58 +193,88 @@ scrolledwindow {
 
 /* ===== Titles ===== */
 .title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
     color: @index_fg;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1.0;
+}
+
+.title:hover {
+    opacity: 1.0;
+    transform: translateX(2px);
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     color: @index_fg;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    margin-top: 8px;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1.0;
+}
+
+.section-title:hover {
+    opacity: 1.0;
+    transform: translateX(2px);
 }
 
 .section-description {
-    font-size: 12px;
+    font-size: 13px;
     color: @index_fg_dim;
-    opacity: 0.7;
-    margin-bottom: 16px;
+    opacity: 0.8;
+    margin-bottom: 24px;
+    margin-top: 4px;
 }
 
 /* ===== Settings Rows ===== */
 .settings-row {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
-    padding: 16px;
-    margin-bottom: 16px;
+    border: none;
+    padding: 20px 24px;
+    margin-bottom: 20px;
     min-width: 400px;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.95;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.settings-row:hover {
+    background-color: rgba(30, 30, 30, 0.9);
+    border: none;
+    transform: translateY(-2px);
+    opacity: 1.0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .row-title {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     color: @index_fg;
+    margin-bottom: 4px;
 }
 
 .row-description {
-    font-size: 11px;
+    font-size: 12px;
     color: @index_fg_dim;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 /* ===== Toggles ===== */
 switch {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     min-width: 50px;
     min-height: 28px;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 switch:checked {
     background-color: @index_bg_tertiary;
-    border-color: @index_fg;
+    border: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 switch slider {
@@ -237,66 +282,116 @@ switch slider {
     min-width: 24px;
     min-height: 24px;
     margin: 2px;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 switch:checked slider {
     background-color: @index_fg;
+    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.3);
+}
+
+switch:hover slider {
+    transform: scale(1.1);
+}
+
+switch:checked:hover slider {
+    transform: scale(1.15);
+    box-shadow: 0 3px 8px rgba(255, 255, 255, 0.4);
 }
 
 /* ===== Color Presets ===== */
 .preset-button {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     padding: 0;
-    min-width: 200px;
-    min-height: 104px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 180px;
+    min-height: 100px;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.95;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .preset-button:hover {
     background-color: @index_hover;
-    border-color: @index_border;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: none;
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    opacity: 1.0;
+}
+
+.preset-button:active {
+    transform: translateY(-1px) scale(1.01);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .color-bar {
     border-radius: 0;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.9;
+}
+
+.preset-button:hover .color-bar {
+    opacity: 1.0;
+    transform: scaleY(1.1);
 }
 
 .preset-name {
     font-size: 13px;
     font-weight: 500;
     color: @index_fg;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.9;
+}
+
+.preset-button:hover .preset-name {
+    opacity: 1.0;
+    transform: translateY(-1px);
 }
 
 /* ===== Custom Colors ===== */
 .color-preview {
     background-color: @index_fg;
-    border: 1px solid @index_border;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.color-preview:hover {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
 }
 
 .color-label {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     color: @index_fg;
+    margin-bottom: 6px;
 }
 
 .color-entry {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
-    padding: 7px 14px;
+    border: none;
+    padding: 10px 18px;
     color: @index_fg;
-    min-height: 34px;
+    min-height: 40px;
     caret-color: @index_fg;
-    font-size: 13px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.color-entry:hover {
+    border: none;
+    background-color: @index_bg_secondary;
 }
 
 .color-entry:focus {
-    border-color: @index_fg;
-    box-shadow: inset 0 0 0 1px @index_fg, 0 0 0 2px rgba(47, 57, 65, 0.2);
+    border: none;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
     background-color: @index_bg_secondary;
+    transform: scale(1.02);
 }
 
 .color-entry text {
@@ -309,56 +404,88 @@ switch:checked slider {
 
 .apply-button {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     color: @index_fg;
-    padding: 7px 14px;
-    min-height: 34px;
-    font-size: 13px;
-    font-weight: 400;
+    padding: 10px 20px;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 500;
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .apply-button:hover {
     background-color: @index_hover;
-    border-color: @index_border;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: none;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.apply-button:active {
+    transform: translateY(0px) scale(0.98);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== Wallpapers ===== */
 .refresh-button {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     color: @index_fg;
-    padding: 7px 14px;
-    min-height: 34px;
-    font-size: 12px;
+    padding: 10px 18px;
+    min-height: 40px;
+    font-size: 13px;
+    font-weight: 500;
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .refresh-button:hover {
     background-color: @index_hover;
-    border-color: @index_border;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: none;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.refresh-button:active {
+    transform: translateY(0px) scale(0.95);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .wallpaper-tile {
     background-color: transparent;
     border: none;
     padding: 4px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 180px;
+    min-height: 101px; /* 16:9 aspect ratio */
+    transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.95;
+    overflow: hidden;
 }
 
 .wallpaper-tile:hover {
     background-color: @index_hover;
     border: none;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    opacity: 1.0;
 }
 
-.wallpaper-tile image {
+.wallpaper-tile:active {
+    transform: translateY(-2px) scale(1.01);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.wallpaper-tile picture {
     border-radius: 0;
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    filter: brightness(0.95);
+}
+
+.wallpaper-tile:hover picture {
+    filter: brightness(1.05);
+    transform: scale(1.05);
 }
 
 /* ===== Audio ===== */
@@ -382,7 +509,7 @@ switch:checked slider {
 
 .mute-button {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     min-width: 50px;
     min-height: 50px;
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -390,7 +517,7 @@ switch:checked slider {
 
 .mute-button:hover {
     background-color: @index_hover;
-    border-color: @index_border;
+    border: none;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -401,7 +528,7 @@ switch:checked slider {
 
 .volume-scale scale {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
 }
 
 .volume-scale scale highlight {
@@ -422,7 +549,7 @@ switch:checked slider {
 /* ===== Buttons ===== */
 button {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     color: @index_fg;
     padding: 7px 14px;
     min-height: 34px;
@@ -440,25 +567,28 @@ button.flat {
 
 button:hover {
     background-color: @index_hover;
-    border-color: @index_border;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: none;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 button:active {
     background-color: @index_selection;
+    transform: translateY(0px) scale(0.98);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 button.suggested-action {
     background-color: @index_fg;
-    border-color: @index_fg;
+    border: none;
     color: @index_bg;
     font-weight: 400;
 }
 
 button.suggested-action:hover {
     background-color: @index_fg;
-    border-color: @index_fg;
+    border: none;
     opacity: 0.9;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(47, 57, 65, 0.3);
@@ -466,13 +596,13 @@ button.suggested-action:hover {
 
 button.destructive-action {
     background-color: #e04040;
-    border-color: #e04040;
+    border: none;
     color: white;
 }
 
 button.destructive-action:hover {
     background-color: #e85555;
-    border-color: #e85555;
+    border: none;
 }
 
 button image {
@@ -546,15 +676,15 @@ scrollbar.vertical slider:hover {
 
 /* ===== Separators ===== */
 separator {
-    background-color: @index_border;
-    margin: 12px 0;
+    background-color: transparent;
+    margin: 24px 0;
     min-height: 1px;
 }
 
 /* ===== Entry Fields ===== */
 entry {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: none;
     color: @index_fg;
     padding: 7px 14px;
     min-height: 34px;
@@ -564,8 +694,8 @@ entry {
 }
 
 entry:focus {
-    border-color: @index_fg;
-    box-shadow: inset 0 0 0 1px @index_fg, 0 0 0 2px rgba(47, 57, 65, 0.2);
+    border: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
     background-color: @index_bg_secondary;
 }
 
@@ -589,6 +719,13 @@ flowbox {
 
 flowboxchild {
     background-color: transparent;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.98;
+}
+
+flowboxchild:hover {
+    opacity: 1.0;
+    transform: scale(1.01);
 }
 
 /* ===== Stack switcher ===== */

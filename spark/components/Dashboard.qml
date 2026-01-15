@@ -279,123 +279,103 @@ PanelWindow {
                             spacing: 12
                             
                             // Network Stats Card (left)
-                            Rectangle {
+                        Rectangle {
                                 width: (parent.width - 12) / 2
                                 height: parent.height
-                                radius: 0
-                                color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            radius: 0
+                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
+                            Column {
+                                anchors.centerIn: parent
+                                    spacing: 6
+                                
+                                Row {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                        spacing: 6
+                                    Text {
+                                        text: "󰤨"
+                                            font.pixelSize: 18
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    
+                                    Text {
+                                        text: "Network"
+                                            font.pixelSize: 14
+                                        font.weight: Font.Bold
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
                                 
                                 Column {
-                                    anchors.centerIn: parent
-                                    spacing: 6
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                        spacing: 4
                                     
                                     Row {
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 6
+                                            spacing: 6
                                         Text {
-                                            text: "󰤨"
-                                            font.pixelSize: 18
+                                            text: "↓"
+                                                font.pixelSize: 12
                                             font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         }
                                         
                                         Text {
-                                            text: "Network"
-                                            font.pixelSize: 14
-                                            font.weight: Font.Bold
+                                            text: networkDownloadSpeed
+                                                font.pixelSize: 11
                                             font.family: "sans-serif"
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }
                                     
-                                    Column {
+                                    Row {
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 4
-                                        
-                                        Row {
-                                            anchors.horizontalCenter: parent.horizontalCenter
                                             spacing: 6
-                                            Text {
-                                                text: "↓"
+                                        Text {
+                                            text: "↑"
                                                 font.pixelSize: 12
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                            }
-                                            
-                                            Text {
-                                                text: networkDownloadSpeed
-                                                font.pixelSize: 11
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            }
+                                            font.family: "sans-serif"
+                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         }
                                         
-                                        Row {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            spacing: 6
-                                            Text {
-                                                text: "↑"
-                                                font.pixelSize: 12
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                            }
-                                            
-                                            Text {
-                                                text: networkUploadSpeed
+                                        Text {
+                                            text: networkUploadSpeed
                                                 font.pixelSize: 11
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            }
+                                            font.family: "sans-serif"
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         }
                                     }
                                 }
                             }
-                            
+                        }
+                        
                             // Quick Actions Card (right)
-                            Rectangle {
+                        Rectangle {
                                 width: (parent.width - 12) / 2
                                 height: parent.height
-                                radius: 0
-                                color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                                
+                            radius: 0
+                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
                                 Column {
                                     anchors.fill: parent
                                     anchors.margins: 8
                                     spacing: 4
                                     
-                                    Row {
-                                        spacing: 4
-                                        Text {
-                                            text: "󰍜"
-                                            font.pixelSize: 12
-                                            font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        
-                                        Text {
-                                            text: "Quick Actions"
-                                            font.pixelSize: 10
-                                            font.weight: Font.Bold
-                                            font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-                                    
                                     Grid {
                                         id: quickActionsGrid
-                                        columns: 2
-                                        spacing: 4
-                                        width: parent.width
+                                    columns: 2
+                                    spacing: 4
+                                    width: parent.width
                                         height: parent.height - 20  // Pozostaw miejsce na nagłówek
                                     
                                     // Toggle Sidebar button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 32
+                                        height: 42
                                         radius: 0
                                         clip: true
                                         color: toggleSidebarQuickMouseArea.containsMouse ? 
@@ -450,7 +430,7 @@ PanelWindow {
                                     // Do Not Disturb button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 32
+                                        height: 42
                                         radius: 0
                                         clip: true
                                         color: dndQuickMouseArea.containsMouse ? 
@@ -508,7 +488,7 @@ PanelWindow {
                                     // Lock button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 32
+                                        height: 42
                                         radius: 0
                                         clip: true
                                         color: lockQuickMouseArea.containsMouse ? 
@@ -566,7 +546,7 @@ PanelWindow {
                                     // Poweroff button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 32
+                                        height: 42
                                         radius: 0
                                         clip: true
                                         color: poweroffQuickMouseArea.containsMouse ? 
@@ -616,9 +596,9 @@ PanelWindow {
                                                 if (sharedData) {
                                                     sharedData.menuVisible = false
                                                 }
+                                                }
                                             }
                                         }
-                                    }
                                     }
                                 }
                             }
@@ -722,90 +702,253 @@ PanelWindow {
                             }
                         }
                         
-                        // Resource Usage Card
+                        // CPU Usage Card
                         Rectangle {
                             width: parent.width
-                            height: 200
+                            height: 205
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                            
-                            Row {
-                                anchors.fill: parent
-                                anchors.margins: 15
-                                spacing: 12
-                                
-                                Repeater {
-                                    model: [
-                                        { label: "CPU", value: cpuUsageValue, icon: "󰻠" },
-                                        { label: "RAM", value: ramUsageValue, icon: "󰍛" },
-                                        { label: "GPU", value: gpuUsageValue, icon: "󰾲" }
-                                    ]
                                     
                                     Column {
-                                        width: (parent.width - 24) / 3
-                                        height: parent.height
+                                anchors.fill: parent
+                                anchors.margins: 12
                                         spacing: 8
                                         
+                                Row {
+                                    spacing: 8
                                         Text {
-                                            text: modelData.icon
-                                            font.pixelSize: 20
+                                        text: "󰻠"
+                                        font.pixelSize: 18
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.verticalCenter: parent.verticalCenter
                                         }
                                         
                                         Text {
-                                            text: modelData.label
-                                            font.pixelSize: 13
+                                        text: "CPU"
+                                        font.pixelSize: 14
                                             font.family: "sans-serif"
+                                        font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.verticalCenter: parent.verticalCenter
                                         }
                                         
                                         Text {
-                                            text: modelData.value + "%"
-                                            font.pixelSize: 16
+                                        text: cpuUsageValue + "%"
+                                        font.pixelSize: 14
                                             font.family: "sans-serif"
                                             font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                         }
                                         
-                                        Item {
-                                            width: parent.width
-                                            height: parent.height - 80
+                                // Line chart
+                                Canvas {
+                                    id: cpuChart
+                                    width: parent.width
+                                    height: 160
+                                    
+                                    onPaint: {
+                                        var ctx = getContext("2d")
+                                        ctx.clearRect(0, 0, width, height)
+                                        
+                                        if (cpuHistory.length < 2) return
+                                        
+                                        var chartWidth = width
+                                        var chartHeight = height
+                                        var maxValue = 100
+                                        
+                                        // Draw background
+                                        ctx.fillStyle = (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
+                                        ctx.fillRect(0, 0, chartWidth, chartHeight)
+                                        
+                                        // Draw grid lines
+                                        ctx.strokeStyle = (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#2a2a2a"
+                                        ctx.lineWidth = 1
+                                        for (var i = 0; i <= 4; i++) {
+                                            var y = (chartHeight / 4) * i
+                                            ctx.beginPath()
+                                            ctx.moveTo(0, y)
+                                            ctx.lineTo(chartWidth, y)
+                                            ctx.stroke()
+                                        }
+                                        
+                                        // Draw line chart
+                                        ctx.strokeStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        ctx.lineWidth = 2
+                                        ctx.beginPath()
+                                        
+                                        var stepX = chartWidth / (cpuHistory.length - 1)
+                                        for (var j = 0; j < cpuHistory.length; j++) {
+                                            var x = j * stepX
+                                            var value = cpuHistory[j]
+                                            var y = chartHeight - (value / maxValue) * chartHeight
                                             
-                                            Rectangle {
-                                                anchors.bottom: parent.bottom
-                                                anchors.horizontalCenter: parent.horizontalCenter
-                                                width: parent.width
-                                                height: parent.height
-                                                radius: 0
-                                                color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
-                                                
-                                                Rectangle {
-                                                    anchors.bottom: parent.bottom
-                                                    anchors.horizontalCenter: parent.horizontalCenter
-                                                    width: parent.width
-                                                    height: parent.height * (modelData.value / 100)
-                                                    radius: 0
-                                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                                    
-                                                    Behavior on height {
-                                                        NumberAnimation {
-                                                            duration: 600
-                                                            easing.type: Easing.OutCubic
-                                                        }
-                                                    }
-                                                    
-                                                    Behavior on color {
-                                                        ColorAnimation {
-                                                            duration: 400
-                                                            easing.type: Easing.InOutQuad
-                                                        }
-                                                    }
-                                                }
+                                            if (j === 0) {
+                                                ctx.moveTo(x, y)
+                                            } else {
+                                                ctx.lineTo(x, y)
                                             }
                                         }
+                                        ctx.stroke()
+                                        
+                                        // Fill area under line
+                                        ctx.lineTo(chartWidth, chartHeight)
+                                        ctx.lineTo(0, chartHeight)
+                                        ctx.closePath()
+                                        ctx.fillStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        ctx.globalAlpha = 0.2
+                                        ctx.fill()
+                                        ctx.globalAlpha = 1.0
+                                    }
+                                    
+                                    function updateHistory() {
+                                        cpuHistory.push(cpuUsageValue)
+                                        if (cpuHistory.length > maxHistoryLength) {
+                                            cpuHistory.shift()
+                                        }
+                                        requestPaint()
+                                    }
+                                    
+                                    Connections {
+                                        target: dashboardRoot
+                                        function onCpuUsageValueChanged() {
+                                            cpuChart.updateHistory()
+                                        }
+                                    }
+                                    
+                                    Component.onCompleted: {
+                                        // Initialize with current value
+                                        for (var i = 0; i < maxHistoryLength; i++) {
+                                            cpuHistory.push(cpuUsageValue)
+                                        }
+                                        requestPaint()
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // RAM Usage Card
+                        Rectangle {
+                            width: parent.width
+                            height: 205
+                            radius: 0
+                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
+                            Column {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 8
+                                
+                                Row {
+                                    spacing: 8
+                                    Text {
+                                        text: "󰍛"
+                                        font.pixelSize: 18
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                }
+                                    
+                                    Text {
+                                        text: "RAM"
+                                        font.pixelSize: 14
+                                        font.family: "sans-serif"
+                                        font.weight: Font.Bold
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    
+                                    Text {
+                                        text: ramUsageValue + "%"
+                                        font.pixelSize: 14
+                                        font.family: "sans-serif"
+                                        font.weight: Font.Bold
+                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                                
+                                // Line chart
+                                Canvas {
+                                    id: ramChart
+                                    width: parent.width
+                                    height: 160
+                                    
+                                    onPaint: {
+                                        var ctx = getContext("2d")
+                                        ctx.clearRect(0, 0, width, height)
+                                        
+                                        if (ramHistory.length < 2) return
+                                        
+                                        var chartWidth = width
+                                        var chartHeight = height
+                                        var maxValue = 100
+                                        
+                                        // Draw background
+                                        ctx.fillStyle = (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
+                                        ctx.fillRect(0, 0, chartWidth, chartHeight)
+                                        
+                                        // Draw grid lines
+                                        ctx.strokeStyle = (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#2a2a2a"
+                                        ctx.lineWidth = 1
+                                        for (var i = 0; i <= 4; i++) {
+                                            var y = (chartHeight / 4) * i
+                                            ctx.beginPath()
+                                            ctx.moveTo(0, y)
+                                            ctx.lineTo(chartWidth, y)
+                                            ctx.stroke()
+                                        }
+                                        
+                                        // Draw line chart
+                                        ctx.strokeStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        ctx.lineWidth = 2
+                                        ctx.beginPath()
+                                        
+                                        var stepX = chartWidth / (ramHistory.length - 1)
+                                        for (var j = 0; j < ramHistory.length; j++) {
+                                            var x = j * stepX
+                                            var value = ramHistory[j]
+                                            var y = chartHeight - (value / maxValue) * chartHeight
+                                            
+                                            if (j === 0) {
+                                                ctx.moveTo(x, y)
+                                            } else {
+                                                ctx.lineTo(x, y)
+                                            }
+                                        }
+                                        ctx.stroke()
+                                        
+                                        // Fill area under line
+                                        ctx.lineTo(chartWidth, chartHeight)
+                                        ctx.lineTo(0, chartHeight)
+                                        ctx.closePath()
+                                        ctx.fillStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        ctx.globalAlpha = 0.2
+                                        ctx.fill()
+                                        ctx.globalAlpha = 1.0
+                                    }
+                                    
+                                    function updateHistory() {
+                                        ramHistory.push(ramUsageValue)
+                                        if (ramHistory.length > maxHistoryLength) {
+                                            ramHistory.shift()
+                                        }
+                                        requestPaint()
+                                    }
+                                    
+                                    Connections {
+                                        target: dashboardRoot
+                                        function onRamUsageValueChanged() {
+                                            ramChart.updateHistory()
+                                        }
+                                    }
+                                    
+                                    Component.onCompleted: {
+                                        // Initialize with current value
+                                        for (var i = 0; i < maxHistoryLength; i++) {
+                                            ramHistory.push(ramUsageValue)
+                                        }
+                                        requestPaint()
                                     }
                                 }
                             }
@@ -814,25 +957,25 @@ PanelWindow {
                         // Media Player Card
                         Rectangle {
                             width: parent.width
-                            height: 440
+                            height: 205
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
-                            Column {
+                            RowLayout {
                                 anchors.fill: parent
                                 anchors.margins: 16
                                 spacing: 16
                                 
                                 // Album Art
                                 Rectangle {
-                                    width: Math.min(180, parent.width - 32)
-                                    height: Math.min(180, parent.width - 32)
+                                    Layout.preferredWidth: 120
+                                    Layout.preferredHeight: 120
+                                    Layout.alignment: Qt.AlignVCenter
                                     radius: 0
                                     color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
-                                    anchors.horizontalCenter: parent.horizontalCenter
                                     
                                     Image {
-                                        id: mediaAlbumArt
+                                        id: mediaAlbumArtCard
                                         anchors.fill: parent
                                         anchors.margins: 1
                                         fillMode: Image.PreserveAspectCrop
@@ -851,146 +994,76 @@ PanelWindow {
                                     
                                     Text {
                                         text: "󰎆"
-                                        font.pixelSize: 60
+                                        font.pixelSize: 50
                                         anchors.centerIn: parent
                                         visible: !mpArt
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                     }
                                 }
                                 
-                                // Track Info
+                                // Track Info and Controls
                                 Column {
-                                    width: parent.width
-                                    spacing: 6
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    spacing: 0
                                     
-                                    Text {
-                                        id: mediaTitle
-                                        text: mpTitle ? mpTitle : "Nothing playing"
-                                        font.pixelSize: 18
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        elide: Text.ElideRight
+                                    Item {
                                         width: parent.width
-                                        horizontalAlignment: Text.AlignHCenter
+                                        height: parent.height * 0.35
                                     }
                                     
-                                    Text {
-                                        id: mediaArtist
-                                        text: mpArtist ? mpArtist : "—"
-                                        font.pixelSize: 16
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        elide: Text.ElideRight
+                                    Item {
                                         width: parent.width
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    
-                                    Text {
-                                        id: mediaAlbum
-                                        text: mpAlbum ? mpAlbum : "—"
-                                        font.pixelSize: 15
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.3) : "#aaaaaa"
-                                        elide: Text.ElideRight
-                                        width: parent.width
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                                
-                                // Controls
-                                Row {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: 12
-                                    
-                                    Rectangle {
-                                        id: prevButton
-                                        width: 40
-                                        height: 40
-                                        radius: 0
-                                        color: prevArea.containsMouse ? 
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
+                                        height: parent.height * 0.3
                                         
-                                        property real buttonScale: prevArea.pressed ? 0.9 : (prevArea.containsMouse ? 1.1 : 1.0)
-                                        
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        Behavior on buttonScale {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        scale: buttonScale
-                                        
-                                        Text {
-                                            text: "󰒮"
-                                            font.pixelSize: 22
+                                        // Track Info - wyśrodkowane
+                                        Column {
                                             anchors.centerIn: parent
-                                            color: prevArea.containsMouse ? 
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
+                                            spacing: 6
+                                            width: parent.width
                                             
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: 200
-                                                    easing.type: Easing.OutQuart
-                                                }
+                                            Text {
+                                                text: mpTitle ? mpTitle : "Nothing playing"
+                                                font.pixelSize: 16
+                                                font.family: "sans-serif"
+                                                font.weight: Font.Bold
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                elide: Text.ElideRight
+                                                width: parent.width
+                                                horizontalAlignment: Text.AlignHCenter
                                             }
-                                        }
-                                        
-                                        MouseArea {
-                                            id: prevArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                playerPrev()
+                                            
+                                            Text {
+                                                text: mpArtist ? mpArtist : "—"
+                                                font.pixelSize: 13
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                elide: Text.ElideRight
+                                                width: parent.width
+                                                horizontalAlignment: Text.AlignHCenter
                                             }
                                         }
                                     }
                                     
-                                    Rectangle {
-                                        id: playButton
-                                        width: 50
-                                        height: 40
-                                        radius: 0
-                                        color: playArea.containsMouse ? 
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
+                                    // Controls - wyśrodkowane
+                                    Item {
+                                        width: parent.width
+                                        height: parent.height * 0.35
                                         
-                                        property real buttonScale: playArea.pressed ? 0.9 : (playArea.containsMouse ? 1.1 : 1.0)
-                                        
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        Behavior on buttonScale {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        scale: buttonScale
-                                        
-                                        Text {
-                                            text: mpPlaying ? "󰏤" : "󰐊"
-                                            font.pixelSize: 24
+                                        Row {
                                             anchors.centerIn: parent
-                                            color: playArea.containsMouse ? 
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                ((sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a")
+                                            spacing: 10
+                                        
+                                        Rectangle {
+                                            width: 36
+                                            height: 36
+                                            radius: 0
+                                            color: prevAreaCard.containsMouse ? 
+                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
+                                                ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
+                                            
+                                            property real buttonScale: prevAreaCard.pressed ? 0.9 : (prevAreaCard.containsMouse ? 1.1 : 1.0)
                                             
                                             Behavior on color {
                                                 ColorAnimation {
@@ -999,61 +1072,51 @@ PanelWindow {
                                                 }
                                             }
                                             
-                                            rotation: playArea.pressed ? 5 : 0
-                                            
-                                            Behavior on rotation {
+                                            Behavior on buttonScale {
                                                 NumberAnimation {
                                                     duration: 150
                                                     easing.type: Easing.OutQuart
                                                 }
                                             }
-                                        }
-                                        
-                                        MouseArea {
-                                            id: playArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                playerPlayPause()
+                                            
+                                            scale: buttonScale
+                                            
+                                            Text {
+                                                text: "󰒮"
+                                                font.pixelSize: 20
+                                                anchors.centerIn: parent
+                                                color: prevAreaCard.containsMouse ? 
+                                                    ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                                                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
+                                                
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                        easing.type: Easing.OutQuart
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }
-                                    
-                                    Rectangle {
-                                        id: nextButton
-                                        width: 40
-                                        height: 40
-                                        radius: 0
-                                        color: nextArea.containsMouse ? 
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
-                                        
-                                        property real buttonScale: nextArea.pressed ? 0.9 : (nextArea.containsMouse ? 1.1 : 1.0)
-                                        
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        Behavior on buttonScale {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
+                                            
+                                            MouseArea {
+                                                id: prevAreaCard
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                hoverEnabled: true
+                                                onClicked: {
+                                                    playerPrev()
+                                                }
                                             }
                                         }
                                         
-                                        scale: buttonScale
-                                        
-                                        Text {
-                                            text: "󰒭"
-                                            font.pixelSize: 22
-                                            anchors.centerIn: parent
-                                            color: nextArea.containsMouse ? 
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
+                                        Rectangle {
+                                            width: 44
+                                            height: 36
+                                            radius: 0
+                                            color: playAreaCard.containsMouse ? 
+                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
+                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
+                                            
+                                            property real buttonScale: playAreaCard.pressed ? 0.9 : (playAreaCard.containsMouse ? 1.1 : 1.0)
                                             
                                             Behavior on color {
                                                 ColorAnimation {
@@ -1061,15 +1124,102 @@ PanelWindow {
                                                     easing.type: Easing.OutQuart
                                                 }
                                             }
+                                            
+                                            Behavior on buttonScale {
+                                                NumberAnimation {
+                                                    duration: 150
+                                                    easing.type: Easing.OutQuart
+                                                }
+                                            }
+                                            
+                                            scale: buttonScale
+                                            
+                                            Text {
+                                                text: mpPlaying ? "󰏤" : "󰐊"
+                                                font.pixelSize: 22
+                                                anchors.centerIn: parent
+                                                color: playAreaCard.containsMouse ? 
+                                                    ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                                                    ((sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a")
+                                                
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                        easing.type: Easing.OutQuart
+                                                    }
+                                                }
+                                                
+                                                rotation: playAreaCard.pressed ? 5 : 0
+                                                
+                                                Behavior on rotation {
+                                                    NumberAnimation {
+                                                        duration: 150
+                                                        easing.type: Easing.OutQuart
+                                                    }
+                                                }
+                                            }
+                                            
+                                            MouseArea {
+                                                id: playAreaCard
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                hoverEnabled: true
+                                                onClicked: {
+                                                    playerPlayPause()
+                                                }
+                                            }
                                         }
                                         
-                                        MouseArea {
-                                            id: nextArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                playerNext()
+                                        Rectangle {
+                                            width: 36
+                                            height: 36
+                                            radius: 0
+                                            color: nextAreaCard.containsMouse ? 
+                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
+                                                ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
+                                            
+                                            property real buttonScale: nextAreaCard.pressed ? 0.9 : (nextAreaCard.containsMouse ? 1.1 : 1.0)
+                                            
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: 200
+                                                    easing.type: Easing.OutQuart
+                                                }
+                                            }
+                                            
+                                            Behavior on buttonScale {
+                                                NumberAnimation {
+                                                    duration: 150
+                                                    easing.type: Easing.OutQuart
+                                                }
+                                            }
+                                            
+                                            scale: buttonScale
+                                            
+                                            Text {
+                                                text: "󰒭"
+                                                font.pixelSize: 20
+                                                anchors.centerIn: parent
+                                                color: nextAreaCard.containsMouse ? 
+                                                    ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                                                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
+                                                
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: 200
+                                                        easing.type: Easing.OutQuart
+                                                    }
+                                                }
+                                            }
+                                            
+                                            MouseArea {
+                                                id: nextAreaCard
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                hoverEnabled: true
+                                                onClicked: {
+                                                    playerNext()
+                                                }
                                             }
                                         }
                                     }
@@ -1675,6 +1825,12 @@ PanelWindow {
     property int gpuUsageValue: 0
     property int cpuTempValue: 0
     property int gpuTempValue: 0
+    
+    // History arrays for line charts
+    property var cpuHistory: []
+    property var ramHistory: []
+    property var gpuHistory: []
+    property int maxHistoryLength: 50  // Number of data points to show
     property string mpTitle: ""
     property string mpArtist: ""
     property string mpAlbum: ""

@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox, Image};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox, Picture};
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::fs;
@@ -16,7 +16,7 @@ pub struct WallpapersTab {
 impl WallpapersTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        let content = GtkBox::new(Orientation::Vertical, 24);
+        let content = GtkBox::new(Orientation::Vertical, 32);
         content.set_margin_start(24);
         content.set_margin_end(24);
         content.set_margin_top(24);
@@ -44,10 +44,12 @@ impl WallpapersTab {
         flowbox.set_halign(gtk4::Align::Fill);
         flowbox.set_hexpand(true);
         flowbox.set_vexpand(true);
-        flowbox.set_max_children_per_line(3);
+        // Responsive: adjust columns based on available width
+        // Will show 1-4 columns depending on window size
+        flowbox.set_max_children_per_line(4);
         flowbox.set_min_children_per_line(1);
         flowbox.set_selection_mode(gtk4::SelectionMode::None);
-        flowbox.set_homogeneous(false);
+        flowbox.set_homogeneous(true); // Make tiles equal size for better grid
         content.append(&flowbox);
 
         // Only vertical scrolling, no horizontal scrolling
@@ -164,33 +166,28 @@ fn create_wallpaper_tile(path: &PathBuf, _config: Arc<Mutex<ColorConfig>>) -> Bu
     let button = Button::new();
     button.add_css_class("wallpaper-tile");
     
-    // Use responsive sizing - FlowBox will distribute space
-    // Set minimum width for smaller windows, but allow expansion
-    // FlowBox with max_children_per_line(3) will ensure 3 columns max
-    let min_width = 300;
-    let min_height = (min_width as f64 * 9.0 / 16.0) as i32;
-
     // Clone path for the closure
     let path_str = path.to_string_lossy().to_string();
     
-    // Image - use proper scaling with aspect ratio
-    // Set minimum size but allow expansion
-    println!("Loading image from: {:?}", path);
-    let image = Image::from_file(path.as_path());
-    image.set_size_request(min_width, min_height);
-    image.set_halign(gtk4::Align::Fill);
-    image.set_valign(gtk4::Align::Fill);
-    image.set_vexpand(false);
-    image.set_hexpand(false);
-    image.set_opacity(1.0);
+    // Use Picture widget for better image loading and display
+    let picture = gtk4::Picture::new();
+    let file = gtk4::gio::File::for_path(path.as_path());
+    picture.set_file(Some(&file));
+    picture.set_content_fit(gtk4::ContentFit::Cover);
+    picture.set_can_shrink(true); // Allow shrinking for responsiveness
+    // Responsive scaling - expand to fill available space
+    picture.set_halign(gtk4::Align::Fill);
+    picture.set_valign(gtk4::Align::Fill);
+    picture.set_vexpand(true);
+    picture.set_hexpand(true);
 
-    button.set_child(Some(&image));
+    button.set_child(Some(&picture));
     
     // Make button expand to fill available space in FlowBox
-    // This ensures tiles fill the available width in their column
+    // FlowBox will automatically distribute space based on available width
     button.set_hexpand(true);
-    button.set_vexpand(false);
-    button.set_size_request(min_width, min_height);
+    button.set_vexpand(true);
+    // Don't set size_request here - let CSS handle minimum sizes for better responsiveness
 
     button.connect_clicked(move |_| {
         if let Err(e) = quickshell::set_wallpaper(&path_str) {

@@ -1,4 +1,5 @@
 mod clipboard;
+mod color_config;
 mod config;
 mod drives;
 mod file_ops;
@@ -7,6 +8,7 @@ mod scanner;
 mod search;
 
 pub use clipboard::Clipboard;
+pub use color_config::ColorConfig;
 pub use config::{Keybind, KeybindAction, KeybindConfig};
 pub use drives::DriveScanner;
 pub use pinned::{PinnedFolder, PinnedManager};

@@ -17,11 +17,11 @@ impl BarTab {
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        let content = GtkBox::new(Orientation::Vertical, 24);
-        content.set_margin_start(16);
-        content.set_margin_end(16);
-        content.set_margin_top(16);
-        content.set_margin_bottom(16);
+        let content = GtkBox::new(Orientation::Vertical, 32);
+        content.set_margin_start(24);
+        content.set_margin_end(24);
+        content.set_margin_top(24);
+        content.set_margin_bottom(24);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
@@ -123,12 +123,12 @@ fn create_toggle_row(
 }
 
 fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 16);
+    let section = GtkBox::new(Orientation::Vertical, 24);
     section.add_css_class("settings-row");
-    section.set_margin_start(15);
-    section.set_margin_end(15);
-    section.set_margin_top(15);
-    section.set_margin_bottom(15);
+    section.set_margin_start(0);
+    section.set_margin_end(0);
+    section.set_margin_top(12);
+    section.set_margin_bottom(12);
 
     let header = GtkBox::new(Orientation::Horizontal, 15);
     

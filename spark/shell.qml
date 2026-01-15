@@ -166,9 +166,10 @@ ShellRoot {
         }
     }
 
-    // Funkcja otwierania aplikacji ustawień
+    // Funkcja otwierania aplikacji ustawień (fuse)
     function openSettings() {
-        sharedData.settingsVisible = !sharedData.settingsVisible
+        // Launch fuse application
+        Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", root)
     }
     
     // Screenshot Service - Take screenshot with area selection
@@ -448,13 +449,6 @@ ShellRoot {
         sharedData: root.sharedData
     }
 
-    // SettingsApplication - aplikacja ustawień
-    SettingsApplication {
-        id: settingsApplicationInstance
-        screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
-        sharedData: root.sharedData
-        visible: sharedData.settingsVisible
-    }
 
     // NotificationDisplay - wyświetlanie powiadomień w prawym górnym rogu
     NotificationDisplay {

@@ -7,7 +7,6 @@ NotificationDisplay 1.0 NotificationDisplay.qml
 NotificationItem 1.0 NotificationItem.qml
 ProgressIndicator 1.0 ProgressIndicator.qml
 RightEdgeDetector 1.0 RightEdgeDetector.qml
-SettingsApplication 1.0 SettingsApplication.qml
 SidePanel 1.0 SidePanel.qml
 SkeletonLoader 1.0 SkeletonLoader.qml
 ToastNotification 1.0 ToastNotification.qml

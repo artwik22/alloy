@@ -352,166 +352,12 @@ PanelWindow {
     }
     
     property var colorPresets: {
-        "Dark": {
-            background: "#0a0a0a",
-            primary: "#252525",
-            secondary: "#1a1a1a",
-            text: "#ffffff",
-            accent: "#6bb6ff"
-        },
-        "Ocean": {
-            background: "#0a1628",
-            primary: "#1e3a52",
-            secondary: "#152535",
-            text: "#ffffff",
-            accent: "#4fc3f7"
-        },
-        "Forest": {
-            background: "#0d1a0d",
-            primary: "#1e3a1e",
-            secondary: "#152515",
-            text: "#ffffff",
-            accent: "#66bb6a"
-        },
-        "Violet": {
-            background: "#1a0d26",
-            primary: "#2e1f3f",
-            secondary: "#231a35",
-            text: "#ffffff",
-            accent: "#ab47bc"
-        },
-        "Crimson": {
-            background: "#1a0a0a",
-            primary: "#2e1a1a",
-            secondary: "#231515",
-            text: "#ffffff",
-            accent: "#ef5350"
-        },
-        "Amber": {
-            background: "#1a150d",
-            primary: "#2e251a",
-            secondary: "#231f15",
-            text: "#ffffff",
-            accent: "#ffb74d"
-        },
-        "Teal": {
-            background: "#0d1a1a",
-            primary: "#1e2e2e",
-            secondary: "#152525",
-            text: "#ffffff",
-            accent: "#26a69a"
-        },
-        "Rose": {
-            background: "#1a0d15",
-            primary: "#2e1a23",
-            secondary: "#23151f",
-            text: "#ffffff",
-            accent: "#f06292"
-        },
-        "Sunset": {
-            background: "#1a150d",
-            primary: "#2e251a",
-            secondary: "#231f15",
-            text: "#ffffff",
-            accent: "#ff9800"
-        },
-        "Midnight": {
-            background: "#0a0d1a",
-            primary: "#1e1f2d",
-            secondary: "#151a23",
-            text: "#ffffff",
-            accent: "#78909c"
-        },
-        "Emerald": {
-            background: "#0d1a0d",
-            primary: "#1e3a1e",
-            secondary: "#152515",
-            text: "#ffffff",
-            accent: "#4caf50"
-        },
-        "Lavender": {
-            background: "#1a0d1a",
-            primary: "#2e1a2d",
-            secondary: "#231523",
-            text: "#ffffff",
-            accent: "#ba68c8"
-        },
-        "Sapphire": {
-            background: "#0d0d1a",
-            primary: "#1e1f2d",
-            secondary: "#151a23",
-            text: "#ffffff",
-            accent: "#42a5f5"
-        },
-        "Coral": {
-            background: "#1a0d0d",
-            primary: "#2e1a1a",
-            secondary: "#231515",
-            text: "#ffffff",
-            accent: "#ff7043"
-        },
-        "Mint": {
-            background: "#0d1a0d",
-            primary: "#1e3a1e",
-            secondary: "#152515",
-            text: "#ffffff",
-            accent: "#4dd0e1"
-        },
-        "Plum": {
-            background: "#1a0d1a",
-            primary: "#2e1a2d",
-            secondary: "#231523",
-            text: "#ffffff",
-            accent: "#9575cd"
-        },
-        "Gold": {
-            background: "#1a150d",
-            primary: "#2e251a",
-            secondary: "#231f15",
-            text: "#ffffff",
-            accent: "#ffd54f"
-        },
         "Monochrome": {
-            background: "#0f0f0f",
+            background: "#000000",
             primary: "#1a1a1a",
-            secondary: "#141414",
+            secondary: "#0d0d0d",
             text: "#ffffff",
-            accent: "#3a3a3a"
-        },
-        "Cherry": {
-            background: "#1a0a0a",
-            primary: "#2e1a1a",
-            secondary: "#231515",
-            text: "#ffffff",
-            accent: "#ec407a"
-        },
-        "Azure": {
-            background: "#0d1a26",
-            primary: "#1e2d3f",
-            secondary: "#152535",
-            text: "#ffffff",
-            accent: "#29b6f6"
-        },
-        "Jade": {
-            background: "#0d1a0d",
-            primary: "#1e3a1e",
-            secondary: "#152515",
-            text: "#ffffff",
-            accent: "#26c6da"
-        },
-        "Ruby": {
-            background: "#1a0a0a",
-            primary: "#2e1a1a",
-            secondary: "#231515",
-            text: "#ffffff",
-            accent: "#d32f2f"
-        },
-        "Indigo": {
-            background: "#0d0d1a",
-            primary: "#1e1f2d",
-            secondary: "#151a23",
-            text: "#ffffff",
-            accent: "#7986cb"
+            accent: "#b0b0b0"
         }
     }
     
@@ -1803,8 +1649,8 @@ PanelWindow {
                     if (selectedIndex >= 0 && selectedIndex < modesList.count) {
                         var mode = modesList.model.get(selectedIndex)
                         if (mode.mode === 2) {
-                            // Launch settings application instead of entering settings mode
-                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['" + projectPath + "/open-settings.sh']; running: true }", appLauncherRoot)
+                            // Launch fuse application instead of entering settings mode
+                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", appLauncherRoot)
                             // Close launcher after launching settings
                             if (sharedData) {
                                 sharedData.launcherVisible = false
@@ -2107,8 +1953,8 @@ PanelWindow {
                     
                     onClicked: {
                         if (model.mode === 2) {
-                            // Launch settings application instead of entering settings mode
-                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['" + projectPath + "/open-settings.sh']; running: true }", appLauncherRoot)
+                            // Launch fuse application instead of entering settings mode
+                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", appLauncherRoot)
                             // Close launcher after launching settings
                             if (sharedData) {
                                 sharedData.launcherVisible = false

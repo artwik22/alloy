@@ -1,34 +1,34 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, Entry, Grid, Separator};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, Entry, Grid, Separator, gdk};
 use std::sync::{Arc, Mutex};
 
 use crate::core::config::ColorConfig;
 use crate::core::quickshell;
 
+// Helper function to set background color on a Box using CSS provider
+fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
+    // Create a unique CSS class name based on color
+    let color_class = format!("color-bar-{}", color.replace("#", "c").replace(" ", ""));
+    box_widget.add_css_class(&color_class);
+    
+    // Create CSS provider with the color
+    let css_provider = gtk4::CssProvider::new();
+    let css = format!(".{} {{ background-color: {}; }}", color_class, color);
+    
+    // load_from_data takes &str and returns ()
+    css_provider.load_from_data(&css);
+    
+    if let Some(display) = gdk::Display::default() {
+        gtk4::style_context_add_provider_for_display(
+            &display,
+            &css_provider,
+            gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+    }
+}
+
 const PRESETS: &[(&str, &str, &str, &str, &str, &str)] = &[
-    ("Dark", "#0a0a0a", "#252525", "#1a1a1a", "#ffffff", "#6bb6ff"),
-    ("Ocean", "#0a1628", "#1e3a52", "#152535", "#ffffff", "#4fc3f7"),
-    ("Forest", "#0d1a0d", "#1e3a1e", "#152515", "#ffffff", "#66bb6a"),
-    ("Violet", "#1a0d26", "#2e1f3f", "#231a35", "#ffffff", "#ab47bc"),
-    ("Crimson", "#1a0a0a", "#2e1a1a", "#231515", "#ffffff", "#ef5350"),
-    ("Amber", "#1a150d", "#2e251a", "#231f15", "#ffffff", "#ffb74d"),
-    ("Teal", "#0d1a1a", "#1e2e2e", "#152525", "#ffffff", "#26a69a"),
-    ("Rose", "#1a0d15", "#2e1a23", "#23151f", "#ffffff", "#f06292"),
-    ("Sunset", "#1a150d", "#2e251a", "#231f15", "#ffffff", "#ff9800"),
-    ("Midnight", "#0a0d1a", "#1e1f2d", "#151a23", "#ffffff", "#78909c"),
-    ("Emerald", "#0d1a0d", "#1e3a1e", "#152515", "#ffffff", "#4caf50"),
-    ("Lavender", "#1a0d1a", "#2e1a2d", "#231523", "#ffffff", "#ba68c8"),
-    ("Sapphire", "#0d0d1a", "#1e1f2d", "#151a23", "#ffffff", "#42a5f5"),
-    ("Coral", "#1a0d0d", "#2e1a1a", "#231515", "#ffffff", "#ff7043"),
-    ("Mint", "#0d1a15", "#1e3a23", "#15251f", "#ffffff", "#4db6ac"),
-    ("Plum", "#1a0d1a", "#2e1a2d", "#231523", "#ffffff", "#ba68c8"),
-    ("Gold", "#1a160d", "#2e281a", "#231f15", "#ffffff", "#ffca28"),
-    ("Monochrome", "#0a0a0a", "#1a1a1a", "#121212", "#ffffff", "#9e9e9e"),
-    ("Cherry", "#1a0a0a", "#2e1a1a", "#231515", "#ffffff", "#e57373"),
-    ("Azure", "#0a151a", "#1a2e3a", "#152325", "#ffffff", "#2196f3"),
-    ("Jade", "#0d1a0d", "#1e3a1e", "#152515", "#ffffff", "#66bb6a"),
-    ("Ruby", "#1a0a0a", "#2e1a1a", "#231515", "#ffffff", "#f44336"),
-    ("Indigo", "#0d0a1a", "#1a162e", "#151223", "#ffffff", "#3f51b5"),
+    ("Monochrome", "#000000", "#1a1a1a", "#0d0d0d", "#ffffff", "#b0b0b0"),
 ];
 
 pub struct ColorsTab {
@@ -43,11 +43,11 @@ impl ColorsTab {
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        let content = GtkBox::new(Orientation::Vertical, 24);
-        content.set_margin_start(16);
-        content.set_margin_end(16);
-        content.set_margin_top(16);
-        content.set_margin_bottom(16);
+        let content = GtkBox::new(Orientation::Vertical, 32);
+        content.set_margin_start(24);
+        content.set_margin_end(24);
+        content.set_margin_top(24);
+        content.set_margin_bottom(24);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
@@ -82,7 +82,7 @@ impl ColorsTab {
 }
 
 fn create_presets_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 16);
+    let section = GtkBox::new(Orientation::Vertical, 24);
 
     let section_title = Label::new(Some("Color Presets"));
     section_title.add_css_class("section-title");
@@ -94,15 +94,21 @@ fn create_presets_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     desc.set_xalign(0.0);
     section.append(&desc);
 
-    // Grid with 3 columns
-    let grid = Grid::new();
-    grid.set_column_spacing(16);
-    grid.set_row_spacing(16);
+    // Use FlowBox instead of Grid for better responsiveness
+    let flowbox = gtk4::FlowBox::new();
+    flowbox.set_column_spacing(16);
+    flowbox.set_row_spacing(16);
+    flowbox.set_halign(gtk4::Align::Fill);
+    flowbox.set_hexpand(true);
+    flowbox.set_vexpand(true);
+    // Responsive: adjust columns based on available width
+    flowbox.set_max_children_per_line(4);
+    flowbox.set_min_children_per_line(1);
+    flowbox.set_selection_mode(gtk4::SelectionMode::None);
+    flowbox.set_homogeneous(true); // Equal size buttons
 
-    for (i, preset) in PRESETS.iter().enumerate() {
+    for preset in PRESETS.iter() {
         let (name, bg, primary, secondary, text, accent) = *preset;
-        let row = i / 3;
-        let col = i % 3;
 
         let preset_button = create_preset_button(
             name,
@@ -113,10 +119,10 @@ fn create_presets_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             accent,
             Arc::clone(&config),
         );
-        grid.attach(&preset_button, col as i32, row as i32, 1, 1);
+        flowbox.append(&preset_button);
     }
 
-    section.append(&grid);
+    section.append(&flowbox);
     section
 }
 
@@ -131,7 +137,11 @@ fn create_preset_button(
 ) -> Button {
     let button = Button::new();
     button.add_css_class("preset-button");
-    button.set_size_request(200, 104);
+    // Responsive sizing - let CSS handle minimum sizes
+    button.set_hexpand(true); // Allow horizontal expansion
+    button.set_vexpand(false);
+    // Ensure button can shrink if needed
+    button.set_can_shrink(true);
 
     let content = GtkBox::new(Orientation::Vertical, 4);
     content.set_margin_start(16);
@@ -139,27 +149,30 @@ fn create_preset_button(
     content.set_margin_top(16);
     content.set_margin_bottom(16);
 
-    // Color preview bars
+    // Color preview bars - set background colors directly
     let bg_bar = gtk4::Box::new(Orientation::Horizontal, 0);
     bg_bar.set_size_request(-1, 12);
     bg_bar.add_css_class("color-bar");
-    // Set background color via CSS
+    set_box_background_color(&bg_bar, bg);
     content.append(&bg_bar);
 
     let primary_bar = gtk4::Box::new(Orientation::Horizontal, 0);
     primary_bar.set_size_request(-1, 12);
     primary_bar.add_css_class("color-bar");
+    set_box_background_color(&primary_bar, primary);
     content.append(&primary_bar);
 
     let secondary_bar = gtk4::Box::new(Orientation::Horizontal, 0);
     secondary_bar.set_size_request(-1, 12);
     secondary_bar.add_css_class("color-bar");
+    set_box_background_color(&secondary_bar, secondary);
     content.append(&secondary_bar);
 
-    let text_bar = gtk4::Box::new(Orientation::Horizontal, 0);
-    text_bar.set_size_request(-1, 12);
-    text_bar.add_css_class("color-bar");
-    content.append(&text_bar);
+    let accent_bar = gtk4::Box::new(Orientation::Horizontal, 0);
+    accent_bar.set_size_request(-1, 12);
+    accent_bar.add_css_class("color-bar");
+    set_box_background_color(&accent_bar, accent);
+    content.append(&accent_bar);
 
     // Preset name
     let name_label = Label::new(Some(name));
@@ -199,7 +212,7 @@ fn create_preset_button(
 }
 
 fn create_custom_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 16);
+    let section = GtkBox::new(Orientation::Vertical, 24);
 
     let section_title = Label::new(Some("Custom Colors"));
     section_title.add_css_class("section-title");
@@ -228,7 +241,7 @@ fn create_custom_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     // Apply button
     let apply_button = Button::with_label("Apply Custom Colors");
     apply_button.add_css_class("apply-button");
-    apply_button.set_margin_top(16);
+    apply_button.set_margin_top(24);
     {
         let config = Arc::clone(&config);
         apply_button.connect_clicked(move |_| {
@@ -271,7 +284,7 @@ fn create_color_input(
     initial_value: &str,
     config: Arc<Mutex<ColorConfig>>,
 ) -> GtkBox {
-    let row = GtkBox::new(Orientation::Horizontal, 12);
+    let row = GtkBox::new(Orientation::Horizontal, 16);
 
     // Color preview
     let preview = gtk4::Box::new(Orientation::Horizontal, 0);

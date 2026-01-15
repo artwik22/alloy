@@ -16,11 +16,11 @@ impl GeneralTab {
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        let content = GtkBox::new(Orientation::Vertical, 24);
-        content.set_margin_start(16);
-        content.set_margin_end(16);
-        content.set_margin_top(16);
-        content.set_margin_bottom(16);
+        let content = GtkBox::new(Orientation::Vertical, 32);
+        content.set_margin_start(24);
+        content.set_margin_end(24);
+        content.set_margin_top(24);
+        content.set_margin_bottom(24);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
@@ -50,7 +50,7 @@ impl GeneralTab {
 }
 
 fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 16);
+    let section = GtkBox::new(Orientation::Vertical, 24);
 
     let section_title = Label::new(Some("Notifications"));
     section_title.add_css_class("section-title");
@@ -104,12 +104,12 @@ fn create_toggle_row(
     on_toggle: impl Fn(bool) + 'static,
     initial_value: bool,
 ) -> GtkBox {
-    let row = GtkBox::new(Orientation::Horizontal, 15);
+    let row = GtkBox::new(Orientation::Horizontal, 20);
     row.add_css_class("settings-row");
-    row.set_margin_start(16);
-    row.set_margin_end(16);
-    row.set_margin_top(16);
-    row.set_margin_bottom(16);
+    row.set_margin_start(0);
+    row.set_margin_end(0);
+    row.set_margin_top(12);
+    row.set_margin_bottom(12);
     row.set_hexpand(true);
     row.set_halign(gtk4::Align::Fill);
 
