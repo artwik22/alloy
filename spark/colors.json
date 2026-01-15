@@ -1,0 +1,9 @@
+{
+  "background": "#1a150d",
+  "primary": "#2e251a",
+  "secondary": "#231f15",
+  "text": "#ffffff",
+  "accent": "#ff9800",
+  "colorPreset": "Sunset",
+  "sidebarVisible": true
+}

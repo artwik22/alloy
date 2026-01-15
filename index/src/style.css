@@ -1,0 +1,732 @@
+/* Index File Explorer - Modern Minimalist Theme */
+/* Sharp edges, symmetric, clean design */
+
+/* ===== CSS Variables for Theming ===== */
+/* Black background, white text theme */
+@define-color index_bg #000000;
+@define-color index_bg_secondary #0a0a0a;
+@define-color index_bg_tertiary #1a1a1a;
+@define-color index_fg #ffffff;
+@define-color index_fg_dim #cccccc;
+@define-color index_accent #ffffff;
+@define-color index_accent_hover #ffffff;
+@define-color index_border #333333;
+@define-color index_selection rgba(255, 255, 255, 0.2);
+@define-color index_hover rgba(255, 255, 255, 0.1);
+
+/* ===== Global Reset ===== */
+* {
+    border-radius: 0;
+    outline-offset: 0;
+}
+
+/* ===== Window ===== */
+window {
+    background-color: @index_bg;
+    color: @index_fg;
+}
+
+window.background {
+    background-color: @index_bg;
+}
+
+/* ===== Header Bar ===== */
+headerbar,
+headerbar.default-decoration,
+headerbar.titlebar {
+    background: @index_bg;
+    background-color: @index_bg;
+    background-image: none;
+    border-bottom: 1px solid @index_border;
+    padding: 10px 14px;
+    min-height: 48px;
+    box-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+headerbar.titlebar:backdrop {
+    background: @index_bg;
+    background-color: @index_bg;
+    background-image: none;
+    opacity: 1.0;
+}
+
+headerbar title {
+    font-weight: 400;
+    font-size: 13px;
+    color: @index_fg;
+    opacity: 0.9;
+}
+
+headerbar.titlebar title {
+    color: @index_fg;
+}
+
+headerbar.titlebar:backdrop title {
+    color: @index_fg;
+    opacity: 0.85;
+}
+
+headerbar button {
+    background: transparent;
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid transparent;
+    padding: 7px 9px;
+    min-height: 34px;
+    min-width: 34px;
+    margin: 0 3px;
+    color: @index_fg;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    -gtk-icon-effect: none;
+    box-shadow: none;
+}
+
+headerbar.titlebar button,
+headerbar.titlebar:backdrop button,
+headerbar.default-decoration button {
+    background: transparent;
+    background-color: transparent;
+    background-image: none;
+    color: @index_fg;
+    box-shadow: none;
+}
+
+headerbar button:hover {
+    background: @index_hover;
+    background-color: @index_hover;
+    background-image: none;
+    border-color: @index_border;
+    color: @index_fg;
+    box-shadow: none;
+    transform: scale(1.02);
+}
+
+headerbar button:active,
+headerbar button:checked,
+headerbar button:checked:hover {
+    background: @index_selection;
+    background-color: @index_selection;
+    background-image: none;
+    border-color: @index_fg;
+    color: @index_fg;
+    box-shadow: none;
+}
+
+headerbar button image {
+    color: @index_fg;
+    opacity: 0.95;
+    -gtk-icon-style: symbolic;
+    -gtk-icon-transform: scale(1.1);
+}
+
+headerbar.titlebar button image,
+headerbar.titlebar:backdrop button image {
+    color: @index_fg;
+}
+
+headerbar button:hover image {
+    opacity: 1.0;
+}
+
+/* Linked button groups */
+headerbar .linked button {
+    margin: 0;
+    border-right-width: 0;
+}
+
+headerbar .linked button:last-child {
+    border-right-width: 1px;
+}
+
+headerbar .linked button:first-child {
+    border-left-width: 1px;
+}
+
+/* Search entry */
+headerbar searchentry,
+headerbar.titlebar searchentry,
+headerbar.titlebar:backdrop searchentry,
+searchentry {
+    background-color: @index_bg_tertiary;
+    background-image: none;
+    border: 1px solid @index_border;
+    color: @index_fg;
+    padding: 7px 14px;
+    min-height: 34px;
+    caret-color: @index_fg;
+    font-size: 13px;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+headerbar.titlebar searchentry:backdrop,
+headerbar.titlebar:backdrop searchentry {
+    background-color: @index_bg_tertiary;
+    background-image: none;
+    color: @index_fg;
+}
+
+headerbar searchentry:focus,
+headerbar.titlebar searchentry:focus,
+searchentry:focus {
+    border-color: @index_fg;
+    box-shadow: inset 0 0 0 1px @index_fg, 0 0 0 2px rgba(47, 57, 65, 0.2);
+    background-color: @index_bg_secondary;
+    background-image: none;
+}
+
+headerbar searchentry image,
+headerbar.titlebar searchentry image,
+headerbar.titlebar:backdrop searchentry image,
+searchentry image {
+    color: @index_fg_dim;
+    opacity: 0.7;
+}
+
+headerbar searchentry text,
+headerbar.titlebar searchentry text,
+headerbar.titlebar:backdrop searchentry text,
+searchentry text {
+    color: @index_fg;
+}
+
+headerbar searchentry placeholder,
+headerbar.titlebar searchentry placeholder {
+    color: @index_fg_dim;
+}
+
+searchentry > * > text > selection {
+    background-color: @index_fg;
+    color: @index_bg;
+}
+
+/* ===== Sidebar ===== */
+.sidebar,
+.navigation-sidebar {
+    background-color: @index_bg_secondary;
+    border-right: 1px solid @index_border;
+    padding: 0;
+    min-width: 220px;
+    max-width: 220px;
+}
+
+.navigation-sidebar row {
+    padding: 0;
+    margin: 2px 10px;
+    min-height: 38px;
+    border: none;
+    background: transparent;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navigation-sidebar row:hover {
+    background-color: @index_hover;
+    transform: translateX(2px);
+}
+
+.navigation-sidebar row.sidebar-section-header:hover {
+    background-color: transparent;
+    transform: none;
+}
+
+.navigation-sidebar row:selected {
+    background-color: @index_selection;
+}
+
+.navigation-sidebar row:selected label {
+    color: @index_fg;
+    font-weight: 500;
+}
+
+.navigation-sidebar row image {
+    color: @index_fg_dim;
+    opacity: 0.9;
+    -gtk-icon-transform: scale(1.1);
+}
+
+.navigation-sidebar row:hover image {
+    opacity: 0.9;
+}
+
+.navigation-sidebar row:selected image {
+    color: @index_fg;
+    opacity: 1.0;
+}
+
+.navigation-sidebar row label {
+    color: @index_fg;
+    font-size: 13px;
+}
+
+/* Sidebar section headers */
+.sidebar-section-header {
+    padding: 8px 12px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: @index_fg_dim;
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.sidebar-section-header:hover {
+    background-color: transparent;
+    transform: none;
+}
+
+
+/* ===== Path Bar ===== */
+.path-bar {
+    background-color: @index_bg;
+    border-bottom: 1px solid @index_border;
+    padding: 12px 20px;
+    min-height: 44px;
+}
+
+.path-breadcrumbs {
+}
+
+.path-bar button.path-segment {
+    background: transparent;
+    border: none;
+    color: @index_fg_dim;
+    font-size: 14px;
+    padding: 6px 2px;
+    min-height: 28px;
+    min-width: 0;
+    margin: 0;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.path-bar button.path-segment:hover {
+    color: @index_fg;
+    background-color: @index_hover;
+}
+
+.path-bar button.path-segment.path-current {
+    color: @index_fg;
+    font-weight: 500;
+    background-color: transparent;
+}
+
+.path-entry {
+    background-color: @index_bg_tertiary;
+    border: 1px solid @index_border;
+    color: @index_fg;
+    font-size: 14px;
+    padding: 8px 14px;
+    min-height: 36px;
+    caret-color: @index_fg;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.path-entry:focus {
+    border-color: @index_fg;
+    box-shadow: inset 0 0 0 1px @index_fg;
+    background-color: @index_bg_tertiary;
+}
+
+.path-entry text {
+    color: @index_fg;
+}
+
+.path-entry placeholder {
+    color: @index_fg_dim;
+}
+
+.path-separator {
+    color: @index_fg_dim;
+    opacity: 0.7;
+    font-size: 14px;
+    margin: 0;
+    padding: 0 2px;
+}
+
+/* ===== File List ===== */
+.file-list,
+listview {
+    background-color: @index_bg;
+    color: @index_fg;
+}
+
+listview > row {
+    padding: 0;
+    margin: 0;
+    min-height: 42px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+listview > row:hover {
+    background-color: @index_hover;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+listview > row:selected {
+    background-color: @index_selection;
+}
+
+listview > row:selected label {
+    color: @index_fg;
+}
+
+listview > row > box {
+    padding: 9px 18px;
+}
+
+listview > row image {
+    color: @index_fg_dim;
+    opacity: 0.9;
+    min-width: 26px;
+    min-height: 26px;
+    -gtk-icon-transform: scale(1.1);
+}
+
+listview > row:hover image {
+    opacity: 0.9;
+}
+
+listview > row:selected image {
+    color: @index_fg;
+    opacity: 1.0;
+}
+
+listview > row label {
+    color: @index_fg;
+    font-size: 13px;
+}
+
+/* File info labels */
+.dim-label {
+    color: @index_fg_dim;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+/* ===== Scrollbars ===== */
+scrollbar {
+    background: transparent;
+    border: none;
+}
+
+scrollbar slider {
+    background-color: rgba(255, 255, 255, 0.18);
+    min-width: 8px;
+    min-height: 8px;
+    border: none;
+    margin: 3px;
+    border-radius: 4px;
+    transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), min-width 200ms cubic-bezier(0.4, 0, 0.2, 1), min-height 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+scrollbar slider:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    min-width: 10px;
+    min-height: 10px;
+}
+
+scrollbar slider:active {
+    background-color: @index_fg;
+}
+
+scrollbar.horizontal slider {
+    min-height: 8px;
+    min-width: 50px;
+}
+
+scrollbar.horizontal slider:hover {
+    min-height: 10px;
+}
+
+scrollbar.vertical slider {
+    min-width: 8px;
+    min-height: 50px;
+}
+
+scrollbar.vertical slider:hover {
+    min-width: 10px;
+}
+
+/* ===== Paned Separator ===== */
+paned > separator {
+    background-color: transparent;
+    min-width: 0;
+    min-height: 0;
+    border: none;
+    opacity: 0;
+}
+
+paned > separator:hover {
+    background-color: transparent;
+    opacity: 0;
+}
+
+/* ===== Context Menu / Popover ===== */
+popover,
+popover.menu {
+    background-color: @index_bg_tertiary;
+    border: 1px solid @index_border;
+    padding: 6px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+popover contents {
+    background: transparent;
+}
+
+popover modelbutton,
+popover .model {
+    padding: 9px 18px;
+    min-height: 34px;
+    color: @index_fg;
+    background: transparent;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 13px;
+    margin: 1px 4px;
+}
+
+popover modelbutton:hover {
+    background-color: @index_selection;
+}
+
+popover separator {
+    background-color: @index_border;
+    margin: 4px 0;
+    min-height: 1px;
+}
+
+/* ===== Dialogs ===== */
+window.dialog,
+dialog {
+    background-color: @index_bg_secondary;
+    border: 1px solid @index_border;
+}
+
+dialog headerbar {
+    background-color: @index_bg_tertiary;
+    border-bottom: 1px solid @index_border;
+}
+
+/* ===== Settings Window ===== */
+window.settings {
+    background-color: @index_bg;
+    color: @index_fg;
+}
+
+/* Notebook (tabs) */
+notebook {
+    background-color: @index_bg;
+    color: @index_fg;
+}
+
+notebook > header {
+    background-color: @index_bg_secondary;
+    border-bottom: 1px solid @index_border;
+}
+
+notebook > header > tabs > tab {
+    background-color: transparent;
+    color: @index_fg_dim;
+    padding: 10px 20px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+notebook > header > tabs > tab:hover {
+    background-color: @index_hover;
+    color: @index_fg;
+}
+
+notebook > header > tabs > tab:checked {
+    background-color: transparent;
+    color: @index_fg;
+    border-bottom-color: @index_fg;
+    font-weight: 500;
+}
+
+notebook > stack {
+    background-color: @index_bg;
+}
+
+/* Settings content */
+.title-4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: @index_fg;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+separator {
+    background-color: @index_border;
+    margin: 12px 0;
+    min-height: 1px;
+}
+
+/* Monospace labels for shortcuts */
+.monospace {
+    font-family: monospace;
+    font-size: 12px;
+}
+
+/* ===== Entry Fields ===== */
+entry {
+    background-color: @index_bg_tertiary;
+    border: 1px solid @index_border;
+    color: @index_fg;
+    padding: 7px 14px;
+    min-height: 34px;
+    caret-color: @index_fg;
+    font-size: 13px;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+entry:focus {
+    border-color: @index_fg;
+    box-shadow: inset 0 0 0 1px @index_fg, 0 0 0 2px rgba(47, 57, 65, 0.2);
+    background-color: @index_bg_secondary;
+}
+
+entry text {
+    color: @index_fg;
+}
+
+entry placeholder {
+    color: @index_fg_dim;
+}
+
+/* ===== Buttons ===== */
+button {
+    background-color: @index_bg_tertiary;
+    border: 1px solid @index_border;
+    color: @index_fg;
+    padding: 7px 14px;
+    min-height: 34px;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+button.flat {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+button:hover {
+    background-color: @index_hover;
+    border-color: @index_border;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    background-color: @index_selection;
+}
+
+button.suggested-action {
+    background-color: @index_fg;
+    border-color: @index_fg;
+    color: @index_bg;
+    font-weight: 400;
+}
+
+button.suggested-action:hover {
+    background-color: @index_fg;
+    border-color: @index_fg;
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(47, 57, 65, 0.3);
+}
+
+button.destructive-action {
+    background-color: #e04040;
+    border-color: #e04040;
+    color: white;
+}
+
+button.destructive-action:hover {
+    background-color: #e85555;
+    border-color: #e85555;
+}
+
+button image {
+    opacity: 0.9;
+}
+
+button:hover image {
+    opacity: 1.0;
+}
+
+/* ===== Labels ===== */
+label {
+    color: @index_fg;
+    font-size: 13px;
+}
+
+label.dim-label {
+    color: @index_fg_dim;
+    font-size: 12px;
+}
+
+/* ===== Selection ===== */
+selection {
+    background-color: @index_fg;
+    color: @index_bg;
+}
+
+/* ===== Tooltips ===== */
+tooltip {
+    background-color: @index_bg_tertiary;
+    border: 1px solid @index_border;
+    color: @index_fg;
+    padding: 8px 12px;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== Drive/Volume Icons ===== */
+.drive-item image {
+    color: @index_fg;
+}
+
+.drive-item label {
+    font-size: 13px;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+    color: @index_fg_dim;
+    font-size: 13px;
+}
+
+/* ===== Focus Indicators ===== */
+*:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+button:focus,
+entry:focus,
+row:focus {
+    outline: none;
+}
+
+/* ===== Light Theme Override ===== */
+/* Uncomment below for light theme */
+/*
+@define-color index_bg #f5f5f5;
+@define-color index_bg_secondary #ffffff;
+@define-color index_bg_tertiary #e8e8e8;
+@define-color index_fg #1a1a1a;
+@define-color index_fg_dim #666666;
+@define-color index_accent #0066cc;
+@define-color index_accent_hover #0077ee;
+@define-color index_border #d0d0d0;
+@define-color index_selection rgba(0, 102, 255, 0.15);
+@define-color index_hover rgba(0, 0, 0, 0.04);
+*/

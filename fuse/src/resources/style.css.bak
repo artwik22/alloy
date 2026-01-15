@@ -1,0 +1,303 @@
+/* Fuse Settings Application Styles */
+
+window {
+    background-color: #0a0a0a;
+    color: #ffffff;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: #1a1a1a;
+    border-radius: 0px;
+    padding: 8px;
+}
+
+.sidebar-switcher {
+    background-color: transparent;
+}
+
+.sidebar-switcher button {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    border-radius: 0px;
+    padding: 12px 16px;
+    margin: 2px 0;
+    text-align: left;
+    min-height: 48px;
+}
+
+.sidebar-switcher button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-switcher button:checked {
+    background-color: rgba(74, 158, 255, 0.2);
+    color: #4a9eff;
+}
+
+.version-label {
+    color: #ffffff;
+    opacity: 0.5;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Content Area */
+scrolledwindow {
+    background-color: #0a0a0a;
+}
+
+/* Titles */
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.section-description {
+    font-size: 12px;
+    color: #ffffff;
+    opacity: 0.7;
+    margin-bottom: 16px;
+}
+
+/* Settings Rows */
+.settings-row {
+    background-color: #252525;
+    border-radius: 0px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.row-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.row-description {
+    font-size: 11px;
+    color: #ffffff;
+    opacity: 0.7;
+}
+
+/* Toggles */
+switch {
+    background-color: #1a1a1a;
+}
+
+switch:checked {
+    background-color: #4a9eff;
+}
+
+/* Color Presets */
+.preset-button {
+    background-color: #1a1a1a;
+    border: none;
+    border-radius: 0px;
+    padding: 0;
+    min-width: 200px;
+    min-height: 104px;
+}
+
+.preset-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.color-bar {
+    border-radius: 0px;
+}
+
+.preset-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+/* Custom Colors */
+.color-preview {
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+    border-radius: 0px;
+}
+
+.color-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.color-entry {
+    background-color: transparent;
+    border: 1px solid #1a1a1a;
+    border-radius: 0px;
+    padding: 4px 8px;
+    color: #ffffff;
+}
+
+.color-entry:focus {
+    border-color: #4a9eff;
+    border-width: 2px;
+}
+
+.apply-button {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: none;
+    border-radius: 0px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.apply-button:hover {
+    background-color: #4a9eff;
+}
+
+/* Wallpapers */
+.refresh-button {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+.refresh-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.wallpaper-tile {
+    background-color: #252525;
+    border: none;
+    border-radius: 0px;
+    padding: 8px;
+}
+
+.wallpaper-tile:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.wallpaper-tile image {
+    border-radius: 0px;
+}
+
+/* Audio */
+.audio-device-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.audio-device-desc {
+    font-size: 13px;
+    color: #ffffff;
+    opacity: 0.8;
+}
+
+.audio-section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.mute-button {
+    background-color: #1a1a1a;
+    border: none;
+    border-radius: 0px;
+    min-width: 50px;
+    min-height: 50px;
+}
+
+.mute-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.volume-scale {
+    min-width: 200px;
+}
+
+.volume-scale scale {
+    background-color: #1a1a1a;
+}
+
+.volume-scale scale highlight {
+    background-color: #4a9eff;
+}
+
+.volume-scale scale slider {
+    background-color: #ffffff;
+}
+
+/* Placeholder */
+.placeholder {
+    font-size: 14px;
+    color: #ffffff;
+    opacity: 0.7;
+}
+
+/* Buttons */
+button {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: none;
+    border-radius: 0px;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+button.suggested-action {
+    background-color: #4a9eff;
+}
+
+button.suggested-action:hover {
+    background-color: #3d8eef;
+}
+
+/* Header Bar */
+headerbar {
+    background-color: #252525;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+headerbar button {
+    background-color: transparent;
+}
+
+headerbar button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbars */
+scrolledwindow scrollbar {
+    background-color: #1a1a1a;
+}
+
+scrolledwindow scrollbar slider {
+    background-color: #4a9eff;
+    min-width: 8px;
+    min-height: 8px;
+}
+
+scrolledwindow scrollbar slider:hover {
+    background-color: #5aa8ff;
+}
+
+/* Separators */
+separator {
+    background-color: #1a1a1a;
+    opacity: 0.5;
+}

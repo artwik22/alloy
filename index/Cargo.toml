@@ -1,0 +1,13 @@
+[package]
+name = "index"
+version = "0.1.0"
+edition = "2021"
+description = "Lightweight file explorer"
+authors = ["Index Team"]
+
+[dependencies]
+gtk4 = { version = "0.9", features = ["v4_12"] }
+trash = "5"
+chrono = "0.4"
+dirs = "5"
+open = "5"
