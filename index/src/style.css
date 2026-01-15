@@ -212,30 +212,39 @@ searchentry > * > text > selection {
 
 .navigation-sidebar row {
     padding: 0;
-    margin: 2px 10px;
-    min-height: 38px;
+    margin: 3px 10px;
+    min-height: 42px;
     border: none;
     background: transparent;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0;
+    opacity: 0.95;
 }
 
 .navigation-sidebar row:hover {
     background-color: @index_hover;
-    transform: translateX(2px);
+    transform: translateX(3px) scale(1.01);
+    opacity: 1.0;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
 .navigation-sidebar row.sidebar-section-header:hover {
     background-color: transparent;
     transform: none;
+    box-shadow: none;
 }
 
 .navigation-sidebar row:selected {
     background-color: @index_selection;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+    border-left: 3px solid @index_fg;
+    padding-left: 9px;
 }
 
 .navigation-sidebar row:selected label {
     color: @index_fg;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .navigation-sidebar row image {
@@ -260,14 +269,15 @@ searchentry > * > text > selection {
 
 /* Sidebar section headers */
 .sidebar-section-header {
-    padding: 8px 12px 6px;
+    padding: 10px 12px 8px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.8px;
     text-transform: uppercase;
     color: @index_fg_dim;
-    opacity: 0.8;
+    opacity: 0.85;
     pointer-events: none;
+    margin-top: 8px;
 }
 
 .sidebar-section-header:hover {

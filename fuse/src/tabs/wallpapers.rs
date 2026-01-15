@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox, Picture};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox};
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::fs;
@@ -100,6 +100,12 @@ fn load_wallpapers_into_flowbox(flowbox: &FlowBox, config: &Arc<Mutex<ColorConfi
 
     println!("Loading {} wallpapers from {:?}", wallpapers.len(), wallpapers_path);
 
+    // Get current wallpaper to highlight active one
+    let current_wallpaper = {
+        let cfg = config.lock().unwrap();
+        cfg.last_wallpaper.clone()
+    };
+
     // Clear existing - remove all children
     let mut child = flowbox.first_child();
     while let Some(c) = child {
@@ -108,6 +114,9 @@ fn load_wallpapers_into_flowbox(flowbox: &FlowBox, config: &Arc<Mutex<ColorConfi
         child = next;
     }
 
+    // Store all buttons to update them when one is clicked
+    let mut buttons: Vec<Button> = Vec::new();
+
     // Add wallpapers - FlowBox will automatically wrap based on available width
     for (idx, wallpaper_path) in wallpapers.iter().enumerate() {
         println!("  [{}/{}] Adding wallpaper: {:?}", idx + 1, wallpapers.len(), wallpaper_path);
@@ -115,8 +124,45 @@ fn load_wallpapers_into_flowbox(flowbox: &FlowBox, config: &Arc<Mutex<ColorConfi
             eprintln!("    WARNING: File does not exist!");
             continue;
         }
-        let tile = create_wallpaper_tile(wallpaper_path, Arc::clone(config));
+        let is_active = current_wallpaper.as_ref()
+            .map(|w| w.as_str() == wallpaper_path.to_string_lossy().as_ref())
+            .unwrap_or(false);
+        let tile = create_wallpaper_tile(wallpaper_path, is_active, Arc::clone(config));
+        buttons.push(tile.clone());
         flowbox.append(&tile);
+    }
+    
+    // Update all buttons when one is clicked
+    let buttons_clone = buttons.clone();
+    for (idx, button) in buttons.iter().enumerate() {
+        let button_clone = button.clone();
+        let all_buttons = buttons_clone.clone();
+        let path_str = wallpapers[idx].to_string_lossy().to_string();
+        let path_str_clone = path_str.clone();
+        let config_clone = Arc::clone(config);
+        
+        button.connect_clicked(move |_| {
+            // Update all buttons - remove active class from all
+            for btn in &all_buttons {
+                btn.remove_css_class("wallpaper-active");
+                btn.remove_css_class("wallpaper-applying");
+            }
+            button_clone.add_css_class("wallpaper-applying");
+            
+            if let Err(e) = quickshell::set_wallpaper(&path_str_clone) {
+                eprintln!("Error setting wallpaper: {}", e);
+                button_clone.remove_css_class("wallpaper-applying");
+            } else {
+                // Mark as active after successful set
+                button_clone.remove_css_class("wallpaper-applying");
+                button_clone.add_css_class("wallpaper-active");
+                
+                // Update config
+                let mut cfg = config_clone.lock().unwrap();
+                cfg.set_wallpaper(&path_str_clone);
+                let _ = cfg.save();
+            }
+        });
     }
     
     println!("Finished loading wallpapers");
@@ -162,12 +208,13 @@ fn find_wallpapers(path: &PathBuf) -> Vec<PathBuf> {
     wallpapers
 }
 
-fn create_wallpaper_tile(path: &PathBuf, _config: Arc<Mutex<ColorConfig>>) -> Button {
+fn create_wallpaper_tile(path: &PathBuf, is_active: bool, _config: Arc<Mutex<ColorConfig>>) -> Button {
     let button = Button::new();
     button.add_css_class("wallpaper-tile");
     
-    // Clone path for the closure
-    let path_str = path.to_string_lossy().to_string();
+    if is_active {
+        button.add_css_class("wallpaper-active");
+    }
     
     // Use Picture widget for better image loading and display
     let picture = gtk4::Picture::new();
@@ -188,12 +235,6 @@ fn create_wallpaper_tile(path: &PathBuf, _config: Arc<Mutex<ColorConfig>>) -> Bu
     button.set_hexpand(true);
     button.set_vexpand(true);
     // Don't set size_request here - let CSS handle minimum sizes for better responsiveness
-
-    button.connect_clicked(move |_| {
-        if let Err(e) = quickshell::set_wallpaper(&path_str) {
-            eprintln!("Error setting wallpaper: {}", e);
-        }
-    });
 
     button
 }

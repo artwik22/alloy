@@ -358,6 +358,34 @@ PanelWindow {
             secondary: "#0d0d0d",
             text: "#ffffff",
             accent: "#b0b0b0"
+        },
+        "Midnight Blue": {
+            background: "#0a0a0f",
+            primary: "#1a1a25",
+            secondary: "#0f0f15",
+            text: "#ffffff",
+            accent: "#6b8dd6"
+        },
+        "Deep Forest": {
+            background: "#0a0f0a",
+            primary: "#1a251a",
+            secondary: "#0f150f",
+            text: "#f5f5f5",
+            accent: "#7a9a7a"
+        },
+        "Dark Violet": {
+            background: "#0f0a15",
+            primary: "#1f1a25",
+            secondary: "#150f1a",
+            text: "#ffffff",
+            accent: "#9a7ab5"
+        },
+        "Crimson": {
+            background: "#0f0a0a",
+            primary: "#251a1a",
+            secondary: "#150f0f",
+            text: "#ffffff",
+            accent: "#d67a7a"
         }
     }
     
@@ -1649,11 +1677,14 @@ PanelWindow {
                     if (selectedIndex >= 0 && selectedIndex < modesList.count) {
                         var mode = modesList.model.get(selectedIndex)
                         if (mode.mode === 2) {
-                            // Launch fuse application instead of entering settings mode
-                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", appLauncherRoot)
-                            // Close launcher after launching settings
-                            if (sharedData) {
-                                sharedData.launcherVisible = false
+                            // Switch to launcher mode and type "fuse" in search
+                            currentMode = 0
+                            selectedIndex = 0
+                            modesList.currentIndex = -1
+                            searchText = "fuse"
+                            if (searchInput) {
+                                searchInput.text = "fuse"
+                                Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: { if (appLauncherRoot.searchInput) appLauncherRoot.searchInput.forceActiveFocus() } }", appLauncherRoot)
                             }
                         } else {
                             currentMode = mode.mode
@@ -1953,11 +1984,14 @@ PanelWindow {
                     
                     onClicked: {
                         if (model.mode === 2) {
-                            // Launch fuse application instead of entering settings mode
-                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", appLauncherRoot)
-                            // Close launcher after launching settings
-                            if (sharedData) {
-                                sharedData.launcherVisible = false
+                            // Switch to launcher mode and type "fuse" in search
+                            currentMode = 0
+                            selectedIndex = 0
+                            modesList.currentIndex = -1
+                            searchText = "fuse"
+                            if (searchInput) {
+                                searchInput.text = "fuse"
+                                Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: { if (appLauncherRoot.searchInput) appLauncherRoot.searchInput.forceActiveFocus() } }", appLauncherRoot)
                             }
                         } else {
                             currentMode = model.mode
@@ -2052,6 +2086,16 @@ PanelWindow {
                                             if (isCalculatorMode && calculatorResult && calculatorResult !== "Error") {
                                                 // Copy result to clipboard
                                                 Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo -n \"" + calculatorResult.replace(/"/g, '\\"') + "\" | xclip -selection clipboard']; running: true }", appLauncherRoot)
+                                                if (sharedData) {
+                                                    sharedData.launcherVisible = false
+                                                }
+                                                event.accepted = true
+                                                return
+                                            }
+                                            
+                                            // Check if search text is "fuse" - launch fuse application
+                                            if (searchText && searchText.trim().toLowerCase() === "fuse") {
+                                                Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", appLauncherRoot)
                                                 if (sharedData) {
                                                     sharedData.launcherVisible = false
                                                 }

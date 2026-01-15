@@ -275,19 +275,19 @@ PanelWindow {
                         // Row with Network Stats and Quick Actions side by side
                         Row {
                             width: parent.width
-                            height: 100
-                            spacing: 12
+                            height: 110
+                            spacing: 16
                             
                             // Network Stats Card (left)
                         Rectangle {
-                                width: (parent.width - 12) / 2
+                                width: (parent.width - 16) / 2
                                 height: parent.height
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             Column {
                                 anchors.centerIn: parent
-                                    spacing: 6
+                                    spacing: 8
                                 
                                 Row {
                                     anchors.horizontalCenter: parent.horizontalCenter
@@ -355,26 +355,26 @@ PanelWindow {
                         
                             // Quick Actions Card (right)
                         Rectangle {
-                                width: (parent.width - 12) / 2
+                                width: (parent.width - 16) / 2
                                 height: parent.height
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                                 Column {
                                     anchors.fill: parent
-                                    anchors.margins: 8
-                                    spacing: 4
+                                    anchors.margins: 10
+                                    spacing: 6
                                     
                                     Grid {
                                         id: quickActionsGrid
                                     columns: 2
-                                    spacing: 4
+                                    spacing: 6
                                     width: parent.width
-                                        height: parent.height - 20  // Pozostaw miejsce na nagłówek
+                                        height: parent.height - 24  // Pozostaw miejsce na nagłówek
                                     
                                     // Toggle Sidebar button
                                     Rectangle {
-                                        width: (quickActionsGrid.width - 4) / 2
+                                        width: (quickActionsGrid.width - 6) / 2
                                         height: 42
                                         radius: 0
                                         clip: true
@@ -391,7 +391,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
+                                            spacing: 6
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -429,7 +429,7 @@ PanelWindow {
                                     
                                     // Do Not Disturb button
                                     Rectangle {
-                                        width: (quickActionsGrid.width - 4) / 2
+                                        width: (quickActionsGrid.width - 6) / 2
                                         height: 42
                                         radius: 0
                                         clip: true
@@ -448,7 +448,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
+                                            spacing: 6
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -487,7 +487,7 @@ PanelWindow {
                                     
                                     // Lock button
                                     Rectangle {
-                                        width: (quickActionsGrid.width - 4) / 2
+                                        width: (quickActionsGrid.width - 6) / 2
                                         height: 42
                                         radius: 0
                                         clip: true
@@ -504,7 +504,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
+                                            spacing: 6
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -562,7 +562,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
+                                            spacing: 6
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -957,20 +957,21 @@ PanelWindow {
                         // Media Player Card
                         Rectangle {
                             width: parent.width
-                            height: 205
+                            height: 220
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 16
+                                anchors.margins: 20
+                                spacing: 20
                                 
-                                // Album Art
+                                // Album Art - wyśrodkowane wertykalnie
                                 Rectangle {
-                                    Layout.preferredWidth: 120
-                                    Layout.preferredHeight: 120
+                                    Layout.preferredWidth: 150
+                                    Layout.preferredHeight: 150
                                     Layout.alignment: Qt.AlignVCenter
+                                    Layout.leftMargin: 10
                                     radius: 0
                                     color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
                                     
@@ -994,71 +995,57 @@ PanelWindow {
                                     
                                     Text {
                                         text: "󰎆"
-                                        font.pixelSize: 50
+                                        font.pixelSize: 55
                                         anchors.centerIn: parent
                                         visible: !mpArt
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                     }
                                 }
                                 
-                                // Track Info and Controls
+                                // Track Info and Controls - wyśrodkowane wertykalnie
                                 Column {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     Layout.alignment: Qt.AlignVCenter
-                                    spacing: 0
+                                    spacing: 24
                                     
-                                    Item {
+                                    // Track Info - wyśrodkowane
+                                    Column {
                                         width: parent.width
-                                        height: parent.height * 0.35
-                                    }
-                                    
-                                    Item {
-                                        width: parent.width
-                                        height: parent.height * 0.3
+                                        spacing: 12
+                                        anchors.horizontalCenter: parent.horizontalCenter
                                         
-                                        // Track Info - wyśrodkowane
-                                        Column {
-                                            anchors.centerIn: parent
-                                            spacing: 6
+                                        Text {
+                                            text: mpTitle ? mpTitle : "Nothing playing"
+                                            font.pixelSize: 16
+                                            font.family: "sans-serif"
+                                            font.weight: Font.Bold
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                            elide: Text.ElideRight
                                             width: parent.width
-                                            
-                                            Text {
-                                                text: mpTitle ? mpTitle : "Nothing playing"
-                                                font.pixelSize: 16
-                                                font.family: "sans-serif"
-                                                font.weight: Font.Bold
-                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                                elide: Text.ElideRight
-                                                width: parent.width
-                                                horizontalAlignment: Text.AlignHCenter
-                                            }
-                                            
-                                            Text {
-                                                text: mpArtist ? mpArtist : "—"
-                                                font.pixelSize: 13
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                                elide: Text.ElideRight
-                                                width: parent.width
-                                                horizontalAlignment: Text.AlignHCenter
-                                            }
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                        
+                                        Text {
+                                            text: mpArtist ? mpArtist : "—"
+                                            font.pixelSize: 13
+                                            font.family: "sans-serif"
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                            elide: Text.ElideRight
+                                            width: parent.width
+                                            horizontalAlignment: Text.AlignHCenter
                                         }
                                     }
                                     
                                     // Controls - wyśrodkowane
-                                    Item {
-                                        width: parent.width
-                                        height: parent.height * 0.35
-                                        
-                                        Row {
-                                            anchors.centerIn: parent
-                                            spacing: 10
+                                    Row {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        spacing: 20
                                         
                                         Rectangle {
-                                            width: 36
-                                            height: 36
-                                            radius: 0
+                                            width: 44
+                                            height: 44
+                                            radius: 4
                                             color: prevAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                                 ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
@@ -1109,9 +1096,9 @@ PanelWindow {
                                         }
                                         
                                         Rectangle {
-                                            width: 44
-                                            height: 36
-                                            radius: 0
+                                            width: 52
+                                            height: 44
+                                            radius: 4
                                             color: playAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                                 ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -1171,9 +1158,9 @@ PanelWindow {
                                         }
                                         
                                         Rectangle {
-                                            width: 36
-                                            height: 36
-                                            radius: 0
+                                            width: 44
+                                            height: 44
+                                            radius: 4
                                             color: nextAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                                 ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
@@ -1302,26 +1289,26 @@ PanelWindow {
                             }
                         }
                         
-                        // Media Player - wyśrodkowany na wierzchu, przesunięty w prawo
+                        // Media Player - wyśrodkowany na wierzchu
                         RowLayout {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.horizontalCenterOffset: parent.width * 0.15  // Przesunięcie w prawo
+                            anchors.horizontalCenterOffset: 60  // Przesunięcie w prawo
                             anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(600, parent.width - 40)
-                            height: 180
-                            spacing: 20
+                            width: Math.min(800, parent.width - 80)
+                            height: 280
+                            spacing: 32
                             z: 1  // Na wierzchu
                             
                             // Album Art - po lewej
                             Rectangle {
-                                Layout.preferredWidth: 180
-                                Layout.preferredHeight: 180
-                                radius: 0
+                                Layout.preferredWidth: 280
+                                Layout.preferredHeight: 280
+                                radius: 6
                                 color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
                                 
                                 Image {
                                     anchors.fill: parent
-                                    anchors.margins: 1
+                                    anchors.margins: 2
                                     fillMode: Image.PreserveAspectCrop
                                     source: mpArt ? mpArt : ""
                                     asynchronous: true
@@ -1338,7 +1325,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: "󰎆"
-                                    font.pixelSize: 60
+                                    font.pixelSize: 70
                                     anchors.centerIn: parent
                                     visible: !mpArt
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1349,16 +1336,17 @@ PanelWindow {
                             Column {
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
-                                spacing: 12
+                                Layout.leftMargin: 12
+                                spacing: 24
                                 
                                 // Track Info
                                 Column {
                                     width: parent.width
-                                    spacing: 6
+                                    spacing: 12
                                     
                                     Text {
                                         text: mpTitle ? mpTitle : "Nothing playing"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 20
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1368,7 +1356,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: mpArtist ? mpArtist : "—"
-                                        font.pixelSize: 16
+                                        font.pixelSize: 17
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         elide: Text.ElideRight
@@ -1387,12 +1375,13 @@ PanelWindow {
                                 
                                 // Controls
                                 Row {
-                                    spacing: 12
+                                    spacing: 20
+                                    anchors.left: parent.left
                                     
                                     Rectangle {
-                                        width: 40
-                                        height: 40
-                                        radius: 0
+                                        width: 44
+                                        height: 44
+                                        radius: 4
                                         color: prevAreaMedia.containsMouse ? 
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
@@ -1443,9 +1432,9 @@ PanelWindow {
                                     }
                                     
                                     Rectangle {
-                                        width: 50
-                                        height: 40
-                                        radius: 0
+                                        width: 52
+                                        height: 44
+                                        radius: 4
                                         color: playAreaMedia.containsMouse ? 
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                             ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -1505,9 +1494,9 @@ PanelWindow {
                                     }
                                     
                                     Rectangle {
-                                        width: 40
-                                        height: 40
-                                        radius: 0
+                                        width: 44
+                                        height: 44
+                                        radius: 4
                                         color: nextAreaMedia.containsMouse ? 
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")

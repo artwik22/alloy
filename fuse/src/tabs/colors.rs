@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, Entry, Grid, Separator, gdk};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, Entry, Separator, gdk};
 use std::sync::{Arc, Mutex};
 
 use crate::core::config::ColorConfig;
@@ -15,8 +15,8 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
     let css_provider = gtk4::CssProvider::new();
     let css = format!(".{} {{ background-color: {}; }}", color_class, color);
     
-    // load_from_data takes &str and returns ()
-    css_provider.load_from_data(&css);
+    // Load CSS from string
+    css_provider.load_from_string(&css);
     
     if let Some(display) = gdk::Display::default() {
         gtk4::style_context_add_provider_for_display(
@@ -29,6 +29,10 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
 
 const PRESETS: &[(&str, &str, &str, &str, &str, &str)] = &[
     ("Monochrome", "#000000", "#1a1a1a", "#0d0d0d", "#ffffff", "#b0b0b0"),
+    ("Midnight Blue", "#0a0a0f", "#1a1a25", "#0f0f15", "#ffffff", "#6b8dd6"),
+    ("Deep Forest", "#0a0f0a", "#1a251a", "#0f150f", "#f5f5f5", "#7a9a7a"),
+    ("Dark Violet", "#0f0a15", "#1f1a25", "#150f1a", "#ffffff", "#9a7ab5"),
+    ("Crimson", "#0f0a0a", "#251a1a", "#150f0f", "#ffffff", "#d67a7a"),
 ];
 
 pub struct ColorsTab {
@@ -107,9 +111,29 @@ fn create_presets_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     flowbox.set_selection_mode(gtk4::SelectionMode::None);
     flowbox.set_homogeneous(true); // Equal size buttons
 
+    // Get current preset name to highlight active one
+    let current_preset = {
+        let cfg = config.lock().unwrap();
+        cfg.color_preset.clone().unwrap_or_default()
+    };
+
+    // Store all buttons to update them when one is clicked
+    let mut buttons: Vec<Button> = Vec::new();
+    let mut preset_data: Vec<(String, String, String, String, String, String)> = Vec::new();
+    
     for preset in PRESETS.iter() {
         let (name, bg, primary, secondary, text, accent) = *preset;
-
+        let is_active = name == current_preset;
+        
+        preset_data.push((
+            name.to_string(),
+            bg.to_string(),
+            primary.to_string(),
+            secondary.to_string(),
+            text.to_string(),
+            accent.to_string(),
+        ));
+        
         let preset_button = create_preset_button(
             name,
             bg,
@@ -117,9 +141,55 @@ fn create_presets_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             secondary,
             text,
             accent,
+            is_active,
             Arc::clone(&config),
         );
-        flowbox.append(&preset_button);
+        buttons.push(preset_button);
+    }
+
+    // Clone buttons and preset data for closures
+    let buttons_clone = buttons.clone();
+    let preset_data_clone = preset_data.clone();
+    for (idx, button) in buttons.iter().enumerate() {
+        let button_clone = button.clone();
+        let all_buttons = buttons_clone.clone();
+        let (preset_name, bg, primary, secondary, text, accent) = preset_data_clone[idx].clone();
+        let config_clone = Arc::clone(&config);
+        
+        button.connect_clicked(move |_| {
+            // Update all buttons - remove active class from all, add to clicked one
+            for btn in &all_buttons {
+                btn.remove_css_class("preset-active");
+                btn.remove_css_class("preset-applying");
+            }
+            button_clone.add_css_class("preset-applying");
+            
+            // Reload config from disk to preserve existing settings
+            let mut cfg = ColorConfig::load();
+            cfg.update_colors(&bg, &primary, &secondary, &text, &accent);
+            cfg.set_preset(&preset_name);
+            if let Err(e) = cfg.save() {
+                eprintln!("Error saving colors: {}", e);
+                button_clone.remove_css_class("preset-applying");
+            } else {
+                // Update the shared config
+                *config_clone.lock().unwrap() = cfg.clone();
+                // Wait a bit for file to be written and synced to disk
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                // Notify quickshell about color change
+                if let Err(e) = quickshell::notify_color_change() {
+                    eprintln!("Error notifying quickshell: {}", e);
+                }
+                
+                // Update visual state - mark clicked button as active
+                button_clone.remove_css_class("preset-applying");
+                button_clone.add_css_class("preset-active");
+                
+                println!("Color preset '{}' applied and saved", preset_name);
+            }
+        });
+        
+        flowbox.append(button);
     }
 
     section.append(&flowbox);
@@ -131,12 +201,16 @@ fn create_preset_button(
     bg: &str,
     primary: &str,
     secondary: &str,
-    text: &str,
+    _text: &str,
     accent: &str,
-    config: Arc<Mutex<ColorConfig>>,
+    is_active: bool,
+    _config: Arc<Mutex<ColorConfig>>,
 ) -> Button {
     let button = Button::new();
     button.add_css_class("preset-button");
+    if is_active {
+        button.add_css_class("preset-active");
+    }
     // Responsive sizing - let CSS handle minimum sizes
     button.set_hexpand(true); // Allow horizontal expansion
     button.set_vexpand(false);
@@ -182,31 +256,8 @@ fn create_preset_button(
 
     button.set_child(Some(&content));
 
-    let bg = bg.to_string();
-    let primary = primary.to_string();
-    let secondary = secondary.to_string();
-    let text = text.to_string();
-    let accent = accent.to_string();
-    let name = name.to_string();
-    button.connect_clicked(move |_| {
-        // Reload config from disk to preserve existing settings (like sidebar position)
-        let mut cfg = ColorConfig::load();
-        cfg.update_colors(&bg, &primary, &secondary, &text, &accent);
-        cfg.set_preset(&name);
-        if let Err(e) = cfg.save() {
-            eprintln!("Error saving colors: {}", e);
-        } else {
-            // Update the shared config
-            *config.lock().unwrap() = cfg.clone();
-            // Wait a bit for file to be written and synced to disk
-            std::thread::sleep(std::time::Duration::from_millis(200));
-            // Notify quickshell about color change
-            if let Err(e) = quickshell::notify_color_change() {
-                eprintln!("Error notifying quickshell: {}", e);
-            }
-            println!("Color preset '{}' applied and saved", name);
-        }
-    });
+    // Note: The click handler is set in create_presets_section to allow
+    // updating all buttons when one is clicked
 
     button
 }

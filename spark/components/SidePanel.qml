@@ -60,10 +60,31 @@ PanelWindow {
     Rectangle {
         id: sidePanelRect
         anchors.fill: parent
-        color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0d0d0d"
+        color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a"
         radius: 0
         enabled: false  // Don't capture mouse events - allows clicks to pass through
         z: -1  // Put background behind everything to ensure buttons are clickable
+        
+        // Border for visual separation
+        Rectangle {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 1
+            color: (sharedData && sharedData.colorPrimary) ? Qt.darker(sharedData.colorPrimary, 1.5) : "#333333"
+            opacity: 0.6
+            visible: panelPosition === "left"
+        }
+        
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: (sharedData && sharedData.colorPrimary) ? Qt.darker(sharedData.colorPrimary, 1.5) : "#333333"
+            opacity: 0.6
+            visible: panelPosition === "top"
+        }
         
         // Smooth fade animation when panel appears/disappears
         opacity: sidePanel.visible ? 1.0 : 0.0
@@ -88,9 +109,9 @@ PanelWindow {
         Column {
             id: sidePanelClockColumn
             anchors.top: parent.top
-            anchors.topMargin: 14
+            anchors.topMargin: 18
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 4
+            spacing: 6
             visible: panelPosition === "left"
 
             // Smooth fade when switching panel positions
@@ -228,6 +249,20 @@ PanelWindow {
             }
         }
         
+        // Separator between clock and workspace switcher (left position)
+        Rectangle {
+            id: separatorClockWorkspaceLeft
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: sidePanelClockColumn.bottom
+            anchors.topMargin: 16
+            width: 20
+            height: 1
+            color: (sharedData && sharedData.colorPrimary) ? Qt.darker(sharedData.colorPrimary, 1.3) : "#2a2a2a"
+            opacity: 0.5
+            visible: panelPosition === "left"
+            z: 1
+        }
+        
         // Workspace switcher - pionowy dla pozycji left
         Item {
             id: sidePanelWorkspaceColumnContainer
@@ -236,11 +271,12 @@ PanelWindow {
             visible: panelPosition === "left"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: 8
             z: 50  // Lower than buttons (z: 10000) to not block clicks
             
             Column {
                 id: sidePanelWorkspaceColumn
-                spacing: 9
+                spacing: 10
                 width: parent.width
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
@@ -403,6 +439,20 @@ PanelWindow {
             }
         }
         
+        // Separator between clock and workspace switcher (top position)
+        Rectangle {
+            id: separatorClockWorkspaceTop
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: sidePanelClockRow.right
+            anchors.leftMargin: 16
+            width: 1
+            height: 20
+            color: (sharedData && sharedData.colorPrimary) ? Qt.darker(sharedData.colorPrimary, 1.3) : "#2a2a2a"
+            opacity: 0.5
+            visible: panelPosition === "top"
+            z: 1
+        }
+        
         // Workspace switcher - poziomy dla pozycji top
         Item {
             id: sidePanelWorkspaceRowContainer
@@ -411,11 +461,12 @@ PanelWindow {
             visible: panelPosition === "top"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: 8
             z: 50  // Lower than buttons (z: 10000) to not block clicks
             
             Row {
                 id: sidePanelWorkspaceRow
-                spacing: 9
+                spacing: 10
                 height: parent.height
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
@@ -578,15 +629,29 @@ PanelWindow {
             }
         }
         
+        // Separator between workspace switcher and visualizer (left position)
+        Rectangle {
+            id: separatorWorkspaceVisualizerLeft
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: musicVisualizerColumnContainer.top
+            anchors.bottomMargin: 12
+            width: 20
+            height: 1
+            color: (sharedData && sharedData.colorPrimary) ? Qt.darker(sharedData.colorPrimary, 1.3) : "#2a2a2a"
+            opacity: 0.5
+            visible: panelPosition === "left"
+            z: 1
+        }
+        
         // Music Visualizer - PIONOWY dla pozycji left
         Item {
             id: musicVisualizerColumnContainer
             width: 24
-            height: parent.height - 85  // Height minus space for buttons
+            height: parent.height - 95  // Height minus space for buttons and separators
             visible: panelPosition === "left"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 85  // Above buttons (clipboard at 45px + 32px height + 8px spacing)
+            anchors.bottomMargin: 95  // Above buttons (clipboard at 45px + 32px height + 8px spacing + separator)
             z: 0  // Lower z-order to ensure buttons are clickable
             
             Column {
@@ -636,6 +701,20 @@ PanelWindow {
             }
         }
         
+        // Separator between workspace switcher and visualizer (top position)
+        Rectangle {
+            id: separatorWorkspaceVisualizerTop
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right: musicVisualizerRowContainer.left
+            anchors.rightMargin: 12
+            width: 1
+            height: 20
+            color: (sharedData && sharedData.colorPrimary) ? Qt.darker(sharedData.colorPrimary, 1.3) : "#2a2a2a"
+            opacity: 0.5
+            visible: panelPosition === "top"
+            z: 1
+        }
+        
         // Music Visualizer - POZIOMY dla pozycji top
         Item {
             id: musicVisualizerRowContainer
@@ -644,7 +723,7 @@ PanelWindow {
             visible: panelPosition === "top"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
-            anchors.rightMargin: 100  // Space for buttons on right (moved above buttons)
+            anchors.rightMargin: 110  // Space for buttons on right (moved above buttons + separator)
             z: 1
 
             Row {
@@ -733,15 +812,18 @@ PanelWindow {
         
         Rectangle {
             id: screenshotButton
-            width: 24
-            height: 24
+            width: 26
+            height: 26
             anchors.centerIn: parent
             radius: 0
-            color: screenshotButtonMouseArea.containsMouse ?
-                "#ff4444" :
-                ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#444444")
+            color: screenshotButtonMouseArea.pressed ?
+                ((sharedData && sharedData.colorAccent) ? Qt.darker(sharedData.colorAccent, 1.3) : "#cc3333") :
+                (screenshotButtonMouseArea.containsMouse ?
+                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#ff4444") :
+                    ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"))
             
-            property real buttonScale: screenshotButtonMouseArea.pressed ? 0.9 : (screenshotButtonMouseArea.containsMouse ? 1.1 : 1.0)
+            property real buttonScale: screenshotButtonMouseArea.pressed ? 0.88 : (screenshotButtonMouseArea.containsMouse ? 1.08 : 1.0)
+            property real buttonOpacity: screenshotButtonMouseArea.containsMouse ? 1.0 : 0.85
             
             Behavior on color {
                 ColorAnimation {
@@ -757,7 +839,36 @@ PanelWindow {
                 }
             }
             
+            Behavior on buttonOpacity {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuart
+                }
+            }
+            
+            opacity: buttonOpacity
             scale: buttonScale
+            
+            // Subtle shadow on hover
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -2
+                color: "transparent"
+                border.color: screenshotButtonMouseArea.containsMouse ? 
+                    ((sharedData && sharedData.colorAccent) ? Qt.lighter(sharedData.colorAccent, 1.2) : "#ff6666") : 
+                    "transparent"
+                border.width: 1
+                opacity: screenshotButtonMouseArea.containsMouse ? 0.4 : 0.0
+                radius: 0
+                z: -1
+                
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.OutQuart
+                    }
+                }
+            }
             
             Text {
                 text: "󰹑"  // Camera/screenshot icon (Nerd Fonts)
@@ -844,15 +955,18 @@ PanelWindow {
         
         Rectangle {
             id: clipboardButton
-            width: 24
-            height: 24
+            width: 26
+            height: 26
             anchors.centerIn: parent
             radius: 0
-            color: clipboardButtonMouseArea.containsMouse ? 
-                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414")
+            color: clipboardButtonMouseArea.pressed ?
+                ((sharedData && sharedData.colorAccent) ? Qt.darker(sharedData.colorAccent, 1.3) : "#3a7fcc") :
+                (clipboardButtonMouseArea.containsMouse ? 
+                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
+                    ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"))
             
-            property real buttonScale: clipboardButtonMouseArea.pressed ? 0.9 : (clipboardButtonMouseArea.containsMouse ? 1.1 : 1.0)
+            property real buttonScale: clipboardButtonMouseArea.pressed ? 0.88 : (clipboardButtonMouseArea.containsMouse ? 1.08 : 1.0)
+            property real buttonOpacity: clipboardButtonMouseArea.containsMouse ? 1.0 : 0.85
             
             Behavior on color {
                 ColorAnimation {
@@ -868,7 +982,36 @@ PanelWindow {
                 }
             }
             
+            Behavior on buttonOpacity {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuart
+                }
+            }
+            
+            opacity: buttonOpacity
             scale: buttonScale
+            
+            // Subtle shadow on hover
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -2
+                color: "transparent"
+                border.color: clipboardButtonMouseArea.containsMouse ? 
+                    ((sharedData && sharedData.colorAccent) ? Qt.lighter(sharedData.colorAccent, 1.2) : "#66aaff") : 
+                    "transparent"
+                border.width: 1
+                opacity: clipboardButtonMouseArea.containsMouse ? 0.4 : 0.0
+                radius: 0
+                z: -1
+                
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.OutQuart
+                    }
+                }
+            }
             
             Text {
                 text: "󰨸"

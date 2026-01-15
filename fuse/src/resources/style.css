@@ -137,7 +137,7 @@ headerbar button:hover image {
 .navigation-sidebar {
     background-color: @index_bg_secondary;
     border: none;
-    border-right: none;
+    border-right: 1px solid @index_border;
     padding: 0;
     min-width: 220px;
     max-width: 220px;
@@ -145,37 +145,47 @@ headerbar button:hover image {
 
 .sidebar-switcher {
     background-color: transparent;
+    padding: 8px 0;
 }
 
 .sidebar-switcher button {
     background-color: @index_bg_tertiary;
     color: @index_fg;
     border: none;
-    padding: 12px 16px;
-    margin: 4px 8px;
-    min-height: 38px;
+    padding: 14px 18px;
+    margin: 3px 10px;
+    min-height: 42px;
     transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0.9;
+    opacity: 0.95;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-switcher button:hover {
     background-color: @index_hover;
-    transform: translateX(4px) scale(1.02);
+    transform: translateX(3px) scale(1.01);
     opacity: 1.0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-switcher button:checked {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: @index_selection;
     color: @index_fg;
     opacity: 1.0;
-    transform: translateX(2px);
-    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+    border-left: 3px solid @index_fg;
+    padding-left: 15px;
 }
 
 .sidebar-switcher button:active {
     transform: translateX(2px) scale(0.98);
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .version-label {
@@ -324,6 +334,30 @@ switch:checked:hover slider {
     transform: translateY(-1px) scale(1.01);
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.preset-active {
+    border: 2px solid @index_fg;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 1.0;
+}
+
+.preset-active:hover {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.preset-applying {
+    opacity: 0.7;
+    animation: pulse 600ms ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1.0;
+    }
 }
 
 .color-bar {
@@ -475,6 +509,54 @@ switch:checked:hover slider {
     transform: translateY(-2px) scale(1.01);
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.wallpaper-active {
+    border: 2px solid @index_fg;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 1.0;
+}
+
+.wallpaper-active:hover {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.wallpaper-applying {
+    opacity: 0.7;
+    animation: pulse 600ms ease-in-out;
+}
+
+/* ===== Sidebar Position Buttons ===== */
+.sidebar-position-button {
+    background-color: @index_bg_tertiary;
+    border: none;
+    color: @index_fg;
+    padding: 8px 20px;
+    min-height: 36px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-position-button:hover {
+    background-color: @index_hover;
+    border: none;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.sidebar-position-button.position-active {
+    background-color: @index_fg;
+    color: @index_bg;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-position-button.position-active:hover {
+    background-color: @index_fg;
+    color: @index_bg;
+    opacity: 0.9;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .wallpaper-tile picture {
