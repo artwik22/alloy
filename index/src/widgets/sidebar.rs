@@ -315,21 +315,16 @@ impl Sidebar {
                 // Create action group
                 let action_group = gio::SimpleActionGroup::new();
 
-                // Unpin action - we can't easily refresh here, so just remove the row
-                // Full refresh would require access to Sidebar instance
+                // Unpin action
                 {
                     let path_to_unpin = path_for_unpin.clone();
-                    let row_to_remove = row_clone.clone();
-                    let list_box_for_remove = list_box_clone.clone();
-                    
                     let action = gio::SimpleAction::new("unpin", None);
                     action.connect_activate(move |_, _| {
                         if let Err(e) = PinnedManager::remove(&path_to_unpin) {
                             eprintln!("Failed to unpin: {}", e);
-                        } else {
-                            // Remove the row directly
-                            list_box_for_remove.remove(&row_to_remove);
                         }
+                        // Note: Sidebar refresh would need to be implemented
+                        // For now, requires restart to see changes
                     });
                     action_group.add_action(&action);
                 }
@@ -353,51 +348,8 @@ impl Sidebar {
     }
 
     pub fn refresh(&self) {
-        // Remove all pinned rows (between pinned_start_index and pinned_end_index)
-        let pinned_start = *self.pinned_start_index.borrow();
-        let pinned_end = *self.pinned_end_index.borrow();
-        
-        // Remove rows in reverse order to avoid index shifting issues
-        // Start from pinned_end and go down to pinned_start + 1 (skip the header)
-        let mut rows_to_remove = Vec::new();
-        for i in (pinned_start + 1)..pinned_end {
-            if let Some(row) = self.list_box.row_at_index(i as i32) {
-                rows_to_remove.push(row);
-            }
-        }
-        
-        for row in rows_to_remove {
-            self.list_box.remove(&row);
-        }
-        
-        // Clear pinned paths from paths array
-        let mut paths = self.paths.borrow_mut();
-        paths.drain(pinned_start..pinned_end);
-        
-        // Reload pinned items
-        let pinned = PinnedManager::load();
-        let mut new_pinned_count: usize = 0;
-        
-        for item in &pinned {
-            if item.path.exists() {
-                let path = item.path.clone();
-                let row = Self::create_pinned_row(&item.name, "folder-symbolic", &path, &self.list_box);
-                
-                // Insert after pinned header
-                // Find the header row and insert after it
-                if let Some(header_row) = self.list_box.row_at_index(pinned_start as i32) {
-                    let header_index = header_row.index();
-                    self.list_box.insert(&row, (header_index + 1 + new_pinned_count as i32) as i32);
-                } else {
-                    self.list_box.append(&row);
-                }
-                paths.insert(pinned_start + new_pinned_count, path);
-                new_pinned_count += 1;
-            }
-        }
-        
-        // Update indices
-        *self.pinned_end_index.borrow_mut() = pinned_start + new_pinned_count;
+        // TODO: Implement refresh to reload pinned items
+        // For now, requires restart
     }
 
     #[allow(dead_code)]

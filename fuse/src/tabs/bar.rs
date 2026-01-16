@@ -158,27 +158,12 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     let is_top = current_pos == "top";
 
     let left_button = Button::with_label("Left");
-    left_button.add_css_class("sidebar-position-button");
     if is_left {
-        left_button.add_css_class("position-active");
+        left_button.add_css_class("suggested-action");
     }
-
-    let top_button = Button::with_label("Top");
-    top_button.add_css_class("sidebar-position-button");
-    if is_top {
-        top_button.add_css_class("position-active");
-    }
-
-    // Connect left button
     {
         let config = Arc::clone(&config);
-        let left_button_clone = left_button.clone();
-        let top_button_clone = top_button.clone();
         left_button.connect_clicked(move |_| {
-            // Update visual state
-            left_button_clone.add_css_class("position-active");
-            top_button_clone.remove_css_class("position-active");
-            
             // Reload config from disk to preserve existing settings (like color preset)
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("left");
@@ -195,17 +180,15 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             }
         });
     }
+    button_box.append(&left_button);
 
-    // Connect top button
+    let top_button = Button::with_label("Top");
+    if is_top {
+        top_button.add_css_class("suggested-action");
+    }
     {
         let config = Arc::clone(&config);
-        let left_button_clone = left_button.clone();
-        let top_button_clone = top_button.clone();
         top_button.connect_clicked(move |_| {
-            // Update visual state
-            top_button_clone.add_css_class("position-active");
-            left_button_clone.remove_css_class("position-active");
-            
             // Reload config from disk to preserve existing settings (like color preset)
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("top");
@@ -222,8 +205,6 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             }
         });
     }
-
-    button_box.append(&left_button);
     button_box.append(&top_button);
 
     header.append(&button_box);

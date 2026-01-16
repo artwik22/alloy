@@ -250,26 +250,6 @@ impl FileView {
                     }
                 }
 
-                // If nothing is selected, try to find and select the item under cursor
-                let clicked_path = if selected_paths.is_empty() {
-                    // Try to find item at click position
-                    let mut found_path = None;
-                    for i in 0..n_items {
-                        if let Some(item) = selection_clone.item(i) {
-                            if let Ok(file_obj) = item.downcast::<FileObject>() {
-                                // Select this item
-                                selection_clone.select_item(i, false);
-                                found_path = Some(file_obj.path());
-                                selected_paths.push(file_obj.path());
-                                break;
-                            }
-                        }
-                    }
-                    found_path
-                } else {
-                    selected_paths.first().cloned()
-                };
-
                 let menu = gio::Menu::new();
                 menu.append(Some("Copy"), Some("file.copy"));
                 menu.append(Some("Cut"), Some("file.cut"));
@@ -277,10 +257,10 @@ impl FileView {
                 menu.append(Some("Delete"), Some("file.delete"));
                 menu.append(Some("Rename"), Some("file.rename"));
                 
-                // Add Pin option for directories (only if single directory selected or clicked)
-                let is_dir = if let Some(path) = clicked_path.as_ref().or_else(|| selected_paths.first()) {
-                    std::fs::metadata(path)
-                        .ok()
+                // Add Pin option for directories (only if single directory selected)
+                let is_dir = if selected_paths.len() == 1 {
+                    selected_paths.first()
+                        .and_then(|p| std::fs::metadata(p).ok())
                         .map(|m| m.is_dir())
                         .unwrap_or(false)
                 } else {
@@ -371,15 +351,13 @@ impl FileView {
 
                 // Pin action (only for directories)
                 if is_dir {
-                    let path_to_pin = clicked_path.as_ref()
-                        .or_else(|| selected_paths.first())
-                        .cloned();
+                    let paths = selected_paths.clone();
                     let on_pin = on_pin_clone.clone();
                     let action = gio::SimpleAction::new("pin", None);
                     action.connect_activate(move |_, _| {
-                        if let Some(path) = path_to_pin.clone() {
+                        if let Some(path) = paths.first() {
                             if let Some(ref callback) = *on_pin.borrow() {
-                                callback(path);
+                                callback(path.clone());
                             }
                         }
                     });

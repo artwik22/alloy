@@ -1,26 +1,41 @@
-/* Index File Explorer - Modern Minimalist Theme */
-/* Sharp edges, symmetric, clean design */
+/* ============================================================================
+   INDEX FILE EXPLORER - BRUTALIST INDUSTRIAL UI
+   Design System v1.0.0
+   ZERO BORDER-RADIUS - ALL EDGES 90° SHARP
+   ============================================================================ */
 
-/* ===== CSS Variables for Theming ===== */
-/* Black background, white text theme */
+/* ===== CSS VARIABLES - DESIGN TOKENS ===== */
 @define-color index_bg #000000;
 @define-color index_bg_secondary #0a0a0a;
 @define-color index_bg_tertiary #1a1a1a;
+@define-color index_bg_elevated #252525;
 @define-color index_fg #ffffff;
 @define-color index_fg_dim #cccccc;
-@define-color index_accent #ffffff;
-@define-color index_accent_hover #ffffff;
+@define-color index_fg_tertiary #999999;
+@define-color index_fg_disabled #666666;
 @define-color index_border #333333;
-@define-color index_selection rgba(255, 255, 255, 0.2);
-@define-color index_hover rgba(255, 255, 255, 0.1);
+@define-color index_border_secondary #444444;
+@define-color index_border_focus #ffffff;
+@define-color index_selection rgba(255, 255, 255, 0.15);
+@define-color index_hover rgba(255, 255, 255, 0.08);
+@define-color index_focus rgba(255, 255, 255, 0.12);
+@define-color index_error #ff4444;
+@define-color index_success #44ff44;
+@define-color index_warning #ffaa00;
+@define-color index_info #44aaff;
 
-/* ===== Global Reset ===== */
+/* ===== GLOBAL RESET - ZERO BORDER-RADIUS ===== */
 * {
     border-radius: 0;
     outline-offset: 0;
+    -gtk-outline-radius: 0;
 }
 
-/* ===== Window ===== */
+*:focus {
+    outline: none;
+}
+
+/* ===== WINDOW ===== */
 window {
     background-color: @index_bg;
     color: @index_fg;
@@ -30,18 +45,20 @@ window.background {
     background-color: @index_bg;
 }
 
-/* ===== Header Bar ===== */
+/* ===== HEADER BAR ===== */
 headerbar,
 headerbar.default-decoration,
 headerbar.titlebar {
     background: @index_bg;
     background-color: @index_bg;
     background-image: none;
-    border-bottom: 1px solid @index_border;
-    padding: 10px 14px;
-    min-height: 48px;
-    box-shadow: none;
+    border: none;
+    border-bottom: 2px solid @index_border;
+    padding: 14px 20px;
+    min-height: 56px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
     -gtk-icon-shadow: none;
+    transition: box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 headerbar.titlebar:backdrop {
@@ -52,10 +69,10 @@ headerbar.titlebar:backdrop {
 }
 
 headerbar title {
-    font-weight: 400;
-    font-size: 13px;
+    font-weight: 600;
+    font-size: 14px;
     color: @index_fg;
-    opacity: 0.9;
+    letter-spacing: 0.02em;
 }
 
 headerbar.titlebar title {
@@ -64,22 +81,23 @@ headerbar.titlebar title {
 
 headerbar.titlebar:backdrop title {
     color: @index_fg;
-    opacity: 0.85;
+    opacity: 0.9;
 }
 
+/* ===== HEADER BAR BUTTONS ===== */
 headerbar button {
     background: transparent;
     background-color: transparent;
     background-image: none;
-    border: 1px solid transparent;
-    padding: 7px 9px;
-    min-height: 34px;
-    min-width: 34px;
-    margin: 0 3px;
+    border: 2px solid transparent;
+    padding: 10px 14px;
+    min-height: 40px;
+    min-width: 40px;
+    margin: 0 2px;
     color: @index_fg;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
     -gtk-icon-effect: none;
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 headerbar.titlebar button,
@@ -98,7 +116,8 @@ headerbar button:hover {
     background-image: none;
     border-color: @index_border;
     color: @index_fg;
-    box-shadow: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
 }
 
 headerbar button:active,
@@ -107,9 +126,17 @@ headerbar button:checked:hover {
     background: @index_selection;
     background-color: @index_selection;
     background-image: none;
-    border-color: @index_fg;
+    border-color: @index_border_focus;
     color: @index_fg;
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    transform: translateY(0);
+    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+headerbar button:focus {
+    outline: none;
+    border-color: @index_border_focus;
+    box-shadow: 0 0 0 2px @index_focus;
 }
 
 headerbar button image {
@@ -135,27 +162,29 @@ headerbar .linked button {
 }
 
 headerbar .linked button:last-child {
-    border-right-width: 1px;
+    border-right-width: 2px;
 }
 
 headerbar .linked button:first-child {
-    border-left-width: 1px;
+    border-left-width: 2px;
 }
 
-/* Search entry */
+/* ===== SEARCH ENTRY ===== */
 headerbar searchentry,
 headerbar.titlebar searchentry,
 headerbar.titlebar:backdrop searchentry,
 searchentry {
     background-color: @index_bg_tertiary;
     background-image: none;
-    border: 1px solid @index_border;
+    border: 2px solid @index_border;
     color: @index_fg;
-    padding: 7px 14px;
-    min-height: 34px;
+    padding: 10px 18px;
+    min-height: 40px;
     caret-color: @index_fg;
-    font-size: 13px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 headerbar.titlebar searchentry:backdrop,
@@ -168,10 +197,11 @@ headerbar.titlebar:backdrop searchentry {
 headerbar searchentry:focus,
 headerbar.titlebar searchentry:focus,
 searchentry:focus {
-    border-color: @index_fg;
-    box-shadow: inset 0 0 0 1px @index_fg, 0 0 0 2px rgba(47, 57, 65, 0.2);
+    border-color: @index_border_focus;
+    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
     background-color: @index_bg_secondary;
     background-image: none;
+    transform: translateY(-1px);
 }
 
 headerbar searchentry image,
@@ -179,7 +209,7 @@ headerbar.titlebar searchentry image,
 headerbar.titlebar:backdrop searchentry image,
 searchentry image {
     color: @index_fg_dim;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 headerbar searchentry text,
@@ -191,7 +221,7 @@ searchentry text {
 
 headerbar searchentry placeholder,
 headerbar.titlebar searchentry placeholder {
-    color: @index_fg_dim;
+    color: @index_fg_tertiary;
 }
 
 searchentry > * > text > selection {
@@ -199,29 +229,32 @@ searchentry > * > text > selection {
     color: @index_bg;
 }
 
-/* ===== Sidebar ===== */
+/* ===== SIDEBAR ===== */
 .sidebar,
 .navigation-sidebar {
     background-color: @index_bg_secondary;
-    border-right: 1px solid @index_border;
+    border-right: 2px solid @index_border;
     padding: 0;
-    min-width: 220px;
-    max-width: 220px;
+    min-width: 240px;
+    max-width: 240px;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.4), 1px 0 2px rgba(0, 0, 0, 0.3);
 }
 
 .navigation-sidebar row {
     padding: 0;
-    margin: 3px 10px;
-    min-height: 42px;
+    margin: 0;
+    min-height: 44px;
     border: none;
+    border-bottom: 1px solid @index_border;
     background: transparent;
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 0;
-    opacity: 0.95;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: none;
 }
 
 .navigation-sidebar row:hover {
     background-color: @index_hover;
+    transform: translateX(2px);
+    box-shadow: inset 2px 0 0 @index_border_focus;
 }
 
 .navigation-sidebar row.sidebar-section-header:hover {
@@ -232,6 +265,8 @@ searchentry > * > text > selection {
 
 .navigation-sidebar row:selected {
     background-color: @index_selection;
+    box-shadow: inset 3px 0 0 @index_fg;
+    transform: translateX(0);
 }
 
 .navigation-sidebar row:selected label {
@@ -246,7 +281,7 @@ searchentry > * > text > selection {
 }
 
 .navigation-sidebar row:hover image {
-    opacity: 0.9;
+    opacity: 1.0;
 }
 
 .navigation-sidebar row:selected image {
@@ -256,20 +291,25 @@ searchentry > * > text > selection {
 
 .navigation-sidebar row label {
     color: @index_fg;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.navigation-sidebar row:selected label {
+    font-weight: 600;
 }
 
 /* Sidebar section headers */
 .sidebar-section-header {
-    padding: 10px 12px 8px;
+    padding: 12px 16px 8px;
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: @index_fg_dim;
-    opacity: 0.85;
+    color: @index_fg_tertiary;
+    opacity: 0.9;
     pointer-events: none;
-    margin-top: 8px;
+    border-bottom: 2px solid @index_border;
 }
 
 .sidebar-section-header:hover {
@@ -277,13 +317,13 @@ searchentry > * > text > selection {
     transform: none;
 }
 
-
-/* ===== Path Bar ===== */
+/* ===== PATH BAR ===== */
 .path-bar {
     background-color: @index_bg;
-    border-bottom: 1px solid @index_border;
-    padding: 12px 20px;
-    min-height: 44px;
+    border-bottom: 2px solid @index_border;
+    padding: 16px 24px;
+    min-height: 52px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .path-breadcrumbs {
@@ -294,39 +334,47 @@ searchentry > * > text > selection {
     border: none;
     color: @index_fg_dim;
     font-size: 14px;
-    padding: 6px 2px;
-    min-height: 28px;
+    font-weight: 400;
+    padding: 8px 8px;
+    min-height: 36px;
     min-width: 0;
-    margin: 0;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0 2px;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: none;
 }
 
 .path-bar button.path-segment:hover {
     color: @index_fg;
     background-color: @index_hover;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
 }
 
 .path-bar button.path-segment.path-current {
     color: @index_fg;
-    font-weight: 500;
+    font-weight: 600;
     background-color: transparent;
+    box-shadow: none;
 }
 
 .path-entry {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: 2px solid @index_border;
     color: @index_fg;
     font-size: 14px;
-    padding: 8px 14px;
-    min-height: 36px;
+    font-weight: 400;
+    padding: 10px 16px;
+    min-height: 40px;
     caret-color: @index_fg;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .path-entry:focus {
-    border-color: @index_fg;
-    box-shadow: inset 0 0 0 1px @index_fg;
-    background-color: @index_bg_tertiary;
+    border-color: @index_border_focus;
+    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
+    background-color: @index_bg_secondary;
+    transform: translateY(-1px);
 }
 
 .path-entry text {
@@ -334,18 +382,18 @@ searchentry > * > text > selection {
 }
 
 .path-entry placeholder {
-    color: @index_fg_dim;
+    color: @index_fg_tertiary;
 }
 
 .path-separator {
-    color: @index_fg_dim;
+    color: @index_fg_tertiary;
     opacity: 0.7;
     font-size: 14px;
     margin: 0;
-    padding: 0 2px;
+    padding: 0 4px;
 }
 
-/* ===== File List ===== */
+/* ===== FILE LIST ===== */
 .file-list,
 listview {
     background-color: @index_bg;
@@ -355,39 +403,44 @@ listview {
 listview > row {
     padding: 0;
     margin: 0;
-    min-height: 42px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 48px;
+    border-bottom: 1px solid @index_border;
     background: transparent;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: none;
 }
 
 listview > row:hover {
     background-color: @index_hover;
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: @index_border_secondary;
+    box-shadow: inset 2px 0 0 @index_border_focus;
+    transform: translateX(2px);
 }
 
 listview > row:selected {
     background-color: @index_selection;
+    box-shadow: inset 3px 0 0 @index_fg;
 }
 
 listview > row:selected label {
     color: @index_fg;
+    font-weight: 600;
 }
 
 listview > row > box {
-    padding: 9px 18px;
+    padding: 12px 24px;
 }
 
 listview > row image {
     color: @index_fg_dim;
     opacity: 0.9;
-    min-width: 26px;
-    min-height: 26px;
+    min-width: 28px;
+    min-height: 28px;
     -gtk-icon-transform: scale(1.1);
 }
 
 listview > row:hover image {
-    opacity: 0.9;
+    opacity: 1.0;
 }
 
 listview > row:selected image {
@@ -397,7 +450,12 @@ listview > row:selected image {
 
 listview > row label {
     color: @index_fg;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+listview > row:selected label {
+    font-weight: 600;
 }
 
 /* File info labels */
@@ -405,26 +463,27 @@ listview > row label {
     color: @index_fg_dim;
     font-size: 12px;
     font-family: monospace;
+    font-weight: 400;
 }
 
-/* ===== Scrollbars ===== */
+/* ===== SCROLLBARS ===== */
 scrollbar {
     background: transparent;
     border: none;
 }
 
 scrollbar slider {
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.12);
     min-width: 8px;
     min-height: 8px;
     border: none;
-    margin: 3px;
-    border-radius: 4px;
-    transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), min-width 200ms cubic-bezier(0.4, 0, 0.2, 1), min-height 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 2px;
+    border-radius: 0;
+    transition: background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 scrollbar slider:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.25);
     min-width: 10px;
     min-height: 10px;
 }
@@ -451,27 +510,27 @@ scrollbar.vertical slider:hover {
     min-width: 10px;
 }
 
-/* ===== Paned Separator ===== */
+/* ===== PANED SEPARATOR ===== */
 paned > separator {
-    background-color: transparent;
-    min-width: 0;
-    min-height: 0;
+    background-color: @index_border;
+    min-width: 2px;
+    min-height: 2px;
     border: none;
-    opacity: 0;
+    opacity: 1.0;
 }
 
 paned > separator:hover {
-    background-color: transparent;
-    opacity: 0;
+    background-color: @index_border_secondary;
 }
 
-/* ===== Context Menu / Popover ===== */
+/* ===== CONTEXT MENU / POPOVER ===== */
 popover,
 popover.menu {
-    background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
-    padding: 6px 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+    background-color: @index_bg_elevated;
+    border: 2px solid @index_border;
+    padding: 4px 0;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: opacity 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 popover contents {
@@ -480,38 +539,46 @@ popover contents {
 
 popover modelbutton,
 popover .model {
-    padding: 9px 18px;
-    min-height: 34px;
+    padding: 12px 24px;
+    min-height: 40px;
     color: @index_fg;
     background: transparent;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 13px;
-    margin: 1px 4px;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    font-size: 14px;
+    font-weight: 400;
+    margin: 2px 4px;
+    border-bottom: 1px solid @index_border;
+}
+
+popover modelbutton:last-child,
+popover .model:last-child {
+    border-bottom: none;
 }
 
 popover modelbutton:hover {
-    background-color: @index_selection;
+    background-color: @index_hover;
 }
 
 popover separator {
     background-color: @index_border;
     margin: 4px 0;
-    min-height: 1px;
+    min-height: 2px;
 }
 
-/* ===== Dialogs ===== */
+/* ===== DIALOGS ===== */
 window.dialog,
 dialog {
-    background-color: @index_bg_secondary;
-    border: 1px solid @index_border;
+    background-color: @index_bg_elevated;
+    border: 2px solid @index_border;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5), 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 dialog headerbar {
     background-color: @index_bg_tertiary;
-    border-bottom: 1px solid @index_border;
+    border-bottom: 2px solid @index_border;
 }
 
-/* ===== Settings Window ===== */
+/* ===== SETTINGS WINDOW ===== */
 window.settings {
     background-color: @index_bg;
     color: @index_fg;
@@ -525,16 +592,16 @@ notebook {
 
 notebook > header {
     background-color: @index_bg_secondary;
-    border-bottom: 1px solid @index_border;
+    border-bottom: 2px solid @index_border;
 }
 
 notebook > header > tabs > tab {
     background-color: transparent;
     color: @index_fg_dim;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border: none;
-    border-bottom: 2px solid transparent;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 3px solid transparent;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 notebook > header > tabs > tab:hover {
@@ -546,7 +613,7 @@ notebook > header > tabs > tab:checked {
     background-color: transparent;
     color: @index_fg;
     border-bottom-color: @index_fg;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 notebook > stack {
@@ -558,14 +625,14 @@ notebook > stack {
     font-size: 16px;
     font-weight: 600;
     color: @index_fg;
-    margin-top: 16px;
-    margin-bottom: 8px;
+    margin-top: 20px;
+    margin-bottom: 12px;
 }
 
 separator {
     background-color: @index_border;
-    margin: 12px 0;
-    min-height: 1px;
+    margin: 16px 0;
+    min-height: 2px;
 }
 
 /* Monospace labels for shortcuts */
@@ -574,22 +641,25 @@ separator {
     font-size: 12px;
 }
 
-/* ===== Entry Fields ===== */
+/* ===== ENTRY FIELDS ===== */
 entry {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: 2px solid @index_border;
     color: @index_fg;
-    padding: 7px 14px;
-    min-height: 34px;
+    padding: 10px 16px;
+    min-height: 40px;
     caret-color: @index_fg;
-    font-size: 13px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 entry:focus {
-    border-color: @index_fg;
-    box-shadow: inset 0 0 0 1px @index_fg, 0 0 0 2px rgba(47, 57, 65, 0.2);
+    border-color: @index_border_focus;
+    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
     background-color: @index_bg_secondary;
+    transform: translateY(-1px);
 }
 
 entry text {
@@ -597,19 +667,20 @@ entry text {
 }
 
 entry placeholder {
-    color: @index_fg_dim;
+    color: @index_fg_tertiary;
 }
 
-/* ===== Buttons ===== */
+/* ===== BUTTONS ===== */
 button {
     background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    border: 2px solid @index_border;
     color: @index_fg;
-    padding: 7px 14px;
-    min-height: 34px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 13px;
-    font-weight: 400;
+    padding: 10px 18px;
+    min-height: 40px;
+    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 button.flat {
@@ -621,49 +692,63 @@ button.flat {
 
 button:hover {
     background-color: @index_hover;
-    border-color: @index_border;
+    border-color: @index_border_secondary;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 button:active {
     background-color: @index_selection;
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+button:focus {
+    outline: none;
+    border-color: @index_border_focus;
+    box-shadow: 0 0 0 2px @index_focus;
 }
 
 button.suggested-action {
     background-color: @index_fg;
     border-color: @index_fg;
     color: @index_bg;
-    font-weight: 400;
+    font-weight: 600;
 }
 
 button.suggested-action:hover {
     background-color: @index_fg;
     border-color: @index_fg;
     opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 button.destructive-action {
-    background-color: #e04040;
-    border-color: #e04040;
-    color: white;
+    background-color: @index_error;
+    border-color: @index_error;
+    color: @index_bg;
 }
 
 button.destructive-action:hover {
-    background-color: #e85555;
-    border-color: #e85555;
+    background-color: #ff6666;
+    border-color: #ff6666;
 }
 
 button image {
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 button:hover image {
     opacity: 1.0;
 }
 
-/* ===== Labels ===== */
+/* ===== LABELS ===== */
 label {
     color: @index_fg;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 400;
 }
 
 label.dim-label {
@@ -671,60 +756,40 @@ label.dim-label {
     font-size: 12px;
 }
 
-/* ===== Selection ===== */
+/* ===== SELECTION ===== */
 selection {
     background-color: @index_fg;
     color: @index_bg;
 }
 
-/* ===== Tooltips ===== */
+/* ===== TOOLTIPS ===== */
 tooltip {
-    background-color: @index_bg_tertiary;
-    border: 1px solid @index_border;
+    background-color: @index_bg_elevated;
+    border: 2px solid @index_border;
     color: @index_fg;
-    padding: 8px 12px;
-    font-size: 13px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    padding: 10px 14px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* ===== Drive/Volume Icons ===== */
+/* ===== DRIVE/VOLUME ICONS ===== */
 .drive-item image {
     color: @index_fg;
 }
 
 .drive-item label {
-    font-size: 13px;
+    font-size: 14px;
 }
 
-/* ===== Empty State ===== */
+/* ===== EMPTY STATE ===== */
 .empty-state {
     color: @index_fg_dim;
-    font-size: 13px;
+    font-size: 14px;
 }
 
-/* ===== Focus Indicators ===== */
-*:focus {
-    outline: none;
-    box-shadow: none;
-}
-
+/* ===== FOCUS INDICATORS ===== */
 button:focus,
 entry:focus,
 row:focus {
     outline: none;
 }
-
-/* ===== Light Theme Override ===== */
-/* Uncomment below for light theme */
-/*
-@define-color index_bg #f5f5f5;
-@define-color index_bg_secondary #ffffff;
-@define-color index_bg_tertiary #e8e8e8;
-@define-color index_fg #1a1a1a;
-@define-color index_fg_dim #666666;
-@define-color index_accent #0066cc;
-@define-color index_accent_hover #0077ee;
-@define-color index_border #d0d0d0;
-@define-color index_selection rgba(0, 102, 255, 0.15);
-@define-color index_hover rgba(0, 0, 0, 0.04);
-*/

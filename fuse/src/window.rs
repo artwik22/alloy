@@ -1,7 +1,7 @@
 use libadwaita::prelude::*;
 use libadwaita::ApplicationWindow;
 use gtk4::{
-    Box as GtkBox, Orientation, Label, Stack, StackSwitcher,
+    Box as GtkBox, Orientation, ScrolledWindow, Label, Stack, StackSwitcher,
 };
 use std::sync::{Arc, Mutex};
 
@@ -50,7 +50,7 @@ impl FuseWindow {
         main_box.set_hexpand(true);
         main_box.set_vexpand(true);
 
-        // Sidebar (220px width) with stack switcher
+        // Sidebar (200px width) with stack switcher
         let sidebar = create_sidebar_with_switcher(&stack_clone);
         main_box.append(&sidebar);
 
@@ -94,7 +94,7 @@ impl FuseWindow {
 
 fn create_sidebar_with_switcher(stack: &Stack) -> GtkBox {
     let sidebar = GtkBox::new(Orientation::Vertical, 4);
-    sidebar.set_size_request(220, -1);
+    sidebar.set_size_request(200, -1);
     sidebar.add_css_class("sidebar");
     sidebar.set_margin_start(8);
     sidebar.set_margin_end(8);
