@@ -27,11 +27,15 @@ pub fn notify_color_change() -> Result<(), Box<dyn std::error::Error>> {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_millis();
-    fs::write(COLOR_CHANGE_FILE, format!("reload_colors_{}", timestamp))?;
-    // Sync to ensure file is written to disk
-    if let Ok(file) = std::fs::File::create(COLOR_CHANGE_FILE) {
+    
+    let content = format!("reload_colors_{}", timestamp);
+    fs::write(COLOR_CHANGE_FILE, content)?;
+    
+    // Ensure the write is flushed to disk
+    if let Ok(file) = std::fs::OpenOptions::new().write(true).open(COLOR_CHANGE_FILE) {
         file.sync_all().ok();
     }
+    
     Ok(())
 }
 

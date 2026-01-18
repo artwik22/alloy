@@ -2,7 +2,7 @@ use gtk4::glib::{self, Object};
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 use gtk4::{
-    gio, CustomFilter, DragSource, DropTarget, FilterListModel, GestureClick, GridView, Label, 
+    gio, CustomFilter, DragSource, DropTarget, EventControllerKey, FilterListModel, GestureClick, GridView, Label, 
     ListItem, ListView, MultiSelection, PopoverMenu, SignalListItemFactory, Stack,
 };
 use std::cell::RefCell;
@@ -11,7 +11,7 @@ use std::rc::Rc;
 use std::fs::OpenOptions;
 use std::io::Write;
 
-use crate::core::{FileEntry, FileOperations, PinnedFolderStore, Scanner};
+use crate::core::{FileEntry, FileOperations, Scanner};
 
 // #region agent log
 fn debug_log(hypothesis_id: &str, location: &str, message: &str, data: serde_json::Value) {
@@ -352,6 +352,40 @@ impl FileGridView {
         let on_open_terminal: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));
         let on_open_micro: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));
 
+        // Keyboard shortcuts for Grid and List views
+        {
+            let selection_clone = selection.clone();
+            let on_delete_clone = on_delete.clone();
+            let key_controller = EventControllerKey::new();
+            
+            key_controller.connect_key_pressed(move |_, key, _keycode, _state| {
+                if key == gtk4::gdk::Key::Delete {
+                    let mut selected_paths = Vec::new();
+                    let n_items = selection_clone.n_items();
+                    for i in 0..n_items {
+                        if selection_clone.is_selected(i) {
+                            if let Some(item) = selection_clone.item(i) {
+                                if let Ok(file_obj) = item.downcast::<FileObject>() {
+                                    selected_paths.push(file_obj.path());
+                                }
+                            }
+                        }
+                    }
+                    
+                    if !selected_paths.is_empty() {
+                        if let Some(ref callback) = *on_delete_clone.borrow() {
+                            callback(selected_paths);
+                            return glib::Propagation::Stop;
+                        }
+                    }
+                }
+                glib::Propagation::Proceed
+            });
+            
+            grid_view.add_controller(key_controller.clone());
+            list_view.add_controller(key_controller);
+        }
+
         // Double-click activation for GRID VIEW
         {
             let on_directory_activated_clone = on_directory_activated.clone();
@@ -437,13 +471,6 @@ impl FileGridView {
                     }
                 }
 
-                // Check if single directory selected for pin option
-                let is_single_dir = selected_paths.len() == 1 && 
-                    selected_paths.first()
-                        .and_then(|p| std::fs::metadata(p).ok())
-                        .map(|m| m.is_dir())
-                        .unwrap_or(false);
-
                 // Build menu using gio::Menu
                 let menu = gio::Menu::new();
                 
@@ -461,23 +488,6 @@ impl FileGridView {
                     edit_section.append(Some("Copy"), Some("file.copy"));
                     edit_section.append(Some("Cut"), Some("file.cut"));
                     menu.append_section(None, &edit_section);
-                    
-                    // Pin section (for directories only)
-                    if is_single_dir {
-                        let pin_section = gio::Menu::new();
-                        let first_path = selected_paths.first().unwrap();
-                        let is_pinned = PinnedFolderStore::new().is_pinned(first_path);
-                        let label = if is_pinned { "Unpin from Sidebar" } else { "Pin to Sidebar" };
-                        
-                        // Use app.toggle-pin action with path parameter
-                        let pin_item = gio::MenuItem::new(Some(label), None);
-                        pin_item.set_action_and_target_value(
-                            Some("app.toggle-pin"),
-                            Some(&first_path.to_string_lossy().to_string().to_variant())
-                        );
-                        pin_section.append_item(&pin_item);
-                        menu.append_section(None, &pin_section);
-                    }
                     
                     // Delete section
                     let delete_section = gio::Menu::new();
@@ -637,12 +647,6 @@ impl FileGridView {
                     }
                 }
 
-                let is_single_dir = selected_paths.len() == 1 && 
-                    selected_paths.first()
-                        .and_then(|p| std::fs::metadata(p).ok())
-                        .map(|m| m.is_dir())
-                        .unwrap_or(false);
-
                 // Build menu using gio::Menu
                 let menu = gio::Menu::new();
                 
@@ -658,21 +662,6 @@ impl FileGridView {
                     edit_section.append(Some("Copy"), Some("file.copy"));
                     edit_section.append(Some("Cut"), Some("file.cut"));
                     menu.append_section(None, &edit_section);
-                    
-                    if is_single_dir {
-                        let pin_section = gio::Menu::new();
-                        let first_path = selected_paths.first().unwrap();
-                        let is_pinned = PinnedFolderStore::new().is_pinned(first_path);
-                        let label = if is_pinned { "Unpin from Sidebar" } else { "Pin to Sidebar" };
-                        
-                        let pin_item = gio::MenuItem::new(Some(label), None);
-                        pin_item.set_action_and_target_value(
-                            Some("app.toggle-pin"),
-                            Some(&first_path.to_string_lossy().to_string().to_variant())
-                        );
-                        pin_section.append_item(&pin_item);
-                        menu.append_section(None, &pin_section);
-                    }
                     
                     let delete_section = gio::Menu::new();
                     delete_section.append(Some("Move to Trash"), Some("file.delete"));

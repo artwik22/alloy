@@ -48,9 +48,25 @@ ShellRoot {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var home = xhr.responseText.trim()
                 if (home && home.length > 0) {
-                    colorConfigPath = home + "/.config/sharpshell/colors.json"
-                    console.log("Color config path initialized:", colorConfigPath)
-                    loadColors()
+                    // 1. Try ~/.config/alloy/colors.json (Global Alloy Config)
+                    var alloyPath = home + "/.config/alloy/colors.json"
+                    var checkXhr = new XMLHttpRequest()
+                    checkXhr.open("GET", "file://" + alloyPath)
+                    checkXhr.onreadystatechange = function() {
+                        if (checkXhr.readyState === XMLHttpRequest.DONE) {
+                            if (checkXhr.status === 200 || checkXhr.status === 0) {
+                                colorConfigPath = alloyPath
+                                console.log("Color config path initialized (Alloy Global):", colorConfigPath)
+                                loadColors()
+                            } else {
+                                // 2. Fallback to ~/.config/sharpshell/colors.json
+                                colorConfigPath = home + "/.config/sharpshell/colors.json"
+                                console.log("Color config path initialized (SharpShell):", colorConfigPath)
+                                loadColors()
+                            }
+                        }
+                    }
+                    checkXhr.send()
                 } else {
                     // Fallback - try to use QUICKSHELL_PROJECT_PATH
                     Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_config_path 2>/dev/null || echo \"\" > /tmp/quickshell_config_path']; running: true }", root)
@@ -361,8 +377,7 @@ ShellRoot {
                             console.log("Color change command received:", cmd)
                             // Przeładuj kolory
                             root.loadColors()
-                            // Usuń plik po przetworzeniu
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_color_change']; running: true }", root)
+                            // Plik zostawiamy dla innych aplikacji
                         }
                     }
                 }

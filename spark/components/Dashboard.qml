@@ -1905,8 +1905,22 @@ PanelWindow {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var home = xhr.responseText.trim()
                 if (home && home.length > 0) {
-                    colorConfigPath = home + "/.config/sharpshell/colors.json"
-                    console.log("Dashboard: Color config path initialized:", colorConfigPath)
+                    // Try ~/.config/alloy/colors.json first
+                    var alloyPath = home + "/.config/alloy/colors.json"
+                    var checkXhr = new XMLHttpRequest()
+                    checkXhr.open("GET", "file://" + alloyPath)
+                    checkXhr.onreadystatechange = function() {
+                        if (checkXhr.readyState === XMLHttpRequest.DONE) {
+                            if (checkXhr.status === 200 || checkXhr.status === 0) {
+                                colorConfigPath = alloyPath
+                                console.log("Dashboard: Color config path initialized (Alloy Global):", colorConfigPath)
+                            } else {
+                                colorConfigPath = home + "/.config/sharpshell/colors.json"
+                                console.log("Dashboard: Color config path initialized (SharpShell):", colorConfigPath)
+                            }
+                        }
+                    }
+                    checkXhr.send()
                 } else {
                     colorConfigPath = "/tmp/sharpshell/colors.json"
                     console.log("Dashboard: Using fallback color config path")

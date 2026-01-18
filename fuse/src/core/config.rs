@@ -50,7 +50,15 @@ impl Default for ColorConfig {
 
 impl ColorConfig {
     pub fn get_config_path() -> PathBuf {
-        // Try QUICKSHELL_PROJECT_PATH first
+        // 1. Try ~/.config/alloy/colors.json (Global Alloy Config)
+        if let Some(home) = dirs::home_dir() {
+            let path = home.join(".config").join("alloy").join("colors.json");
+            if path.exists() {
+                return path;
+            }
+        }
+
+        // 2. Try QUICKSHELL_PROJECT_PATH first
         if let Ok(project_path) = std::env::var("QUICKSHELL_PROJECT_PATH") {
             let path = PathBuf::from(project_path).join("colors.json");
             if path.exists() {
@@ -58,7 +66,7 @@ impl ColorConfig {
             }
         }
 
-        // Fallback to ~/.config/sharpshell/colors.json
+        // 3. Fallback to ~/.config/sharpshell/colors.json
         if let Some(home) = dirs::home_dir() {
             let path = home.join(".config").join("sharpshell").join("colors.json");
             if path.exists() {

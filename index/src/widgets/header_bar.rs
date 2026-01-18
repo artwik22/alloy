@@ -17,8 +17,6 @@ pub struct NautilusHeaderBar {
     view_toggle_btn: Button,
     is_editing_path: Rc<RefCell<bool>>,
 
-    on_back: Rc<RefCell<Option<Box<dyn Fn()>>>>,
-    on_forward: Rc<RefCell<Option<Box<dyn Fn()>>>>,
     on_path_clicked: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
     on_path_entered: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
     on_search: Rc<RefCell<Option<Box<dyn Fn(String)>>>>,
@@ -30,27 +28,7 @@ impl NautilusHeaderBar {
     pub fn new() -> Self {
         let container = adw::HeaderBar::new();
         container.add_css_class("flat");
-
-        // ===== LEFT SIDE: Navigation buttons =====
-        let nav_box = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(0)
-            .css_classes(["linked"])
-            .build();
-
-        let back_btn = Button::builder()
-            .icon_name("go-previous-symbolic")
-            .tooltip_text("Back")
-            .build();
-
-        let forward_btn = Button::builder()
-            .icon_name("go-next-symbolic")
-            .tooltip_text("Forward")
-            .build();
-
-        nav_box.append(&back_btn);
-        nav_box.append(&forward_btn);
-        container.pack_start(&nav_box);
+        container.set_show_back_button(false);
 
         // ===== CENTER: Breadcrumb path bar with editable entry =====
         let path_box = GtkBox::builder()
@@ -170,8 +148,6 @@ impl NautilusHeaderBar {
         container.pack_end(&menu_btn);
 
         // Callbacks
-        let on_back: Rc<RefCell<Option<Box<dyn Fn()>>>> = Rc::new(RefCell::new(None));
-        let on_forward: Rc<RefCell<Option<Box<dyn Fn()>>>> = Rc::new(RefCell::new(None));
         let on_path_clicked: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));
         let on_path_entered: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));
         let on_search: Rc<RefCell<Option<Box<dyn Fn(String)>>>> = Rc::new(RefCell::new(None));
@@ -289,24 +265,6 @@ impl NautilusHeaderBar {
 
         // Connect signals
         {
-            let on_back_clone = on_back.clone();
-            back_btn.connect_clicked(move |_| {
-                if let Some(ref callback) = *on_back_clone.borrow() {
-                    callback();
-                }
-            });
-        }
-
-        {
-            let on_forward_clone = on_forward.clone();
-            forward_btn.connect_clicked(move |_| {
-                if let Some(ref callback) = *on_forward_clone.borrow() {
-                    callback();
-                }
-            });
-        }
-
-        {
             let on_search_clone = on_search.clone();
             search_entry.connect_search_changed(move |entry| {
                 if let Some(ref callback) = *on_search_clone.borrow() {
@@ -366,8 +324,6 @@ impl NautilusHeaderBar {
             search_popover,
             view_toggle_btn,
             is_editing_path,
-            on_back,
-            on_forward,
             on_path_clicked,
             on_path_entered,
             on_search,
@@ -486,14 +442,6 @@ impl NautilusHeaderBar {
                 self.breadcrumbs_box.append(&btn);
             }
         }
-    }
-
-    pub fn connect_back<F: Fn() + 'static>(&self, callback: F) {
-        *self.on_back.borrow_mut() = Some(Box::new(callback));
-    }
-
-    pub fn connect_forward<F: Fn() + 'static>(&self, callback: F) {
-        *self.on_forward.borrow_mut() = Some(Box::new(callback));
     }
 
     pub fn connect_path_clicked<F: Fn(PathBuf) + 'static>(&self, callback: F) {

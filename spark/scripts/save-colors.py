@@ -52,6 +52,8 @@ if "rounding" in existing_data:
     colors["rounding"] = existing_data["rounding"]
 if "showHiddenFiles" in existing_data:
     colors["showHiddenFiles"] = existing_data["showHiddenFiles"]
+if "presets" in existing_data:
+    colors["presets"] = existing_data["presets"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled

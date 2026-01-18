@@ -121,8 +121,7 @@ fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>) {
                     if modified > last_notification_check {
                         last_notification_check = modified;
                         reload_needed = true;
-                        // Remove notification file after reading
-                        let _ = std::fs::remove_file(notification_file);
+                        // Notification file is left for other apps to see
                     }
                 }
             }

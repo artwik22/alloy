@@ -1,0 +1,11 @@
+{
+  "background": "#0c0c0c",
+  "primary": "#161616",
+  "secondary": "#121212",
+  "text": "#f0f0f0",
+  "accent": "#a0a0a0",
+  "colorPreset": "Minimal Gray",
+  "sidebarPosition": "left",
+  "sidebarVisible": true,
+  "rounding": "sharp"
+}

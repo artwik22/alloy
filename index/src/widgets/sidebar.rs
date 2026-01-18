@@ -1,8 +1,8 @@
 use gtk4::glib::{self, clone};
 use gtk4::prelude::*;
 use gtk4::{
-    gio, Box as GtkBox, GestureClick, Image, Label, ListBox, ListBoxRow, 
-    Orientation, PopoverMenu, ScrolledWindow, SelectionMode,
+    gio, Box as GtkBox, DropTarget, GestureClick, Image, Label, ListBox, ListBoxRow, 
+    Orientation, PopoverMenu, ScrolledWindow, SelectionMode, Separator,
 };
 use std::cell::RefCell;
 use std::path::PathBuf;
@@ -92,7 +92,13 @@ impl NautilusSidebar {
         // Create pinned folders store
         let pinned_store = PinnedFolderStore::new();
 
-        // ===== Pinned Section =====
+        // ===== Pinned Section Container =====
+        let pinned_section = GtkBox::builder()
+            .orientation(Orientation::Vertical)
+            .css_classes(["pinned-section"])
+            .build();
+
+        // ===== Pinned Label =====
         let pinned_label = Label::builder()
             .label("Pinned")
             .halign(gtk4::Align::Start)
@@ -101,7 +107,7 @@ impl NautilusSidebar {
             .margin_bottom(6)
             .css_classes(["dim-label", "caption"])
             .build();
-        main_box.append(&pinned_label);
+        pinned_section.append(&pinned_label);
 
         let pinned_list_box = ListBox::builder()
             .selection_mode(SelectionMode::Single)
@@ -113,7 +119,102 @@ impl NautilusSidebar {
             Rc::new(RefCell::new(None));
         
         Self::bind_pinned_store(&pinned_list_box, &pinned_store, on_location_selected.clone());
-        main_box.append(&pinned_list_box);
+        pinned_section.append(&pinned_list_box);
+        main_box.append(&pinned_section);
+
+        // Add drop target for drag-and-drop pinning to the entire pinned section
+        {
+            let pinned_store_clone = pinned_store.clone();
+            let pinned_section_clone = pinned_section.clone();
+            
+            let drop_target = DropTarget::new(
+                glib::Type::INVALID, // We will set multiple supported types
+                gtk4::gdk::DragAction::COPY | gtk4::gdk::DragAction::MOVE
+            );
+            
+            // Support both FileList and individual GFile
+            drop_target.set_types(&[
+                gtk4::gdk::FileList::static_type(),
+                gio::File::static_type(),
+            ]);
+            
+            drop_target.connect_enter(clone!(
+                #[strong] pinned_section_clone,
+                move |_, _, _| {
+                    pinned_section_clone.add_css_class("drop-highlight");
+                    gtk4::gdk::DragAction::COPY
+                }
+            ));
+            
+            drop_target.connect_leave(clone!(
+                #[strong] pinned_section_clone,
+                move |_| {
+                    pinned_section_clone.remove_css_class("drop-highlight");
+                }
+            ));
+            
+            drop_target.connect_motion(move |_, _, _| {
+                gtk4::gdk::DragAction::COPY
+            });
+            
+            drop_target.connect_drop(clone!(
+                #[strong] pinned_section_clone,
+                move |_, value, _, _| {
+                    pinned_section_clone.remove_css_class("drop-highlight");
+                    
+                    let mut paths = Vec::new();
+                    
+                    if let Ok(file_list) = value.get::<gtk4::gdk::FileList>() {
+                        paths = file_list.files().iter().filter_map(|f| f.path()).collect();
+                    } else if let Ok(file) = value.get::<gio::File>() {
+                        if let Some(path) = file.path() {
+                            paths.push(path);
+                        }
+                    }
+                    
+                    if paths.is_empty() {
+                        return false;
+                    }
+                    
+                    let mut success = false;
+                    for path in paths {
+                        // Check if it's a directory
+                        if let Ok(metadata) = std::fs::metadata(&path) {
+                            if !metadata.is_dir() {
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                        
+                        if pinned_store_clone.is_pinned(&path) {
+                            continue;
+                        }
+                        
+                        if Self::is_standard_location(&path) {
+                            continue;
+                        }
+                        
+                        if let Err(e) = pinned_store_clone.add(&path) {
+                            eprintln!("Failed to pin folder: {}", e);
+                        } else {
+                            success = true;
+                        }
+                    }
+                    
+                    success
+                }
+            ));
+            
+            pinned_section.add_controller(drop_target);
+        }
+
+        // Subtle separator between Pinned and Standard sections
+        let sep = Separator::builder()
+            .orientation(Orientation::Horizontal)
+            .css_classes(["sidebar-separator"])
+            .build();
+        main_box.append(&sep);
 
         // ===== Standard Folders Section =====
         let standard_list_box = ListBox::builder()
@@ -193,6 +294,46 @@ impl NautilusSidebar {
         main_box.append(&other_list_box);
         scrolled.set_child(Some(&main_box));
         container.append(&scrolled);
+
+        // Selection sync: ensure only one ListBox has a selection at a time
+        {
+            let pinned_lb = pinned_list_box.clone();
+            let standard_lb = standard_list_box.clone();
+            let other_lb = other_list_box.clone();
+
+            pinned_lb.connect_row_selected(clone!(
+                #[weak] standard_lb,
+                #[weak] other_lb,
+                move |_, row| {
+                    if row.is_some() {
+                        standard_lb.unselect_all();
+                        other_lb.unselect_all();
+                    }
+                }
+            ));
+
+            standard_lb.connect_row_selected(clone!(
+                #[weak] pinned_lb,
+                #[weak] other_lb,
+                move |_, row| {
+                    if row.is_some() {
+                        pinned_lb.unselect_all();
+                        other_lb.unselect_all();
+                    }
+                }
+            ));
+
+            other_lb.connect_row_selected(clone!(
+                #[weak] pinned_lb,
+                #[weak] standard_lb,
+                move |_, row| {
+                    if row.is_some() {
+                        pinned_lb.unselect_all();
+                        standard_lb.unselect_all();
+                    }
+                }
+            ));
+        }
 
         // Connect standard list box row activation
         {
@@ -408,11 +549,11 @@ impl NautilusSidebar {
             #[weak] row,
             move |_, _, x, y| {
                 // Close existing popover
-                if let Some(ref mut popover) = *current_popover.borrow_mut() {
-                    popover.popdown();
-                    popover.unparent();
-                }
-                current_popover.borrow_mut().take();
+            if let Some(ref mut popover) = *current_popover.borrow_mut() {
+                popover.popdown();
+                popover.unparent();
+            }
+            current_popover.borrow_mut().take();
 
                 // Create menu
                 let menu = gio::Menu::new();
@@ -488,7 +629,7 @@ impl NautilusSidebar {
     }
 
     /// Setup context menu for standard/other locations
-    fn setup_standard_context_menu(list_box: &ListBox, store: &PinnedFolderStore) {
+    fn setup_standard_context_menu(list_box: &ListBox, _store: &PinnedFolderStore) {
         // #region agent log
         debug_log("C", "sidebar.rs:setup_standard_context_menu", "Function entry", serde_json::json!({
             "list_box_ptr": format!("{:p}", list_box)
@@ -509,8 +650,6 @@ impl NautilusSidebar {
         
         let current_popover: Rc<RefCell<Option<PopoverMenu>>> = Rc::new(RefCell::new(None));
         
-        let store_clone = store.clone();
-        
         // #region agent log
         let widget_before_connect = gesture.widget();
         debug_log("F", "sidebar.rs:setup_standard_context_menu", "Before connect_pressed", serde_json::json!({
@@ -521,7 +660,6 @@ impl NautilusSidebar {
         
         gesture.connect_pressed(clone!(
             #[strong] current_popover,
-            #[strong] store_clone,
             move |gesture, _, x, y| {
                 // Close existing popover
                 if let Some(ref mut popover) = *current_popover.borrow_mut() {
@@ -546,7 +684,7 @@ impl NautilusSidebar {
                 }
                 
                 let Some(row) = found_row else { return };
-                let Some(path) = Self::get_row_path(&row) else { return };
+                let Some(_path) = Self::get_row_path(&row) else { return };
                 let item_type = Self::get_row_item_type(&row);
                 
                 // Don't show menu for system folders (like Trash)
@@ -554,33 +692,8 @@ impl NautilusSidebar {
                     return;
                 }
 
-                // Create menu
-                let menu = gio::Menu::new();
-                
-                let is_pinned = store_clone.is_pinned(&path);
-                let pin_label = if is_pinned { "Unpin from Sidebar" } else { "Pin to Sidebar" };
-                
-                let pin_item = gio::MenuItem::new(Some(pin_label), None);
-                pin_item.set_action_and_target_value(
-                    Some("app.toggle-pin"),
-                    Some(&path.to_string_lossy().to_string().to_variant())
-                );
-                menu.append_item(&pin_item);
-
-                let popover = PopoverMenu::from_model(Some(&menu));
-                popover.set_parent(&row);
-                popover.set_position(gtk4::PositionType::Bottom);
-                popover.set_pointing_to(Some(&gtk4::gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
-                
-                let popover_clone = popover.clone();
-                let current_popover_clone = current_popover.clone();
-                popover.connect_closed(move |p| {
-                    p.unparent();
-                    current_popover_clone.borrow_mut().take();
-                });
-                
-                *current_popover.borrow_mut() = Some(popover_clone.clone());
-                popover_clone.popup();
+                // No context menu items available
+                return;
             }
         ));
         
@@ -598,11 +711,17 @@ impl NautilusSidebar {
         let controllers_count = list_box.observe_controllers().n_items();
         
         // Check if this gesture is already in the list_box controllers
-        let gesture_already_in_list = {
+        let (gesture_already_in_list, existing_gesture_click_count, existing_gesture_has_widget) = {
             let mut found = false;
+            let mut gesture_click_count = 0;
+            let mut has_widget_count = 0;
             for i in 0..controllers_count {
                 if let Some(controller) = list_box.observe_controllers().item(i) {
                     if let Ok(existing_gesture) = controller.downcast::<GestureClick>() {
+                        gesture_click_count += 1;
+                        if existing_gesture.widget().is_some() {
+                            has_widget_count += 1;
+                        }
                         if existing_gesture.as_ref() as *const _ == &gesture as *const _ {
                             found = true;
                             break;
@@ -610,7 +729,7 @@ impl NautilusSidebar {
                     }
                 }
             }
-            found
+            (found, gesture_click_count, has_widget_count)
         };
         
         debug_log("C", "sidebar.rs:setup_standard_context_menu", "Before add_controller", serde_json::json!({
@@ -619,7 +738,9 @@ impl NautilusSidebar {
             "has_widget": widget_before.is_some(),
             "widget_type": widget_before.as_ref().map(|w| format!("{:?}", w.type_())),
             "list_box_controllers_count": controllers_count,
-            "gesture_already_in_list": gesture_already_in_list
+            "gesture_already_in_list": gesture_already_in_list,
+            "existing_gesture_click_count": existing_gesture_click_count,
+            "existing_gesture_has_widget": existing_gesture_has_widget
         }));
         // #endregion
         
@@ -655,9 +776,9 @@ impl NautilusSidebar {
         let current_name = {
             let normalized = PinnedFolderStore::normalize_path(path);
             let mut name = path.file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_else(|| "Folder".to_string());
-            
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "Folder".to_string());
+
             for i in 0..store.store().n_items() {
                 if let Some(obj) = store.store().item(i) {
                     if let Ok(pinned) = obj.downcast::<PinnedFolderObject>() {
@@ -747,6 +868,18 @@ impl NautilusSidebar {
         
         // Force a re-evaluation of the model binding
         self.pinned_list_box.invalidate_filter();
+    }
+
+    pub fn unpin_selected(&self) {
+        if let Some(row) = self.pinned_list_box.selected_row() {
+            if let Some(path) = Self::get_row_path(&row) {
+                if let Err(e) = self.pinned_store.remove(&path) {
+                    eprintln!("Failed to unpin: {}", e);
+                } else {
+                    println!("[DEBUG] Unpinned folder via method: {:?}", path);
+                }
+            }
+        }
     }
 }
 

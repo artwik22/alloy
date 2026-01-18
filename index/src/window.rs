@@ -51,12 +51,8 @@ impl IndexWindow {
         let history_index: Rc<RefCell<i32>> = Rc::new(RefCell::new(-1));
         let clipboard: Rc<RefCell<Clipboard>> = Rc::new(RefCell::new(Clipboard::new()));
 
-        // Create toolbar view (main container)
-        let toolbar_view = adw::ToolbarView::new();
-
         // Create header bar (Nautilus style)
         let header_bar = NautilusHeaderBar::new();
-        toolbar_view.add_top_bar(header_bar.container());
 
         // Create navigation split view for sidebar + content
         let split_view = adw::NavigationSplitView::builder()
@@ -76,6 +72,9 @@ impl IndexWindow {
         // Content area with file grid
         let content_box = GtkBox::new(Orientation::Vertical, 0);
         content_box.add_css_class("view");
+        
+        // Add header bar to content area so sidebar spans full height
+        content_box.append(header_bar.container());
 
         // File grid view with scroll
         let file_view = FileGridView::new();
@@ -93,8 +92,40 @@ impl IndexWindow {
             .build();
         split_view.set_content(Some(&content_page));
 
-        toolbar_view.set_content(Some(&split_view));
-        window.set_content(Some(&toolbar_view));
+        window.set_content(Some(&split_view));
+
+        // Shared state for hidden files to sync with monitor
+        let last_show_hidden = Rc::new(RefCell::new(SidebarPrefs::show_hidden_files()));
+
+        // Keyboard shortcuts
+        {
+            let file_view_clone = file_view.clone();
+            let sidebar_clone = sidebar.clone();
+            let last_show_hidden_clone = last_show_hidden.clone();
+            let key_controller = gtk4::EventControllerKey::new();
+            key_controller.connect_key_pressed(move |_, keyval, modifiers, _| {
+                // Ctrl+H to toggle hidden files
+                if keyval == gtk4::gdk::Key::h && modifiers & gtk4::gdk::ModifierType::CONTROL_MASK.bits() != 0 {
+                    let mut current_hidden = last_show_hidden_clone.borrow_mut();
+                    let new_hidden = !*current_hidden;
+                    *current_hidden = new_hidden;
+                    
+                    file_view_clone.set_show_hidden(new_hidden);
+                    file_view_clone.refresh();
+                    println!("Toggled hidden files (session): {}", new_hidden);
+                    return gtk4::glib::Propagation::Stop;
+                }
+                
+                // Key 'o' to unpin selected item in sidebar
+                if keyval == gtk4::gdk::Key::o {
+                    sidebar_clone.unpin_selected();
+                    return gtk4::glib::Propagation::Stop;
+                }
+                
+                gtk4::glib::Propagation::Proceed
+            });
+            window.add_controller(key_controller);
+        }
 
         // Initialize
         let initial_path = current_path.borrow().clone();
@@ -186,11 +217,11 @@ impl IndexWindow {
         // Monitor for config changes (hidden files setting from fuse)
         {
             let file_view_monitor = file_view.clone();
-            let last_show_hidden = Rc::new(RefCell::new(SidebarPrefs::show_hidden_files()));
+            let last_show_hidden_monitor = last_show_hidden.clone();
             
             glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
                 let show_hidden = SidebarPrefs::show_hidden_files();
-                let mut last_value = last_show_hidden.borrow_mut();
+                let mut last_value = last_show_hidden_monitor.borrow_mut();
                 
                 // Only update if the value actually changed
                 if show_hidden != *last_value {
@@ -304,50 +335,6 @@ impl IndexWindow {
             let navigate_to = navigate_to.clone();
             file_view.connect_directory_activated(move |path| {
                 navigate_to(path, true);
-            });
-        }
-
-        // Connect back button
-        {
-            let file_view = file_view.clone();
-            let header_bar_clone = header_bar.clone();
-            let current_path = current_path.clone();
-            let history = history.clone();
-            let history_index = history_index.clone();
-
-            header_bar.clone().connect_back(move || {
-                let mut idx = history_index.borrow_mut();
-                if *idx > 0 {
-                    *idx -= 1;
-                    let hist = history.borrow();
-                    if let Some(path) = hist.get(*idx as usize) {
-                        current_path.replace(path.clone());
-                        file_view.load_directory(path);
-                        header_bar_clone.set_path(path);
-                    }
-                }
-            });
-        }
-
-        // Connect forward button
-        {
-            let file_view = file_view.clone();
-            let header_bar_clone = header_bar.clone();
-            let current_path = current_path.clone();
-            let history = history.clone();
-            let history_index = history_index.clone();
-
-            header_bar.clone().connect_forward(move || {
-                let hist = history.borrow();
-                let mut idx = history_index.borrow_mut();
-                if (*idx as usize) < hist.len() - 1 {
-                    *idx += 1;
-                    if let Some(path) = hist.get(*idx as usize) {
-                        current_path.replace(path.clone());
-                        file_view.load_directory(path);
-                        header_bar_clone.set_path(path);
-                    }
-                }
             });
         }
 
@@ -483,12 +470,19 @@ impl IndexWindow {
 
                     dialog.connect_response(None, move |_, response| {
                         if response == "trash" {
+                            println!("[DEBUG] Deleting {} items", paths_clone.len());
                             for path in &paths_clone {
+                                println!("[DEBUG] Moving to trash: {:?}", path);
                                 if let Err(e) = FileOperations::delete(path) {
                                     eprintln!("Delete error: {}", e);
                                 }
                             }
-                            file_view.refresh();
+                            
+                            // Refresh with a small delay to allow the filesystem to update
+                            let file_view_delayed = file_view.clone();
+                            glib::timeout_add_local_once(std::time::Duration::from_millis(150), move || {
+                                file_view_delayed.refresh();
+                            });
                         }
                     });
 
