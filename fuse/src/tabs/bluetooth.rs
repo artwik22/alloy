@@ -9,7 +9,7 @@ use crate::core::config::ColorConfig;
 pub struct BluetoothDevice {
     pub mac_address: String,
     pub name: String,
-    pub paired: bool,
+    pub _paired: bool,
     pub connected: bool,
 }
 
@@ -348,7 +348,7 @@ fn get_paired_devices() -> Vec<BluetoothDevice> {
                     devices.push(BluetoothDevice {
                         mac_address: mac,
                         name,
-                        paired: true,
+                        _paired: true,
                         connected,
                     });
                 }
@@ -457,7 +457,7 @@ fn get_available_devices() -> Vec<BluetoothDevice> {
                         devices.push(BluetoothDevice {
                             mac_address: mac,
                             name,
-                            paired: false,
+                            _paired: false,
                             connected: false,
                         });
                     }

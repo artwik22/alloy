@@ -168,7 +168,7 @@ separator {
 }
 
 .sidebar-separator {
-    margin: 16px 12px;
+    margin: 8px 12px;
     background: none;
     border: none;
     border-top: 1px solid alpha(white, 0.2);

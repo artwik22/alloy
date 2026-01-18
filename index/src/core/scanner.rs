@@ -78,13 +78,9 @@ impl Scanner {
             });
         }
 
-        // Sort: directories first, then alphabetically
-        entries.sort_by(|a, b| {
-            match (a.is_directory, b.is_directory) {
-                (true, false) => std::cmp::Ordering::Less,
-                (false, true) => std::cmp::Ordering::Greater,
-                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-            }
+        // Sort: directories first, then alphabetically (case-insensitive)
+        entries.sort_by_cached_key(|e| {
+            (!e.is_directory, e.name.to_lowercase())
         });
 
         Ok(entries)

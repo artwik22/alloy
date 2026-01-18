@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::fs::OpenOptions;
 use std::io::Write;
+use async_channel;
 
 use crate::core::{FileEntry, FileOperations, Scanner};
 
@@ -178,6 +179,7 @@ pub struct FileGridView {
     on_pin: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
     on_open_terminal: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
     on_open_micro: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
+    current_scan_id: Rc<RefCell<u64>>,
 }
 
 impl FileGridView {
@@ -351,6 +353,7 @@ impl FileGridView {
         // on_pin is already created above for use in factories
         let on_open_terminal: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));
         let on_open_micro: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));
+        let current_scan_id = Rc::new(RefCell::new(0u64));
 
         // Keyboard shortcuts for Grid and List views
         {
@@ -1070,6 +1073,7 @@ impl FileGridView {
             on_pin,
             on_open_terminal,
             on_open_micro,
+            current_scan_id,
         }
     }
 
@@ -1090,33 +1094,57 @@ impl FileGridView {
         self.current_path.replace(path.to_path_buf());
         self.store.remove_all();
 
+        // Increment scan ID to ignore previous pending scans
+        let mut scan_id_guard = self.current_scan_id.borrow_mut();
+        *scan_id_guard += 1;
+        let scan_id = *scan_id_guard;
+        drop(scan_id_guard);
+
+        let path = path.to_path_buf();
         let show_hidden = *self.show_hidden.borrow();
-        match Scanner::scan_with_hidden(path, show_hidden) {
-            Ok(entries) => {
-                // #region agent log
-                debug_log("E", "file_view.rs:load_directory", "Scan successful", serde_json::json!({
-                    "path": path.to_string_lossy(),
-                    "entry_count": entries.len()
-                }));
-                // #endregion
-                
-                self.all_entries.replace(entries.clone());
-                for entry in &entries {
-                    self.store.append(&FileObject::new(entry));
+        
+        let (tx, rx) = async_channel::unbounded::<Result<Vec<FileEntry>, std::io::Error>>();
+        
+        let store = self.store.clone();
+        let all_entries = self.all_entries.clone();
+        let current_scan_id = self.current_scan_id.clone();
+        
+        // Spawn background thread for scanning
+        std::thread::spawn(move || {
+            let result = Scanner::scan_with_hidden(&path, show_hidden);
+            let _ = tx.send_blocking(result);
+        });
+        
+        // Receive result on UI thread
+        glib::spawn_future_local(async move {
+            if let Ok(result) = rx.recv().await {
+                // Only process if this is still the latest scan
+                if *current_scan_id.borrow() == scan_id {
+                    match result {
+                        Ok(entries) => {
+                            // #region agent log
+                            debug_log("E", "file_view.rs:load_directory", "Scan successful (async)", serde_json::json!({
+                                "entry_count": entries.len()
+                            }));
+                            // #endregion
+                            
+                            all_entries.replace(entries.clone());
+                            for entry in &entries {
+                                store.append(&FileObject::new(entry));
+                            }
+                        }
+                        Err(e) => {
+                            // #region agent log
+                            debug_log("E", "file_view.rs:load_directory", "Scan failed (async)", serde_json::json!({
+                                "error": e.to_string()
+                            }));
+                            // #endregion
+                            eprintln!("Failed to scan directory: {}", e);
+                        }
+                    }
                 }
             }
-            Err(e) => {
-                // #region agent log
-                debug_log("E", "file_view.rs:load_directory", "Scan failed", serde_json::json!({
-                    "path": path.to_string_lossy(),
-                    "error": e.to_string(),
-                    "error_kind": format!("{:?}", e.kind())
-                }));
-                // #endregion
-                
-                eprintln!("Failed to scan directory: {}", e);
-            }
-        }
+        });
     }
 
     pub fn refresh(&self) {

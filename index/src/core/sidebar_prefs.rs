@@ -11,9 +11,11 @@ struct ColorConfig {
     sidebar_visible: Option<bool>,
 }
 
+#[allow(dead_code)]
 pub struct SidebarPrefs;
 
 impl SidebarPrefs {
+    #[allow(dead_code)]
     fn config_path() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))

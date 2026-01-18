@@ -97,6 +97,7 @@ fn create_file_manager_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     section
 }
 
+#[allow(dead_code)]
 fn create_toggle_row(
     title: &str,
     description: &str,

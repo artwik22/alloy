@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{glib, CssProvider};
+use gtk4::{gio, glib, CssProvider};
 use libadwaita as adw;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -11,7 +11,8 @@ const APP_ID: &str = "com.index.fileexplorer";
 
 pub struct IndexApp {
     app: adw::Application,
-    css_provider: Rc<RefCell<Option<CssProvider>>>,
+    _css_provider: Rc<RefCell<Option<CssProvider>>>,
+    _monitors: Vec<gio::FileMonitor>,
 }
 
 impl IndexApp {
@@ -31,11 +32,12 @@ impl IndexApp {
 
         // Start monitoring for color changes
         let css_provider_monitor = css_provider.clone();
-        start_color_monitoring(css_provider_monitor);
+        let monitors = start_color_monitoring(css_provider_monitor);
 
         Self { 
             app,
-            css_provider,
+            _css_provider: css_provider,
+            _monitors: monitors,
         }
     }
 
@@ -93,44 +95,33 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>) {
     *css_provider_rc.borrow_mut() = Some(provider);
 }
 
-fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>) {
-    let mut last_modified = std::time::UNIX_EPOCH;
-    let mut last_notification_check = std::time::UNIX_EPOCH;
+fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>) -> Vec<gio::FileMonitor> {
+    let mut monitors = Vec::new();
+    let config_path = ColorConfig::get_config_path();
     
-    glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-        let config_path = ColorConfig::get_config_path();
-        let mut reload_needed = false;
-        
-        // Check if colors.json was modified
-        if config_path.exists() {
-            if let Ok(metadata) = std::fs::metadata(&config_path) {
-                if let Ok(modified) = metadata.modified() {
-                    if modified > last_modified {
-                        last_modified = modified;
-                        reload_needed = true;
-                    }
-                }
+    // Monitor colors.json
+    let file = gio::File::for_path(&config_path);
+    if let Ok(monitor) = file.monitor_file(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE) {
+        let css_provider_rc_clone = css_provider_rc.clone();
+        monitor.connect_changed(move |_, _, _, event_type| {
+            if matches!(event_type, gio::FileMonitorEvent::Changed | gio::FileMonitorEvent::ChangesDoneHint) {
+                load_css_with_colors(&css_provider_rc_clone);
             }
-        }
-        
-        // Check for color change notification file
-        let notification_file = std::path::Path::new("/tmp/quickshell_color_change");
-        if notification_file.exists() {
-            if let Ok(metadata) = std::fs::metadata(notification_file) {
-                if let Ok(modified) = metadata.modified() {
-                    if modified > last_notification_check {
-                        last_notification_check = modified;
-                        reload_needed = true;
-                        // Notification file is left for other apps to see
-                    }
-                }
+        });
+        monitors.push(monitor);
+    }
+    
+    // Monitor /tmp/quickshell_color_change notification file
+    let notification_file = gio::File::for_path("/tmp/quickshell_color_change");
+    if let Ok(monitor) = notification_file.monitor_file(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE) {
+        let css_provider_rc_clone = css_provider_rc.clone();
+        monitor.connect_changed(move |_, _, _, event_type| {
+            if matches!(event_type, gio::FileMonitorEvent::Changed | gio::FileMonitorEvent::ChangesDoneHint | gio::FileMonitorEvent::Created) {
+                load_css_with_colors(&css_provider_rc_clone);
             }
-        }
-        
-        if reload_needed {
-            load_css_with_colors(&css_provider_rc);
-        }
-        
-        glib::ControlFlow::Continue
-    });
+        });
+        monitors.push(monitor);
+    }
+    
+    monitors
 }

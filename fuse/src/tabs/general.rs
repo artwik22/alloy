@@ -153,6 +153,7 @@ fn create_toggle_row(
     row
 }
 
+#[allow(dead_code)]
 fn create_toggle_row_with_switch(
     title: &str,
     description: &str,
