@@ -13,11 +13,12 @@ pub struct AudioTab {
 impl AudioTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        let content = GtkBox::new(Orientation::Vertical, 30);
-        content.set_margin_start(20);
-        content.set_margin_end(20);
-        content.set_margin_top(20);
-        content.set_margin_bottom(20);
+        // GNOME spacing: 24px section gap, 18px container margins
+        let content = GtkBox::new(Orientation::Vertical, 18);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
 
         let title = Label::new(Some("Audio Settings"));
         title.add_css_class("title");
@@ -32,24 +33,24 @@ impl AudioTab {
         let input_section = create_audio_device_section("Input", "󰍬", false);
         content.append(&input_section);
 
-        // Separator
+        // Separator - GNOME margins
         let separator = Separator::new(Orientation::Horizontal);
-        separator.set_margin_start(20);
-        separator.set_margin_end(20);
-        separator.set_margin_top(20);
-        separator.set_margin_bottom(20);
+        separator.set_margin_start(12);
+        separator.set_margin_end(12);
+        separator.set_margin_top(18);
+        separator.set_margin_bottom(18);
         content.append(&separator);
 
         // All Output Devices
         let all_outputs_section = create_all_devices_section("All Output Devices", "󰓃", true);
         content.append(&all_outputs_section);
 
-        // Separator
+        // Separator - GNOME margins
         let separator2 = Separator::new(Orientation::Horizontal);
-        separator2.set_margin_start(20);
-        separator2.set_margin_end(20);
-        separator2.set_margin_top(20);
-        separator2.set_margin_bottom(20);
+        separator2.set_margin_start(12);
+        separator2.set_margin_end(12);
+        separator2.set_margin_top(18);
+        separator2.set_margin_bottom(18);
         content.append(&separator2);
 
         // All Input Devices

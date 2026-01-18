@@ -64,11 +64,11 @@ pub static PROFILE: &str = "release";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"The compiler that cargo resolved to use."#]
 #[allow(dead_code)]
-pub static RUSTC: &str = "/home/artwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc";
+pub static RUSTC: &str = "/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"The documentation generator that cargo resolved to use."#]
 #[allow(dead_code)]
-pub static RUSTDOC: &str = "/home/artwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc";
+pub static RUSTDOC: &str = "/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"Value of OPT_LEVEL for the profile used during compilation."#]
 #[allow(dead_code)]
@@ -98,11 +98,11 @@ pub static FEATURES_LOWERCASE: [&str; 1] = ["threading"];
 #[allow(dead_code)]
 pub static FEATURES_LOWERCASE_STR: &str = "threading";
 #[allow(clippy::needless_raw_string_hashes)]
-#[doc=r#"The output of `/home/artwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -V`"#]
+#[doc=r#"The output of `/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -V`"#]
 #[allow(dead_code)]
 pub static RUSTC_VERSION: &str = "rustc 1.92.0 (ded5c06cf 2025-12-08)";
 #[allow(clippy::needless_raw_string_hashes)]
-#[doc=r#"The output of `/home/artwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V`; empty string if `/home/artwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V` failed to execute"#]
+#[doc=r#"The output of `/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V`; empty string if `/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V` failed to execute"#]
 #[allow(dead_code)]
 pub static RUSTDOC_VERSION: &str = "rustdoc 1.92.0 (ded5c06cf 2025-12-08)";
 #[allow(clippy::needless_raw_string_hashes)]

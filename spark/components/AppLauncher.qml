@@ -1677,15 +1677,14 @@ PanelWindow {
                     if (selectedIndex >= 0 && selectedIndex < modesList.count) {
                         var mode = modesList.model.get(selectedIndex)
                         if (mode.mode === 2) {
-                            // Switch to launcher mode and type "fuse" in search
-                            currentMode = 0
-                            selectedIndex = 0
-                            modesList.currentIndex = -1
-                            searchText = "fuse"
-                            if (searchInput) {
-                                searchInput.text = "fuse"
-                                Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: { if (appLauncherRoot.searchInput) appLauncherRoot.searchInput.forceActiveFocus() } }", appLauncherRoot)
-                            }
+                            // Launch fuse directly using launchApp function
+                            launchApp({
+                                name: "Fuse",
+                                exec: "fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null",
+                                icon: "󰒓"
+                            })
+                            event.accepted = true
+                            return
                         } else {
                             currentMode = mode.mode
                             selectedIndex = 0
@@ -1984,15 +1983,13 @@ PanelWindow {
                     
                     onClicked: {
                         if (model.mode === 2) {
-                            // Switch to launcher mode and type "fuse" in search
-                            currentMode = 0
-                            selectedIndex = 0
-                            modesList.currentIndex = -1
-                            searchText = "fuse"
-                            if (searchInput) {
-                                searchInput.text = "fuse"
-                                Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: { if (appLauncherRoot.searchInput) appLauncherRoot.searchInput.forceActiveFocus() } }", appLauncherRoot)
-                            }
+                            // Launch fuse directly using launchApp function
+                            launchApp({
+                                name: "Fuse",
+                                exec: "fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null",
+                                icon: "󰒓"
+                            })
+                            return
                         } else {
                             currentMode = model.mode
                             selectedIndex = 0

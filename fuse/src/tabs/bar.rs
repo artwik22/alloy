@@ -17,11 +17,11 @@ impl BarTab {
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        let content = GtkBox::new(Orientation::Vertical, 32);
-        content.set_margin_start(24);
-        content.set_margin_end(24);
-        content.set_margin_top(24);
-        content.set_margin_bottom(24);
+        let content = GtkBox::new(Orientation::Vertical, 18);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
@@ -32,31 +32,50 @@ impl BarTab {
 
         // Sidebar Visibility toggle
         let current_visible = config.lock().unwrap().sidebar_visible.unwrap_or(true);
-        let sidebar_visible_row = create_toggle_row(
-            "Sidebar Visibility",
-            "Show or hide the sidebar",
-            {
-                let config = Arc::clone(&config);
-                move |enabled| {
-                    // Reload config from disk to preserve existing settings
-                    let mut cfg = ColorConfig::load();
-                    cfg.set_sidebar_visible(enabled);
-                    if let Err(e) = cfg.save() {
-                        eprintln!("Error saving sidebar visibility: {}", e);
-                    } else {
-                        // Update the shared config
-                        *config.lock().unwrap() = cfg.clone();
-                        // Wait a bit for file to be written
-                        std::thread::sleep(std::time::Duration::from_millis(100));
+        let toggle_switch = Switch::new();
+        toggle_switch.set_active(current_visible);
+        toggle_switch.set_halign(gtk4::Align::End);
+        toggle_switch.set_hexpand(false);
+        toggle_switch.set_valign(gtk4::Align::Center);
+        toggle_switch.set_vexpand(false);
+        toggle_switch.set_sensitive(true);
+        toggle_switch.set_can_focus(true);
+        toggle_switch.set_focusable(true);
+        
+        {
+            let config = Arc::clone(&config);
+            let toggle_switch_clone = toggle_switch.clone();
+            toggle_switch.connect_active_notify(move |toggle| {
+                let enabled = toggle.is_active();
+                println!("Toggle Bar clicked! New state: {}", enabled);
+                // Reload config from disk to preserve existing settings
+                let mut cfg = ColorConfig::load();
+                cfg.set_sidebar_visible(enabled);
+                if let Err(e) = cfg.save() {
+                    eprintln!("Error saving sidebar visibility: {}", e);
+                    // Revert the toggle state on error
+                    toggle_switch_clone.set_active(!enabled);
+                } else {
+                    // Update the shared config
+                    *config.lock().unwrap() = cfg.clone();
+                    // Notify quickshell about change after a short delay
+                    let config_clone = Arc::clone(&config);
+                    gtk4::glib::timeout_add_local(std::time::Duration::from_millis(100), move || {
                         // Notify quickshell about change
                         if let Err(e) = quickshell::notify_color_change() {
                             eprintln!("Error notifying quickshell: {}", e);
                         }
                         println!("Sidebar visibility set to: {}", enabled);
-                    }
+                        gtk4::glib::ControlFlow::Break
+                    });
                 }
-            },
-            current_visible,
+            });
+        }
+        
+        let sidebar_visible_row = create_toggle_row_with_switch(
+            "Sidebar Visibility",
+            "Show or hide the sidebar",
+            toggle_switch,
         );
         content.append(&sidebar_visible_row);
 
@@ -113,7 +132,9 @@ fn create_toggle_row(
     let toggle = Switch::new();
     toggle.set_active(initial_value);
     toggle.set_halign(gtk4::Align::End);
+    toggle.set_valign(gtk4::Align::Center);
     toggle.set_hexpand(false);
+    toggle.set_vexpand(false);
     toggle.connect_active_notify(move |toggle| {
         on_toggle(toggle.is_active());
     });
@@ -122,8 +143,46 @@ fn create_toggle_row(
     row
 }
 
+fn create_toggle_row_with_switch(
+    title: &str,
+    description: &str,
+    toggle: Switch,
+) -> GtkBox {
+    let row = GtkBox::new(Orientation::Horizontal, 15);
+    row.add_css_class("settings-row");
+    row.set_margin_start(16);
+    row.set_margin_end(16);
+    row.set_margin_top(16);
+    row.set_margin_bottom(16);
+    row.set_hexpand(true);
+    row.set_halign(gtk4::Align::Fill);
+    row.set_can_focus(false);
+
+    let text_box = GtkBox::new(Orientation::Vertical, 4);
+    text_box.set_hexpand(true);
+    text_box.set_halign(gtk4::Align::Fill);
+    text_box.set_can_focus(false);
+
+    let title_label = Label::new(Some(title));
+    title_label.add_css_class("row-title");
+    title_label.set_xalign(0.0);
+    title_label.set_halign(gtk4::Align::Start);
+    text_box.append(&title_label);
+
+    let desc_label = Label::new(Some(description));
+    desc_label.add_css_class("row-description");
+    desc_label.set_xalign(0.0);
+    desc_label.set_halign(gtk4::Align::Start);
+    text_box.append(&desc_label);
+
+    row.append(&text_box);
+    row.append(&toggle);
+
+    row
+}
+
 fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 24);
+    let section = GtkBox::new(Orientation::Vertical, 12);
     section.add_css_class("settings-row");
     section.set_margin_start(0);
     section.set_margin_end(0);

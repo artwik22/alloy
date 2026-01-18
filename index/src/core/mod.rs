@@ -6,15 +6,17 @@ mod file_ops;
 mod pinned;
 mod scanner;
 mod search;
+mod sidebar_prefs;
 
 pub use clipboard::Clipboard;
 pub use color_config::ColorConfig;
-pub use config::{Keybind, KeybindAction, KeybindConfig};
-pub use drives::DriveScanner;
-pub use pinned::{PinnedFolder, PinnedManager};
-
-#[allow(unused_imports)]
-pub use drives::DriveInfo;
 pub use file_ops::FileOperations;
 pub use scanner::{FileEntry, Scanner};
-pub use search::GlobalSearch;
+
+// These are available but not currently used in the Nautilus clone
+#[allow(unused_imports)]
+pub use config::{Keybind, KeybindAction, KeybindConfig};
+#[allow(unused_imports)]
+pub use drives::{DriveInfo, DriveScanner};
+pub use pinned::{PinnedFolderObject, PinnedFolderStore};
+pub use sidebar_prefs::SidebarPrefs;

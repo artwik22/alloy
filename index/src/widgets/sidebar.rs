@@ -1,30 +1,82 @@
+use gtk4::glib::{self, clone};
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, GestureClick, Image, Label, ListBox, ListBoxRow, Orientation, PopoverMenu, ScrolledWindow, SelectionMode};
-use gtk4::gio;
+use gtk4::{
+    gio, Box as GtkBox, GestureClick, Image, Label, ListBox, ListBoxRow, 
+    Orientation, PopoverMenu, ScrolledWindow, SelectionMode,
+};
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::fs::OpenOptions;
+use std::io::Write;
 
-use crate::core::{DriveScanner, PinnedManager, PinnedFolder};
+use crate::core::{DriveScanner, PinnedFolderObject, PinnedFolderStore};
 
-#[derive(Clone)]
-#[allow(dead_code)]
-pub struct Sidebar {
-    container: GtkBox,
-    list_box: ListBox,
-    on_location_selected: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
-    paths: Rc<RefCell<Vec<PathBuf>>>,
-    pinned_start_index: Rc<RefCell<usize>>,
-    pinned_end_index: Rc<RefCell<usize>>,
+// #region agent log
+fn debug_log(hypothesis_id: &str, location: &str, message: &str, data: serde_json::Value) {
+    let log_entry = serde_json::json!({
+        "sessionId": "debug-session",
+        "runId": "run1",
+        "hypothesisId": hypothesis_id,
+        "location": location,
+        "message": message,
+        "data": data,
+        "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()
+    });
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/artwik/.config/alloy/.cursor/debug.log") {
+        let _ = writeln!(file, "{}", log_entry);
+    }
+}
+// #endregion
+
+// ============================================================================
+// Sidebar Item Types
+// ============================================================================
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum SidebarItemType {
+    StandardFolder,
+    SystemFolder,
+    Drive,
 }
 
-impl Sidebar {
+// ============================================================================
+// NautilusSidebar - Main sidebar widget
+// ============================================================================
+
+#[derive(Clone)]
+pub struct NautilusSidebar {
+    container: GtkBox,
+    pinned_list_box: ListBox,
+    standard_list_box: ListBox,
+    other_list_box: ListBox,
+    pinned_store: PinnedFolderStore,
+    on_location_selected: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>,
+}
+
+impl NautilusSidebar {
+    /// Check if a path is a standard location (to avoid duplicates in pinned)
+    fn is_standard_location(path: &std::path::Path) -> bool {
+        let standard_paths = vec![
+            dirs::home_dir(),
+            dirs::document_dir(),
+            dirs::download_dir(),
+            dirs::audio_dir(),
+            dirs::picture_dir(),
+            dirs::video_dir(),
+            Some(PathBuf::from("/")),
+        ];
+        
+        standard_paths.iter()
+            .filter_map(|p| p.as_ref())
+            .any(|std_path| PinnedFolderStore::normalize_path(path) == 
+                            PinnedFolderStore::normalize_path(std_path))
+    }
+
     pub fn new() -> Self {
         let container = GtkBox::builder()
             .orientation(Orientation::Vertical)
-            .css_classes(["sidebar"])
-            .vexpand(true)
-            .width_request(220)
+            .css_classes(["sidebar-container"])
             .build();
 
         let scrolled = ScrolledWindow::builder()
@@ -33,314 +85,655 @@ impl Sidebar {
             .vexpand(true)
             .build();
 
-        let list_box = ListBox::builder()
+        let main_box = GtkBox::builder()
+            .orientation(Orientation::Vertical)
+            .build();
+
+        // Create pinned folders store
+        let pinned_store = PinnedFolderStore::new();
+
+        // ===== Pinned Section =====
+        let pinned_label = Label::builder()
+            .label("Pinned")
+            .halign(gtk4::Align::Start)
+            .margin_start(12)
+            .margin_top(12)
+            .margin_bottom(6)
+            .css_classes(["dim-label", "caption"])
+            .build();
+        main_box.append(&pinned_label);
+
+        let pinned_list_box = ListBox::builder()
             .selection_mode(SelectionMode::Single)
             .css_classes(["navigation-sidebar"])
             .build();
 
-        let paths: Rc<RefCell<Vec<PathBuf>>> = Rc::new(RefCell::new(Vec::new()));
-        let pinned_start_index: Rc<RefCell<usize>> = Rc::new(RefCell::new(0));
-        let pinned_end_index: Rc<RefCell<usize>> = Rc::new(RefCell::new(0));
+        // Bind pinned store to list box using factory
+        let on_location_selected: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = 
+            Rc::new(RefCell::new(None));
+        
+        Self::bind_pinned_store(&pinned_list_box, &pinned_store, on_location_selected.clone());
+        main_box.append(&pinned_list_box);
 
-        // === Pinned Section ===
-        let pinned_header = Self::create_section_header("Pinned");
-        list_box.append(&pinned_header);
-        let pinned_start = paths.borrow().len();
+        // ===== Standard Folders Section =====
+        let standard_list_box = ListBox::builder()
+            .selection_mode(SelectionMode::Single)
+            .css_classes(["navigation-sidebar"])
+            .build();
 
-        let pinned = PinnedManager::load();
-        for item in &pinned {
-            if item.path.exists() {
-                let path = item.path.clone();
-                let row = Self::create_pinned_row(&item.name, "folder-symbolic", &path, &list_box);
-                list_box.append(&row);
-                paths.borrow_mut().push(path);
-            }
+        Self::add_standard_location(&standard_list_box, "Home", "user-home-symbolic", 
+            dirs::home_dir().unwrap_or_else(|| PathBuf::from("/")), SidebarItemType::StandardFolder);
+
+        if let Some(documents) = dirs::document_dir() {
+            Self::add_standard_location(&standard_list_box, "Documents", "folder-documents-symbolic", 
+                documents, SidebarItemType::StandardFolder);
         }
-        let pinned_end = paths.borrow().len();
+        
+        if let Some(downloads) = dirs::download_dir() {
+            Self::add_standard_location(&standard_list_box, "Downloads", "folder-download-symbolic", 
+                downloads, SidebarItemType::StandardFolder);
+        }
+        
+        if let Some(music) = dirs::audio_dir() {
+            Self::add_standard_location(&standard_list_box, "Music", "folder-music-symbolic", 
+                music, SidebarItemType::StandardFolder);
+        }
+        
+        if let Some(pictures) = dirs::picture_dir() {
+            Self::add_standard_location(&standard_list_box, "Pictures", "folder-pictures-symbolic", 
+                pictures, SidebarItemType::StandardFolder);
+        }
+        
+        if let Some(videos) = dirs::video_dir() {
+            Self::add_standard_location(&standard_list_box, "Videos", "folder-videos-symbolic", 
+                videos, SidebarItemType::StandardFolder);
+        }
 
-        *pinned_start_index.borrow_mut() = pinned_start;
-        *pinned_end_index.borrow_mut() = pinned_end;
+        Self::add_standard_location(&standard_list_box, "Trash", "user-trash-symbolic", 
+            dirs::home_dir()
+                .map(|h| h.join(".local/share/Trash/files"))
+                .unwrap_or_else(|| PathBuf::from("/")), SidebarItemType::SystemFolder);
 
-        // === Devices Section ===
-        let devices_header = Self::create_section_header("Devices");
-        list_box.append(&devices_header);
+        main_box.append(&standard_list_box);
 
+        // ===== Other Locations Section =====
+        let other_label = Label::builder()
+            .label("Other Locations")
+            .halign(gtk4::Align::Start)
+            .margin_start(12)
+            .margin_top(12)
+            .margin_bottom(6)
+            .css_classes(["dim-label", "caption"])
+            .build();
+        main_box.append(&other_label);
+
+        let other_list_box = ListBox::builder()
+            .selection_mode(SelectionMode::Single)
+            .css_classes(["navigation-sidebar"])
+            .build();
+
+        Self::add_standard_location(&other_list_box, "Computer", "drive-harddisk-symbolic", 
+            PathBuf::from("/"), SidebarItemType::Drive);
+
+        // Add other drives
         let drives = DriveScanner::scan();
-        for drive in drives {
-            let subtitle = if drive.total_size > 0 {
-                Some(drive.size_display())
-            } else {
-                None
-            };
-
-            let row = Self::create_item_row(&drive.name, &drive.icon_name, subtitle.as_deref());
-            row.add_css_class("drive-item");
-            list_box.append(&row);
-            paths.borrow_mut().push(drive.mount_point);
+        for drive in &drives {
+            if drive.mount_point == PathBuf::from("/") {
+                continue;
+            }
+            if let Some(home) = dirs::home_dir() {
+                if drive.mount_point == home {
+                    continue;
+                }
+            }
+            Self::add_standard_location(&other_list_box, &drive.name, &drive.icon_name, 
+                drive.mount_point.clone(), SidebarItemType::Drive);
         }
 
-        // === System Section ===
-        let system_header = Self::create_section_header("System");
-        list_box.append(&system_header);
-
-        // Trash
-        if let Some(trash_path) = dirs::data_local_dir().map(|p| p.join("Trash/files")) {
-            let row = Self::create_item_row("Trash", "user-trash-symbolic", None);
-            list_box.append(&row);
-            paths.borrow_mut().push(trash_path);
-        }
-
-        // Root
-        let row = Self::create_item_row("File System", "drive-harddisk-symbolic", None);
-        list_box.append(&row);
-        paths.borrow_mut().push(PathBuf::from("/"));
-
-        scrolled.set_child(Some(&list_box));
+        main_box.append(&other_list_box);
+        scrolled.set_child(Some(&main_box));
         container.append(&scrolled);
 
-        let on_location_selected: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> =
-            Rc::new(RefCell::new(None));
-
-        // Connect row activation - use direct index lookup
+        // Connect standard list box row activation
         {
             let on_location_selected_clone = on_location_selected.clone();
-            let paths_clone = paths.clone();
-
-            list_box.connect_row_activated(move |_listbox, activated_row| {
-                // Skip if it's a header
-                if activated_row
-                    .css_classes()
-                    .iter()
-                    .any(|c| c == "sidebar-section-header")
-                {
-                    return;
-                }
-
-                // Get row index and map to paths array
-                let row_index = activated_row.index();
-                
-                // Build index map (skip headers)
-                let mut item_indices = Vec::new();
-                let mut current = _listbox.first_child();
-                
-                while let Some(child) = current {
-                    if let Some(r) = child.downcast_ref::<ListBoxRow>() {
-                        if !r.css_classes().iter().any(|c| c == "sidebar-section-header") {
-                            item_indices.push(r.index());
-                        }
-                    }
-                    current = child.next_sibling();
-                }
-
-                // Find position in item_indices that matches row_index
-                if let Some(array_index) = item_indices.iter().position(|&idx| idx == row_index) {
-                    let paths = paths_clone.borrow();
-                    if let Some(path) = paths.get(array_index) {
-                        if let Some(ref callback) = *on_location_selected_clone.borrow() {
-                            callback(path.clone());
-                        }
+            standard_list_box.connect_row_activated(move |_, row| {
+                if let Some(path) = Self::get_row_path(row) {
+                    if let Some(ref callback) = *on_location_selected_clone.borrow() {
+                        callback(path);
                     }
                 }
             });
         }
+
+        // Connect other list box row activation
+        {
+            let on_location_selected_clone = on_location_selected.clone();
+            other_list_box.connect_row_activated(move |_, row| {
+                if let Some(path) = Self::get_row_path(row) {
+                    if let Some(ref callback) = *on_location_selected_clone.borrow() {
+                        callback(path);
+                    }
+                }
+            });
+        }
+
+        // Setup context menus for standard and other locations
+        Self::setup_standard_context_menu(&standard_list_box, &pinned_store);
+        Self::setup_standard_context_menu(&other_list_box, &pinned_store);
 
         Self {
             container,
-            list_box,
+            pinned_list_box,
+            standard_list_box,
+            other_list_box,
+            pinned_store,
             on_location_selected,
-            paths,
-            pinned_start_index,
-            pinned_end_index,
         }
     }
 
-    fn create_section_header(title: &str) -> ListBoxRow {
+    /// Bind the pinned store to a ListBox using a factory function
+    fn bind_pinned_store(
+        list_box: &ListBox, 
+        store: &PinnedFolderStore,
+        on_location_selected: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>>
+    ) {
+        let store_clone = store.clone();
+        let on_location_selected_clone = on_location_selected.clone();
+        
+        list_box.bind_model(
+            Some(store.store()),
+            move |obj| {
+                let pinned_obj = obj.clone().downcast::<PinnedFolderObject>()
+                    .expect("Expected PinnedFolderObject");
+                
+                // #region agent log
+                debug_log("B", "sidebar.rs:bind_pinned_store", "Factory called", serde_json::json!({
+                    "path": pinned_obj.path().to_string_lossy(),
+                    "name": pinned_obj.name(),
+                    "obj_ptr": format!("{:p}", &pinned_obj)
+                }));
+                // #endregion
+                
+                // Skip standard locations
+                if Self::is_standard_location(&pinned_obj.path()) {
+                    // Return an invisible row for standard locations
+                    let row = ListBoxRow::builder()
+                        .visible(false)
+                        .build();
+                    return row.upcast();
+                }
+                
+                let row = Self::create_sidebar_row(
+                    &pinned_obj.name(), 
+                    "folder-symbolic", 
+                    &pinned_obj.path()
+                );
+                
+                // #region agent log
+                debug_log("B", "sidebar.rs:bind_pinned_store", "Before setup_pinned_row_context_menu", serde_json::json!({
+                    "row_ptr": format!("{:p}", &row),
+                    "path": pinned_obj.path().to_string_lossy()
+                }));
+                // #endregion
+                
+                // Setup context menu for pinned folder
+                Self::setup_pinned_row_context_menu(&row, &pinned_obj, &store_clone);
+                
+                // #region agent log
+                debug_log("B", "sidebar.rs:bind_pinned_store", "After setup_pinned_row_context_menu", serde_json::json!({
+                    "row_ptr": format!("{:p}", &row),
+                    "path": pinned_obj.path().to_string_lossy()
+                }));
+                // #endregion
+                
+                // Connect click for navigation
+                let path = pinned_obj.path();
+                let on_selected = on_location_selected_clone.clone();
+                row.connect_activate(move |_| {
+                    if let Some(ref callback) = *on_selected.borrow() {
+                        callback(path.clone());
+                    }
+                });
+                
+                row.upcast()
+            }
+        );
+        
+        // Connect row activation for pinned list
+        let on_location_selected_activation = on_location_selected.clone();
+        let store_for_activation = store.store().clone();
+        
+        list_box.connect_row_activated(move |_, row| {
+            let index = row.index();
+            if index >= 0 {
+                if let Some(obj) = store_for_activation.item(index as u32) {
+                    if let Ok(pinned) = obj.downcast::<PinnedFolderObject>() {
+                        if let Some(ref callback) = *on_location_selected_activation.borrow() {
+                            callback(pinned.path());
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /// Create a sidebar row widget
+    fn create_sidebar_row(name: &str, icon_name: &str, path: &std::path::Path) -> ListBoxRow {
         let row = ListBoxRow::builder()
-            .selectable(false)
-            .activatable(false)
-            .css_classes(["sidebar-section-header"])
+            .css_classes(["sidebar-row"])
+            .build();
+        
+        let hbox = GtkBox::builder()
+            .orientation(Orientation::Horizontal)
+            .spacing(10)
+            .margin_start(8)
+            .margin_end(8)
+            .margin_top(4)
+            .margin_bottom(4)
+            .build();
+
+        let icon = Image::builder()
+            .icon_name(icon_name)
+            .pixel_size(18)
+            .css_classes(["sidebar-icon"])
             .build();
 
         let label = Label::builder()
-            .label(title)
+            .label(name)
             .halign(gtk4::Align::Start)
-            .margin_start(16)
-            .margin_top(10)
-            .margin_bottom(6)
-            .css_classes(["sidebar-section-header"])
-            .build();
-
-        row.set_child(Some(&label));
-        row
-    }
-
-    fn create_item_row(name: &str, icon_name: &str, subtitle: Option<&str>) -> ListBoxRow {
-        let row = ListBoxRow::new();
-
-        let hbox = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(10)
-            .margin_start(12)
-            .margin_end(12)
-            .margin_top(4)
-            .margin_bottom(4)
-            .build();
-
-        let icon = Image::builder()
-            .icon_name(icon_name)
-            .pixel_size(18)
-            .build();
-
-        let vbox = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(2)
             .hexpand(true)
             .build();
 
-        let name_label = Label::builder()
-            .label(name)
-            .halign(gtk4::Align::Start)
-            .ellipsize(gtk4::pango::EllipsizeMode::End)
-            .build();
-
-        vbox.append(&name_label);
-
-        if let Some(sub) = subtitle {
-            let sub_label = Label::builder()
-                .label(sub)
-                .halign(gtk4::Align::Start)
-                .css_classes(["dim-label"])
-                .build();
-            vbox.append(&sub_label);
-        }
-
         hbox.append(&icon);
-        hbox.append(&vbox);
+        hbox.append(&label);
         row.set_child(Some(&hbox));
+        
+        // Store path in row data (unsafe but required for GTK data storage)
+        unsafe {
+            row.set_data("path", path.to_path_buf());
+        }
+        
         row
     }
 
-    fn get_folder_icon(path: &PathBuf) -> String {
-        // Check if it's a standard directory
-        if let Some(home) = dirs::home_dir() {
-            if path == &home {
-                return "user-home-symbolic".to_string();
-            }
-            if let Some(doc_dir) = dirs::document_dir() {
-                if path == &doc_dir {
-                    return "folder-documents-symbolic".to_string();
-                }
-            }
-            if let Some(download_dir) = dirs::download_dir() {
-                if path == &download_dir {
-                    return "folder-download-symbolic".to_string();
-                }
-            }
-            if let Some(pic_dir) = dirs::picture_dir() {
-                if path == &pic_dir {
-                    return "folder-pictures-symbolic".to_string();
-                }
-            }
-            if let Some(music_dir) = dirs::audio_dir() {
-                if path == &music_dir {
-                    return "folder-music-symbolic".to_string();
-                }
-            }
-            if let Some(video_dir) = dirs::video_dir() {
-                if path == &video_dir {
-                    return "folder-videos-symbolic".to_string();
-                }
-            }
+    /// Add a standard location to a ListBox
+    fn add_standard_location(
+        list_box: &ListBox, 
+        name: &str, 
+        icon_name: &str, 
+        path: PathBuf,
+        item_type: SidebarItemType
+    ) {
+        let row = Self::create_sidebar_row(name, icon_name, &path);
+        unsafe {
+            row.set_data("item_type", item_type);
         }
-        "folder-symbolic".to_string()
+        list_box.append(&row);
     }
 
-    fn create_pinned_row(name: &str, icon_name: &str, path: &PathBuf, list_box: &ListBox) -> ListBoxRow {
-        let row = ListBoxRow::new();
+    /// Get path from a row
+    fn get_row_path(row: &ListBoxRow) -> Option<PathBuf> {
+        unsafe { row.data::<PathBuf>("path").map(|p| p.as_ref().clone()) }
+    }
 
-        let hbox = GtkBox::builder()
-            .orientation(Orientation::Horizontal)
-            .spacing(10)
-            .margin_start(12)
-            .margin_end(12)
-            .margin_top(4)
-            .margin_bottom(4)
-            .build();
+    /// Get item type from a row
+    fn get_row_item_type(row: &ListBoxRow) -> Option<SidebarItemType> {
+        unsafe { row.data::<SidebarItemType>("item_type").map(|t| t.as_ref().clone()) }
+    }
 
-        let icon = Image::builder()
-            .icon_name(icon_name)
-            .pixel_size(18)
-            .build();
+    /// Setup context menu for a pinned folder row
+    fn setup_pinned_row_context_menu(
+        row: &ListBoxRow, 
+        pinned_obj: &PinnedFolderObject,
+        store: &PinnedFolderStore
+    ) {
+        // #region agent log
+        debug_log("A", "sidebar.rs:setup_pinned_row_context_menu", "Function entry", serde_json::json!({
+            "row_ptr": format!("{:p}", row),
+            "path": pinned_obj.path().to_string_lossy()
+        }));
+        // #endregion
+        
+        let gesture = GestureClick::builder().button(3).build();
+        let current_popover: Rc<RefCell<Option<PopoverMenu>>> = Rc::new(RefCell::new(None));
+        
+        let path = pinned_obj.path();
+        let store_clone = store.clone();
+        
+        gesture.connect_pressed(clone!(
+            #[strong] current_popover,
+            #[strong] path,
+            #[strong] store_clone,
+            #[weak] row,
+            move |_, _, x, y| {
+                // Close existing popover
+                if let Some(ref mut popover) = *current_popover.borrow_mut() {
+                    popover.popdown();
+                    popover.unparent();
+                }
+                current_popover.borrow_mut().take();
 
-        let vbox = GtkBox::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(2)
-            .hexpand(true)
-            .build();
-
-        let name_label = Label::builder()
-            .label(name)
-            .halign(gtk4::Align::Start)
-            .ellipsize(gtk4::pango::EllipsizeMode::End)
-            .build();
-
-        vbox.append(&name_label);
-
-        hbox.append(&icon);
-        hbox.append(&vbox);
-
-        row.set_child(Some(&hbox));
-        row.add_css_class("pinned-item");
-
-        // Context menu for unpin
-        {
-            let path_for_unpin = path.clone();
-            let row_clone = row.clone();
-            let list_box_clone = list_box.clone();
-            
-            let gesture = GestureClick::builder().button(3).build();
-            gesture.connect_pressed(move |_gesture, _, x, y| {
+                // Create menu
                 let menu = gio::Menu::new();
-                menu.append(Some("Unpin"), Some("pinned.unpin"));
+                
+                // Rename action
+                let rename_item = gio::MenuItem::new(Some("Rename…"), None);
+                rename_item.set_action_and_target_value(
+                    Some("sidebar.rename-pinned"),
+                    Some(&path.to_string_lossy().to_string().to_variant())
+                );
+                menu.append_item(&rename_item);
+                
+                // Unpin action
+                let unpin_item = gio::MenuItem::new(Some("Unpin from Sidebar"), None);
+                unpin_item.set_action_and_target_value(
+                    Some("app.toggle-pin"),
+                    Some(&path.to_string_lossy().to_string().to_variant())
+                );
+                menu.append_item(&unpin_item);
 
                 let popover = PopoverMenu::from_model(Some(&menu));
-                popover.set_parent(&list_box_clone);
-                popover.set_pointing_to(Some(&gtk4::gdk::Rectangle::new(
-                    x as i32,
-                    y as i32,
-                    1,
-                    1,
-                )));
-
-                // Create action group
+                popover.set_parent(&row);
+                popover.set_position(gtk4::PositionType::Bottom);
+                popover.set_pointing_to(Some(&gtk4::gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
+                
+                // Create action group for sidebar-specific actions
                 let action_group = gio::SimpleActionGroup::new();
+                
+                // Rename action
+                let rename_action = gio::SimpleAction::new(
+                    "rename-pinned", 
+                    Some(&String::static_variant_type())
+                );
+                let store_for_rename = store_clone.clone();
+                let row_clone = row.clone();
+                rename_action.connect_activate(move |_, param| {
+                    if let Some(path_str) = param.and_then(|p| p.get::<String>()) {
+                        let path = PathBuf::from(&path_str);
+                        Self::show_rename_dialog(&path, &row_clone, &store_for_rename);
+                    }
+                });
+                action_group.add_action(&rename_action);
+                
+                popover.insert_action_group("sidebar", Some(&action_group));
+                
+                let popover_clone = popover.clone();
+                let current_popover_clone = current_popover.clone();
+                popover.connect_closed(move |p| {
+                    p.unparent();
+                    current_popover_clone.borrow_mut().take();
+                });
+                
+                *current_popover.borrow_mut() = Some(popover_clone.clone());
+                popover_clone.popup();
+            }
+        ));
+        
+        // #region agent log
+        debug_log("A", "sidebar.rs:setup_pinned_row_context_menu", "Before add_controller", serde_json::json!({
+            "row_ptr": format!("{:p}", row),
+            "gesture_ptr": format!("{:p}", &gesture),
+            "has_widget": gesture.widget().is_some()
+        }));
+        // #endregion
+        
+        row.add_controller(gesture);
+        
+        // #region agent log
+        debug_log("A", "sidebar.rs:setup_pinned_row_context_menu", "After add_controller", serde_json::json!({
+            "row_ptr": format!("{:p}", row)
+        }));
+        // #endregion
+    }
 
-                // Unpin action
-                {
-                    let path_to_unpin = path_for_unpin.clone();
-                    let action = gio::SimpleAction::new("unpin", None);
-                    action.connect_activate(move |_, _| {
-                        if let Err(e) = PinnedManager::remove(&path_to_unpin) {
-                            eprintln!("Failed to unpin: {}", e);
-                        }
-                        // Note: Sidebar refresh would need to be implemented
-                        // For now, requires restart to see changes
-                    });
-                    action_group.add_action(&action);
+    /// Setup context menu for standard/other locations
+    fn setup_standard_context_menu(list_box: &ListBox, store: &PinnedFolderStore) {
+        // #region agent log
+        debug_log("C", "sidebar.rs:setup_standard_context_menu", "Function entry", serde_json::json!({
+            "list_box_ptr": format!("{:p}", list_box)
+        }));
+        // #endregion
+        
+        let gesture = GestureClick::builder().button(3).build();
+        
+        // #region agent log
+        let widget_after_create = gesture.widget();
+        debug_log("D", "sidebar.rs:setup_standard_context_menu", "After creating gesture", serde_json::json!({
+            "list_box_ptr": format!("{:p}", list_box),
+            "gesture_ptr": format!("{:p}", &gesture),
+            "has_widget": widget_after_create.is_some(),
+            "widget_type": widget_after_create.as_ref().map(|w| format!("{:?}", w.type_()))
+        }));
+        // #endregion
+        
+        let current_popover: Rc<RefCell<Option<PopoverMenu>>> = Rc::new(RefCell::new(None));
+        
+        let store_clone = store.clone();
+        
+        // #region agent log
+        let widget_before_connect = gesture.widget();
+        debug_log("F", "sidebar.rs:setup_standard_context_menu", "Before connect_pressed", serde_json::json!({
+            "gesture_ptr": format!("{:p}", &gesture),
+            "has_widget": widget_before_connect.is_some()
+        }));
+        // #endregion
+        
+        gesture.connect_pressed(clone!(
+            #[strong] current_popover,
+            #[strong] store_clone,
+            move |gesture, _, x, y| {
+                // Close existing popover
+                if let Some(ref mut popover) = *current_popover.borrow_mut() {
+                    popover.popdown();
+                    popover.unparent();
+                }
+                current_popover.borrow_mut().take();
+
+                // Find clicked row
+                let Some(widget) = gesture.widget() else { return };
+                let Some(picked) = widget.pick(x, y, gtk4::PickFlags::DEFAULT) else { return };
+                
+                let mut current_widget = Some(picked);
+                let mut found_row: Option<ListBoxRow> = None;
+                
+                while let Some(w) = current_widget {
+                    if let Ok(row) = w.clone().downcast::<ListBoxRow>() {
+                        found_row = Some(row);
+                        break;
+                    }
+                    current_widget = w.parent();
+                }
+                
+                let Some(row) = found_row else { return };
+                let Some(path) = Self::get_row_path(&row) else { return };
+                let item_type = Self::get_row_item_type(&row);
+                
+                // Don't show menu for system folders (like Trash)
+                if item_type == Some(SidebarItemType::SystemFolder) {
+                    return;
                 }
 
-                popover.insert_action_group("pinned", Some(&action_group));
-                popover.popup();
-            });
+                // Create menu
+                let menu = gio::Menu::new();
+                
+                let is_pinned = store_clone.is_pinned(&path);
+                let pin_label = if is_pinned { "Unpin from Sidebar" } else { "Pin to Sidebar" };
+                
+                let pin_item = gio::MenuItem::new(Some(pin_label), None);
+                pin_item.set_action_and_target_value(
+                    Some("app.toggle-pin"),
+                    Some(&path.to_string_lossy().to_string().to_variant())
+                );
+                menu.append_item(&pin_item);
 
-            row.add_controller(gesture);
+                let popover = PopoverMenu::from_model(Some(&menu));
+                popover.set_parent(&row);
+                popover.set_position(gtk4::PositionType::Bottom);
+                popover.set_pointing_to(Some(&gtk4::gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
+                
+                let popover_clone = popover.clone();
+                let current_popover_clone = current_popover.clone();
+                popover.connect_closed(move |p| {
+                    p.unparent();
+                    current_popover_clone.borrow_mut().take();
+                });
+                
+                *current_popover.borrow_mut() = Some(popover_clone.clone());
+                popover_clone.popup();
+            }
+        ));
+        
+        // #region agent log
+        let widget_after_connect = gesture.widget();
+        debug_log("F", "sidebar.rs:setup_standard_context_menu", "After connect_pressed", serde_json::json!({
+            "gesture_ptr": format!("{:p}", &gesture),
+            "has_widget": widget_after_connect.is_some(),
+            "widget_type": widget_after_connect.as_ref().map(|w| format!("{:?}", w.type_()))
+        }));
+        // #endregion
+        
+        // #region agent log
+        let widget_before = gesture.widget();
+        let controllers_count = list_box.observe_controllers().n_items();
+        
+        // Check if this gesture is already in the list_box controllers
+        let gesture_already_in_list = {
+            let mut found = false;
+            for i in 0..controllers_count {
+                if let Some(controller) = list_box.observe_controllers().item(i) {
+                    if let Ok(existing_gesture) = controller.downcast::<GestureClick>() {
+                        if existing_gesture.as_ref() as *const _ == &gesture as *const _ {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            found
+        };
+        
+        debug_log("C", "sidebar.rs:setup_standard_context_menu", "Before add_controller", serde_json::json!({
+            "list_box_ptr": format!("{:p}", list_box),
+            "gesture_ptr": format!("{:p}", &gesture),
+            "has_widget": widget_before.is_some(),
+            "widget_type": widget_before.as_ref().map(|w| format!("{:?}", w.type_())),
+            "list_box_controllers_count": controllers_count,
+            "gesture_already_in_list": gesture_already_in_list
+        }));
+        // #endregion
+        
+        // Check if gesture already has a widget - this would cause the GTK assertion error
+        if widget_before.is_some() {
+            eprintln!("ERROR: Gesture already has widget before add_controller! widget={:?}", widget_before);
+            return; // Don't add controller if it already has a widget
         }
+        
+        // Check if gesture is already in the list_box - this would also cause the GTK assertion error
+        if gesture_already_in_list {
+            eprintln!("ERROR: Gesture is already in list_box controllers! Not adding again.");
+            return; // Don't add controller if it's already in the list
+        }
+        
+        list_box.add_controller(gesture);
+        
+        // #region agent log
+        debug_log("C", "sidebar.rs:setup_standard_context_menu", "After add_controller", serde_json::json!({
+            "list_box_ptr": format!("{:p}", list_box),
+            "controllers_count": list_box.observe_controllers().n_items()
+        }));
+        // #endregion
+    }
 
-        row
+    /// Show rename dialog for pinned folder
+    fn show_rename_dialog(path: &std::path::Path, row: &ListBoxRow, store: &PinnedFolderStore) {
+        use gtk4::Entry;
+        use libadwaita as adw;
+        use adw::prelude::*;
+        
+        // Get current name from store
+        let current_name = {
+            let normalized = PinnedFolderStore::normalize_path(path);
+            let mut name = path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "Folder".to_string());
+            
+            for i in 0..store.store().n_items() {
+                if let Some(obj) = store.store().item(i) {
+                    if let Ok(pinned) = obj.downcast::<PinnedFolderObject>() {
+                        if PinnedFolderStore::normalize_path(&pinned.path()) == normalized {
+                            name = pinned.name();
+                            break;
+                        }
+                    }
+                }
+            }
+            name
+        };
+
+        let window = row.root()
+            .and_then(|root| root.downcast::<gtk4::ApplicationWindow>().ok());
+
+        let dialog = adw::AlertDialog::builder()
+            .heading("Rename Item")
+            .body("Enter a new name for this item in the sidebar")
+            .build();
+
+        let entry = Entry::builder()
+            .text(&current_name)
+            .build();
+        entry.set_activates_default(true);
+        dialog.set_extra_child(Some(&entry));
+
+        dialog.add_response("cancel", "Cancel");
+        dialog.add_response("rename", "Rename");
+        dialog.set_response_appearance("rename", adw::ResponseAppearance::Suggested);
+        dialog.set_default_response(Some("rename"));
+        dialog.set_close_response("cancel");
+
+        let entry_clone = entry.clone();
+        glib::idle_add_local_once(move || {
+            entry_clone.grab_focus();
+            entry_clone.select_region(0, -1);
+        });
+
+        let path_clone = path.to_path_buf();
+        let store_clone = store.clone();
+        let current_name_clone = current_name.clone();
+        
+        dialog.connect_response(None, move |dialog, response| {
+            if response == "rename" {
+                if let Some(entry) = dialog.extra_child().and_downcast::<Entry>() {
+                    let new_name = entry.text().to_string().trim().to_string();
+                    if !new_name.is_empty() && new_name != current_name_clone {
+                        if let Err(e) = store_clone.rename(&path_clone, &new_name) {
+                            eprintln!("Failed to rename: {}", e);
+                        }
+                    }
+                }
+            }
+        });
+
+        if let Some(win) = window {
+            dialog.present(Some(&win));
+        } else {
+            dialog.present(None::<&gtk4::Window>);
+        }
     }
 
     pub fn container(&self) -> &GtkBox {
         &self.container
+    }
+
+    pub fn pinned_store(&self) -> &PinnedFolderStore {
+        &self.pinned_store
+    }
+
+    pub fn select_location(&self, _index: i32) {
+        // Select first row in standard list box
+        if let Some(row) = self.standard_list_box.row_at_index(0) {
+            self.standard_list_box.select_row(Some(&row));
+        }
     }
 
     pub fn connect_location_selected<F: Fn(PathBuf) + 'static>(&self, callback: F) {
@@ -348,13 +741,17 @@ impl Sidebar {
     }
 
     pub fn refresh(&self) {
-        // TODO: Implement refresh to reload pinned items
-        // For now, requires restart
+        // The ListStore binding automatically updates the UI when the store changes
+        // This method is kept for API compatibility but may not need to do anything
+        // if we properly use the reactive model
+        
+        // Force a re-evaluation of the model binding
+        self.pinned_list_box.invalidate_filter();
     }
+}
 
-    #[allow(dead_code)]
-    pub fn refresh_drives(&self) {
-        // Could be implemented to refresh drive list
-        // For now, requires restart to see new drives
+impl Default for NautilusSidebar {
+    fn default() -> Self {
+        Self::new()
     }
 }

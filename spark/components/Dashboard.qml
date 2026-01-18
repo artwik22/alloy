@@ -422,6 +422,7 @@ PanelWindow {
                                             onClicked: {
                                                 if (sharedData && sharedData.sidebarVisible !== undefined) {
                                                     sharedData.sidebarVisible = !sharedData.sidebarVisible
+                                                    dashboardRoot.saveSidebarSettings()
                                                 }
                                             }
                                         }
@@ -1848,8 +1849,73 @@ PanelWindow {
     property var cavaValues: []
     property bool cavaRunning: false
     property string projectPath: ""
+    property string colorConfigPath: ""
     
     // ============ FUNCTIONS ============
+    
+    // Save settings to colors.json
+    function saveSidebarSettings() {
+        if (!colorConfigPath || colorConfigPath.length === 0) {
+            console.log("Color config path not initialized, cannot save sidebar settings")
+            return
+        }
+        if (!projectPath || projectPath.length === 0) {
+            console.log("Project path not initialized, cannot save sidebar settings")
+            return
+        }
+        
+        // Use Python script to save settings - pass only sidebarVisible as argument 12
+        var scriptPath = projectPath + "/scripts/save-colors.py"
+        
+        // First, read current colors from file to preserve them
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file://" + colorConfigPath)
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    try {
+                        var json = JSON.parse(xhr.responseText)
+                        var bg = json.background || (sharedData ? sharedData.colorBackground : "#0a0a0a")
+                        var pr = json.primary || (sharedData ? sharedData.colorPrimary : "#1a1a1a")
+                        var sc = json.secondary || (sharedData ? sharedData.colorSecondary : "#141414")
+                        var tx = json.text || (sharedData ? sharedData.colorText : "#ffffff")
+                        var ac = json.accent || (sharedData ? sharedData.colorAccent : "#4a9eff")
+                        
+                        var sidebarVisibleStr = (sharedData && sharedData.sidebarVisible) ? "true" : "false"
+                        
+                        // Build command with all 12 arguments (colors + sidebarVisible)
+                        // Use synchronous write with sh -c to ensure file is written immediately
+                        var cmd = 'python3 "' + scriptPath + '" "' + bg + '" "' + pr + '" "' + sc + '" "' + tx + '" "' + ac + '" "' + colorConfigPath + '" "" "" "" "" "" "' + sidebarVisibleStr + '" && sync'
+                        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + cmd + "']; running: true }", dashboardRoot)
+                        console.log("Saved sidebar visibility to:", colorConfigPath, "value:", sidebarVisibleStr)
+                    } catch (e) {
+                        console.log("Error reading colors.json for save:", e)
+                    }
+                }
+            }
+        }
+        xhr.send()
+    }
+    
+    // Initialize color config path from home directory
+    function initializeColorConfigPath() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_home_dash")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                var home = xhr.responseText.trim()
+                if (home && home.length > 0) {
+                    colorConfigPath = home + "/.config/sharpshell/colors.json"
+                    console.log("Dashboard: Color config path initialized:", colorConfigPath)
+                } else {
+                    colorConfigPath = "/tmp/sharpshell/colors.json"
+                    console.log("Dashboard: Using fallback color config path")
+                }
+            }
+        }
+        xhr.send()
+    }
+    
     function updateWeather() {
         // Simple weather update - can be extended with API integration
         // For now, uses a simple approach that can be customized
@@ -2637,6 +2703,9 @@ PanelWindow {
         // Initialize project path
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_cava_path 2>/dev/null || pwd > /tmp/quickshell_cava_path']; running: true }", dashboardRoot)
         Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readCavaPath() }", dashboardRoot)
+        // Initialize color config path
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$HOME\" > /tmp/quickshell_home_dash 2>/dev/null || echo \"\" > /tmp/quickshell_home_dash']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.initializeColorConfigPath() }", dashboardRoot)
         startCava()
     }
     

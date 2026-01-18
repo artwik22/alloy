@@ -1,30 +1,47 @@
+use gtk4::glib::{self, clone};
 use gtk4::prelude::*;
-use gtk4::{Application, ApplicationWindow, Box as GtkBox, Orientation, Paned, ScrolledWindow};
+use gtk4::{gio, Box as GtkBox, Orientation, ScrolledWindow};
+use libadwaita as adw;
+use adw::prelude::*;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::fs::OpenOptions;
+use std::io::Write;
 
-use crate::core::{Clipboard, FileOperations, KeybindAction, KeybindConfig};
-use crate::widgets::{FileView, HeaderBar, PathBar, Sidebar, SettingsWindow};
+use crate::core::{Clipboard, FileOperations, SidebarPrefs};
+use crate::widgets::{FileGridView, NautilusHeaderBar, NautilusSidebar};
+
+// #region agent log
+fn debug_log(hypothesis_id: &str, location: &str, message: &str, data: serde_json::Value) {
+    let log_entry = serde_json::json!({
+        "sessionId": "debug-session",
+        "runId": "run1",
+        "hypothesisId": hypothesis_id,
+        "location": location,
+        "message": message,
+        "data": data,
+        "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()
+    });
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("/home/artwik/.config/alloy/.cursor/debug.log") {
+        let _ = writeln!(file, "{}", log_entry);
+    }
+}
+// #endregion
 
 pub struct IndexWindow {
-    pub window: ApplicationWindow,
+    pub window: adw::ApplicationWindow,
 }
 
 impl IndexWindow {
-    pub fn new(app: &Application) -> Self {
-        let window = ApplicationWindow::builder()
+    pub fn new(app: &adw::Application) -> Self {
+        // Create main window - Nautilus style
+        let window = adw::ApplicationWindow::builder()
             .application(app)
-            .title("Index")
-            .default_width(1000)
+            .title("Files")
+            .default_width(1100)
             .default_height(700)
-            .resizable(true)
-            .decorated(true)
             .build();
-        
-        // Ensure window is treated as a normal window, not floating
-        window.set_modal(false);
-        window.set_destroy_with_parent(false);
 
         // Shared state
         let current_path: Rc<RefCell<PathBuf>> = Rc::new(RefCell::new(
@@ -34,554 +51,385 @@ impl IndexWindow {
         let history_index: Rc<RefCell<i32>> = Rc::new(RefCell::new(-1));
         let clipboard: Rc<RefCell<Clipboard>> = Rc::new(RefCell::new(Clipboard::new()));
 
-        // Main layout
-        let main_box = GtkBox::new(Orientation::Vertical, 0);
+        // Create toolbar view (main container)
+        let toolbar_view = adw::ToolbarView::new();
 
-        // Path bar
-        let path_bar = PathBar::new();
+        // Create header bar (Nautilus style)
+        let header_bar = NautilusHeaderBar::new();
+        toolbar_view.add_top_bar(header_bar.container());
 
-        // Header bar
-        let header_bar = HeaderBar::new();
-        window.set_titlebar(Some(header_bar.container()));
+        // Create navigation split view for sidebar + content
+        let split_view = adw::NavigationSplitView::builder()
+            .min_sidebar_width(200.0)
+            .max_sidebar_width(280.0)
+            .sidebar_width_fraction(0.22)
+            .build();
 
-        // Create paned for sidebar and file view
-        let paned = Paned::new(Orientation::Horizontal);
-        paned.set_position(220);
-        paned.set_shrink_start_child(false);
-        paned.set_shrink_end_child(false);
-        paned.set_wide_handle(false);
-        paned.set_resize_start_child(false);
+        // Create sidebar (Nautilus style)
+        let sidebar = NautilusSidebar::new();
+        let sidebar_page = adw::NavigationPage::builder()
+            .title("Places")
+            .child(sidebar.container())
+            .build();
+        split_view.set_sidebar(Some(&sidebar_page));
 
-        // Sidebar
-        let sidebar = Sidebar::new();
-        paned.set_start_child(Some(sidebar.container()));
+        // Content area with file grid
+        let content_box = GtkBox::new(Orientation::Vertical, 0);
+        content_box.add_css_class("view");
 
-        // File view container
-        let file_view_box = GtkBox::new(Orientation::Vertical, 0);
-
-        // Add path bar to file view box
-        file_view_box.append(path_bar.container());
-
-        // File view
-        let file_view = FileView::new();
+        // File grid view with scroll
+        let file_view = FileGridView::new();
         let scrolled = ScrolledWindow::builder()
-            .hscrollbar_policy(gtk4::PolicyType::Automatic)
-            .vscrollbar_policy(gtk4::PolicyType::Automatic)
             .vexpand(true)
             .hexpand(true)
             .child(file_view.container())
             .build();
-        file_view_box.append(&scrolled);
+        scrolled.add_css_class("nautilus-scrolled");
+        content_box.append(&scrolled);
 
-        paned.set_end_child(Some(&file_view_box));
+        let content_page = adw::NavigationPage::builder()
+            .title("Files")
+            .child(&content_box)
+            .build();
+        split_view.set_content(Some(&content_page));
 
-        main_box.append(&paned);
-        window.set_child(Some(&main_box));
+        toolbar_view.set_content(Some(&split_view));
+        window.set_content(Some(&toolbar_view));
+
+        // Initialize
+        let initial_path = current_path.borrow().clone();
         
-        // Add DropTarget at window level for cross-window drag and drop
+        // #region agent log
+        debug_log("E", "window.rs:new", "Initial path", serde_json::json!({
+            "path": initial_path.to_string_lossy(),
+            "exists": initial_path.exists(),
+            "is_dir": initial_path.is_dir()
+        }));
+        // #endregion
+        
+        // Load with hidden files setting from config
+        let show_hidden = SidebarPrefs::show_hidden_files();
+        file_view.set_show_hidden(show_hidden);
+        
+        // #region agent log
+        debug_log("E", "window.rs:new", "Before load_directory", serde_json::json!({
+            "path": initial_path.to_string_lossy()
+        }));
+        // #endregion
+        
+        file_view.load_directory(&initial_path);
+        
+        // #region agent log
+        debug_log("E", "window.rs:new", "After load_directory", serde_json::json!({
+            "path": initial_path.to_string_lossy()
+        }));
+        // #endregion
+        header_bar.set_path(&initial_path);
+        history.borrow_mut().push(initial_path.clone());
+        *history_index.borrow_mut() = 0;
+
+        // Select Home in sidebar initially
+        sidebar.select_location(0);
+
+        // =========================================================================
+        // Register app.toggle-pin action with path parameter
+        // =========================================================================
         {
-            let current_path_clone = current_path.clone();
-            let file_view_clone = file_view.clone();
+            let pinned_store = sidebar.pinned_store().clone();
+            let sidebar_clone = sidebar.clone();
             
-            let window_drop_target = gtk4::DropTarget::new(
-                gtk4::gdk::FileList::static_type(),
-                gtk4::gdk::DragAction::COPY | gtk4::gdk::DragAction::MOVE
+            let toggle_pin_action = gio::SimpleAction::new(
+                "toggle-pin",
+                Some(&String::static_variant_type())
             );
             
-            window_drop_target.connect_drop(move |_, value, _, _| {
-                // Extract files from FileList
-                if let Ok(file_list) = value.get::<gtk4::gdk::FileList>() {
-                    let files: Vec<PathBuf> = file_list.files()
-                        .iter()
-                        .filter_map(|f| f.path())
-                        .collect();
-                    
-                    if !files.is_empty() {
-                        // Get current directory from file view
-                        let dest_dir = current_path_clone.borrow().clone();
+            toggle_pin_action.connect_activate(clone!(
+                #[strong] pinned_store,
+                #[strong] sidebar_clone,
+                move |_, param| {
+                    if let Some(path_str) = param.and_then(|p| p.get::<String>()) {
+                        let path = PathBuf::from(&path_str);
                         
-                        // Determine action: move if different directory, copy if same directory
-                        let mut same_dir = false;
-                        for source_file in &files {
-                            if let Some(parent) = source_file.parent() {
-                                if parent == dest_dir {
-                                    same_dir = true;
-                                    break;
-                                }
-                            }
-                        }
-                        let should_move = !same_dir;
-                        
-                        // Move/copy files
-                        for source_file in &files {
-                            if let Some(file_name) = source_file.file_name() {
-                                let dest_path = dest_dir.join(file_name);
-                                
-                                if source_file == &dest_path {
-                                    continue;
-                                }
-                                
-                                // Handle duplicates
-                                let mut final_dest = dest_path.clone();
-                                let mut counter = 1;
-                                while final_dest.exists() {
-                                    let stem = source_file
-                                        .file_stem()
-                                        .map(|s| s.to_string_lossy().to_string())
-                                        .unwrap_or_default();
-                                    let extension = source_file
-                                        .extension()
-                                        .map(|e| format!(".{}", e.to_string_lossy()))
-                                        .unwrap_or_default();
-                                    
-                                    let new_name = format!("{} ({}){}", stem, counter, extension);
-                                    final_dest = dest_dir.join(new_name);
-                                    counter += 1;
-                                }
-                                
-                                let result = if should_move {
-                                    crate::core::FileOperations::move_file(source_file, &final_dest)
+                        match pinned_store.toggle_pin(&path) {
+                            Ok(is_now_pinned) => {
+                                if is_now_pinned {
+                                    println!("[DEBUG] Pinned folder: {:?}", path);
                                 } else {
-                                    crate::core::FileOperations::copy_file(source_file, &final_dest)
-                                };
-                                
-                                if let Err(e) = result {
-                                    eprintln!("Failed to {} file: {}", if should_move { "move" } else { "copy" }, e);
+                                    println!("[DEBUG] Unpinned folder: {:?}", path);
                                 }
+                                // Refresh sidebar to update UI
+                                sidebar_clone.refresh();
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to toggle pin: {}", e);
                             }
                         }
-                        
-                        // Refresh file view
-                        file_view_clone.refresh();
-                        true
-                    } else {
-                        false
                     }
-                } else {
-                    false
                 }
+            ));
+            
+            app.add_action(&toggle_pin_action);
+        }
+
+        // =========================================================================
+        // Register refresh_sidebar action
+        // =========================================================================
+        {
+            let sidebar_clone = sidebar.clone();
+            let refresh_action = gio::SimpleAction::new("refresh_sidebar", None);
+            refresh_action.connect_activate(move |_, _| {
+                sidebar_clone.refresh();
             });
-            
-            window.add_controller(window_drop_target);
+            app.add_action(&refresh_action);
         }
 
-        // Load keybinds configuration
-        let keybinds = KeybindConfig::load();
-        
-        // Helper function to check if keybind matches
-        let matches_keybind = |key: gtk4::gdk::Key, mods: gtk4::gdk::ModifierType, keybind: &crate::core::Keybind| -> bool {
-            let key_name = key.name().map(|s| s.to_string()).unwrap_or_default();
-            if key_name != keybind.key {
-                return false;
-            }
-            
-            let mut has_control = mods.contains(gtk4::gdk::ModifierType::CONTROL_MASK);
-            let mut has_shift = mods.contains(gtk4::gdk::ModifierType::SHIFT_MASK);
-            let mut has_alt = mods.contains(gtk4::gdk::ModifierType::ALT_MASK);
-            let mut has_super = mods.contains(gtk4::gdk::ModifierType::SUPER_MASK);
-            
-            // Check if modifiers match
-            let mut required_control = false;
-            let mut required_shift = false;
-            let mut required_alt = false;
-            let mut required_super = false;
-            
-            for mod_str in &keybind.modifiers {
-                match mod_str.as_str() {
-                    "Control" => required_control = true,
-                    "Shift" => required_shift = true,
-                    "Alt" => required_alt = true,
-                    "Super" => required_super = true,
-                    _ => {}
-                }
-            }
-            
-            // Check that required modifiers are present and no extra modifiers
-            if required_control != has_control || required_shift != has_shift || 
-               required_alt != has_alt || required_super != has_super {
-                return false;
-            }
-            
-            // Check that no other modifiers are present
-            let other_mods = mods & !(gtk4::gdk::ModifierType::CONTROL_MASK | 
-                                     gtk4::gdk::ModifierType::SHIFT_MASK |
-                                     gtk4::gdk::ModifierType::ALT_MASK |
-                                     gtk4::gdk::ModifierType::SUPER_MASK);
-            if !other_mods.is_empty() {
-                return false;
-            }
-            
-            true
-        };
-
-        // Keyboard shortcuts
-        let file_view_clone = file_view.clone();
-        let current_path_clone = current_path.clone();
-        let keybinds_clone = keybinds.clone();
-        let controller = gtk4::EventControllerKey::new();
-        controller.connect_key_pressed(move |_, key, _, mods| {
-            // Toggle hidden files
-            if let Some(keybind) = keybinds_clone.get(&KeybindAction::ToggleHidden) {
-                if matches_keybind(key, mods, keybind) {
-                    file_view_clone.toggle_hidden();
-                    return gtk4::glib::Propagation::Stop;
-                }
-            }
-            
-            // Open terminal
-            if let Some(keybind) = keybinds_clone.get(&KeybindAction::OpenTerminal) {
-                if matches_keybind(key, mods, keybind) {
-                    let current = current_path_clone.borrow().clone();
-                    let path_str = current.display().to_string();
-                    
-                    // Try different terminals in order
-                    let terminals: Vec<(&str, Vec<String>)> = vec![
-                        ("alacritty", vec!["--working-directory".to_string(), path_str.clone()]),
-                        ("xterm", vec!["-e".to_string(), "sh".to_string(), "-c".to_string(), format!("cd '{}' && exec $SHELL", path_str.clone())]),
-                        ("gnome-terminal", vec!["--working-directory".to_string(), path_str.clone()]),
-                        ("konsole", vec!["--workdir".to_string(), path_str.clone()]),
-                        ("kitty", vec!["-d".to_string(), path_str.clone()]),
-                        ("terminator", vec!["--working-directory".to_string(), path_str.clone()]),
-                        ("tilix", vec!["-w".to_string(), path_str.clone()]),
-                    ];
-                    
-                    let mut opened = false;
-                    for (term, args) in terminals.iter() {
-                        if std::process::Command::new(term)
-                            .args(args)
-                            .spawn()
-                            .is_ok()
-                        {
-                            opened = true;
-                            break;
-                        }
-                    }
-                    
-                    if !opened {
-                        eprintln!("Failed to open terminal in directory: {}", path_str);
-                    }
-                    return gtk4::glib::Propagation::Stop;
-                }
-            }
-            
-            // Select all
-            if let Some(keybind) = keybinds_clone.get(&KeybindAction::SelectAll) {
-                if matches_keybind(key, mods, keybind) {
-                    file_view_clone.select_all();
-                    return gtk4::glib::Propagation::Stop;
-                }
-            }
-            
-            // Refresh
-            if let Some(keybind) = keybinds_clone.get(&KeybindAction::Refresh) {
-                if matches_keybind(key, mods, keybind) {
-                    file_view_clone.refresh();
-                    return gtk4::glib::Propagation::Stop;
-                }
-            }
-            
-            // Open with micro
-            if let Some(keybind) = keybinds_clone.get(&KeybindAction::OpenWithMicro) {
-                if matches_keybind(key, mods, keybind) {
-                    file_view_clone.open_with_micro();
-                    return gtk4::glib::Propagation::Stop;
-                }
-            }
-            
-            gtk4::glib::Propagation::Proceed
-        });
-        window.add_controller(controller);
-        
-        // Mouse side buttons for back/forward navigation
+        // Monitor for config changes (hidden files setting from fuse)
         {
-            // Back button
-            if let Some(keybind) = keybinds.get(&KeybindAction::Back) {
-                if keybind.key == "Mouse8" {
-                    let file_view_clone = file_view.clone();
-                    let path_bar_clone = path_bar.clone();
-                    let current_path_clone = current_path.clone();
-                    let history_clone = history.clone();
-                    let history_index_clone = history_index.clone();
-                    
-                    let back_gesture = gtk4::GestureClick::new();
-                    back_gesture.set_button(8);
-                    back_gesture.connect_pressed(move |_, _, _, _| {
-                        let mut idx = history_index_clone.borrow_mut();
-                        if *idx > 0 {
-                            *idx -= 1;
-                            let hist = history_clone.borrow();
-                            if let Some(path) = hist.get(*idx as usize) {
-                                current_path_clone.replace(path.clone());
-                                file_view_clone.load_directory(path);
-                                path_bar_clone.set_path(path);
-                            }
-                        }
-                    });
-                    window.add_controller(back_gesture);
-                }
-            }
+            let file_view_monitor = file_view.clone();
+            let last_show_hidden = Rc::new(RefCell::new(SidebarPrefs::show_hidden_files()));
             
-            // Forward button
-            if let Some(keybind) = keybinds.get(&KeybindAction::Forward) {
-                if keybind.key == "Mouse9" {
-                    let file_view_clone = file_view.clone();
-                    let path_bar_clone = path_bar.clone();
-                    let current_path_clone = current_path.clone();
-                    let history_clone = history.clone();
-                    let history_index_clone = history_index.clone();
-                    
-                    let forward_gesture = gtk4::GestureClick::new();
-                    forward_gesture.set_button(9);
-                    forward_gesture.connect_pressed(move |_, _, _, _| {
-                        let hist = history_clone.borrow();
-                        let mut idx = history_index_clone.borrow_mut();
-                        if (*idx as usize) < hist.len() - 1 {
-                            *idx += 1;
-                            if let Some(path) = hist.get(*idx as usize) {
-                                current_path_clone.replace(path.clone());
-                                file_view_clone.load_directory(path);
-                                path_bar_clone.set_path(path);
-                            }
-                        }
-                    });
-                    window.add_controller(forward_gesture);
+            glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
+                let show_hidden = SidebarPrefs::show_hidden_files();
+                let mut last_value = last_show_hidden.borrow_mut();
+                
+                // Only update if the value actually changed
+                if show_hidden != *last_value {
+                    *last_value = show_hidden;
+                    file_view_monitor.set_show_hidden(show_hidden);
+                    file_view_monitor.refresh();
+                    println!("Hidden files visibility changed to: {}", show_hidden);
                 }
-            }
-        }
-
-        // Initial load
-        let initial_path = current_path.borrow().clone();
-        file_view.load_directory(&initial_path);
-        path_bar.set_path(&initial_path);
-
-        // Push initial path to history
-        {
-            let mut hist = history.borrow_mut();
-            hist.push(initial_path);
-            *history_index.borrow_mut() = 0;
-        }
-
-        // Connect path bar segment clicks
-        {
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
-            let header_bar_clone = header_bar.clone();
-
-            path_bar.connect_segment_clicked(move |path| {
-                current_path_clone.replace(path.clone());
-                file_view_clone.load_directory(&path);
-                path_bar_clone.set_path(&path);
-                header_bar_clone.clear_search();
-
-                // Add to history
-                let mut hist = history_clone.borrow_mut();
-                let mut idx = history_index_clone.borrow_mut();
-                *idx += 1;
-                hist.truncate(*idx as usize);
-                hist.push(path);
+                
+                glib::ControlFlow::Continue
             });
         }
 
-        // Connect path bar path changed (when user types path)
+
+        // Add mouse button navigation (back/forward buttons)
         {
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
-            let header_bar_clone = header_bar.clone();
+            // Create gesture for button 8 (back)
+            let file_view_back = file_view.clone();
+            let header_bar_back = header_bar.clone();
+            let current_path_back = current_path.clone();
+            let history_back = history.clone();
+            let history_index_back = history_index.clone();
 
-            path_bar.connect_path_changed(move |path| {
-                current_path_clone.replace(path.clone());
-                file_view_clone.load_directory(&path);
-                path_bar_clone.set_path(&path);
-                header_bar_clone.clear_search();
-
-                // Add to history
-                let mut hist = history_clone.borrow_mut();
-                let mut idx = history_index_clone.borrow_mut();
-                *idx += 1;
-                hist.truncate(*idx as usize);
-                hist.push(path);
-            });
-        }
-
-        // Connect sidebar navigation
-        {
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
-
-            sidebar.connect_location_selected(move |path| {
-                current_path_clone.replace(path.clone());
-                file_view_clone.load_directory(&path);
-                path_bar_clone.set_path(&path);
-
-                // Add to history
-                let mut hist = history_clone.borrow_mut();
-                let mut idx = history_index_clone.borrow_mut();
-                *idx += 1;
-                hist.truncate(*idx as usize);
-                hist.push(path);
-            });
-        }
-
-        // Connect file view navigation (double-click on folder)
-        {
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
-
-            file_view.connect_directory_activated(move |path| {
-                current_path_clone.replace(path.clone());
-                file_view_clone.load_directory(&path);
-                path_bar_clone.set_path(&path);
-
-                // Add to history
-                let mut hist = history_clone.borrow_mut();
-                let mut idx = history_index_clone.borrow_mut();
-                *idx += 1;
-                hist.truncate(*idx as usize);
-                hist.push(path);
-            });
-        }
-
-        // Connect header bar actions
-        {
-            // Back button
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
-
-            header_bar.connect_back(move || {
-                let mut idx = history_index_clone.borrow_mut();
+            let gesture_back = gtk4::GestureClick::builder().button(8).build();
+            gesture_back.connect_pressed(move |_, _, _, _| {
+                let mut idx = history_index_back.borrow_mut();
                 if *idx > 0 {
                     *idx -= 1;
-                    let hist = history_clone.borrow();
+                    let hist = history_back.borrow();
                     if let Some(path) = hist.get(*idx as usize) {
-                        current_path_clone.replace(path.clone());
-                        file_view_clone.load_directory(path);
-                        path_bar_clone.set_path(path);
+                        current_path_back.replace(path.clone());
+                        file_view_back.load_directory(path);
+                        header_bar_back.set_path(path);
                     }
                 }
             });
-        }
+            window.add_controller(gesture_back);
 
-        {
-            // Forward button
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
+            // Create gesture for button 9 (forward)
+            let file_view_forward = file_view.clone();
+            let header_bar_forward = header_bar.clone();
+            let current_path_forward = current_path.clone();
+            let history_forward = history.clone();
+            let history_index_forward = history_index.clone();
 
-            header_bar.connect_forward(move || {
-                let hist = history_clone.borrow();
-                let mut idx = history_index_clone.borrow_mut();
+            let gesture_forward = gtk4::GestureClick::builder().button(9).build();
+            gesture_forward.connect_pressed(move |_, _, _, _| {
+                let hist = history_forward.borrow();
+                let mut idx = history_index_forward.borrow_mut();
                 if (*idx as usize) < hist.len() - 1 {
                     *idx += 1;
                     if let Some(path) = hist.get(*idx as usize) {
-                        current_path_clone.replace(path.clone());
-                        file_view_clone.load_directory(path);
-                        path_bar_clone.set_path(path);
+                        current_path_forward.replace(path.clone());
+                        file_view_forward.load_directory(path);
+                        header_bar_forward.set_path(path);
+                    }
+                }
+            });
+            window.add_controller(gesture_forward);
+        }
+
+        // Helper function to navigate to a path
+        let navigate_to = {
+            let file_view = file_view.clone();
+            let header_bar = header_bar.clone();
+            let current_path = current_path.clone();
+            let history = history.clone();
+            let history_index = history_index.clone();
+
+            move |path: PathBuf, add_to_history: bool| {
+                current_path.replace(path.clone());
+                file_view.load_directory(&path);
+                header_bar.set_path(&path);
+
+                if add_to_history {
+                    let mut hist = history.borrow_mut();
+                    let mut idx = history_index.borrow_mut();
+                    *idx += 1;
+                    hist.truncate(*idx as usize);
+                    hist.push(path);
+                }
+            }
+        };
+
+        // Connect sidebar navigation
+        {
+            let navigate_to = navigate_to.clone();
+            sidebar.connect_location_selected(move |path| {
+                navigate_to(path, true);
+            });
+        }
+
+        // Connect header bar breadcrumb navigation
+        {
+            let navigate_to = navigate_to.clone();
+            header_bar.connect_path_clicked(move |path| {
+                navigate_to(path, true);
+            });
+        }
+
+        // Connect path entry (when user types path)
+        {
+            let navigate_to = navigate_to.clone();
+            header_bar.connect_path_entered(move |path| {
+                navigate_to(path, true);
+            });
+        }
+
+        // Connect file view directory activation (double-click on folder)
+        {
+            let navigate_to = navigate_to.clone();
+            file_view.connect_directory_activated(move |path| {
+                navigate_to(path, true);
+            });
+        }
+
+        // Connect back button
+        {
+            let file_view = file_view.clone();
+            let header_bar_clone = header_bar.clone();
+            let current_path = current_path.clone();
+            let history = history.clone();
+            let history_index = history_index.clone();
+
+            header_bar.clone().connect_back(move || {
+                let mut idx = history_index.borrow_mut();
+                if *idx > 0 {
+                    *idx -= 1;
+                    let hist = history.borrow();
+                    if let Some(path) = hist.get(*idx as usize) {
+                        current_path.replace(path.clone());
+                        file_view.load_directory(path);
+                        header_bar_clone.set_path(path);
                     }
                 }
             });
         }
 
+        // Connect forward button
         {
-            // Up button
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
+            let file_view = file_view.clone();
+            let header_bar_clone = header_bar.clone();
+            let current_path = current_path.clone();
+            let history = history.clone();
+            let history_index = history_index.clone();
 
-            header_bar.connect_up(move || {
-                let current = current_path_clone.borrow().clone();
-                if let Some(parent) = current.parent() {
-                    let parent_path = parent.to_path_buf();
-                    current_path_clone.replace(parent_path.clone());
-                    file_view_clone.load_directory(&parent_path);
-                    path_bar_clone.set_path(&parent_path);
-
-                    // Add to history
-                    let mut hist = history_clone.borrow_mut();
-                    let mut idx = history_index_clone.borrow_mut();
+            header_bar.clone().connect_forward(move || {
+                let hist = history.borrow();
+                let mut idx = history_index.borrow_mut();
+                if (*idx as usize) < hist.len() - 1 {
                     *idx += 1;
-                    hist.truncate(*idx as usize);
-                    hist.push(parent_path);
+                    if let Some(path) = hist.get(*idx as usize) {
+                        current_path.replace(path.clone());
+                        file_view.load_directory(path);
+                        header_bar_clone.set_path(path);
+                    }
                 }
             });
         }
 
+        // Connect search
         {
-            // Home button
-            let file_view_clone = file_view.clone();
-            let path_bar_clone = path_bar.clone();
-            let current_path_clone = current_path.clone();
-            let history_clone = history.clone();
-            let history_index_clone = history_index.clone();
-
-            header_bar.connect_home(move || {
-                if let Some(home) = dirs::home_dir() {
-                    current_path_clone.replace(home.clone());
-                    file_view_clone.load_directory(&home);
-                    path_bar_clone.set_path(&home);
-
-                    // Add to history
-                    let mut hist = history_clone.borrow_mut();
-                    let mut idx = history_index_clone.borrow_mut();
-                    *idx += 1;
-                    hist.truncate(*idx as usize);
-                    hist.push(home);
-                }
-            });
-        }
-
-        {
-            // Search
-            let file_view_clone = file_view.clone();
-
+            let file_view = file_view.clone();
             header_bar.connect_search(move |query| {
-                file_view_clone.filter(&query);
+                file_view.filter(&query);
             });
         }
 
+        // Connect view toggle (grid/list)
         {
-            // New folder
-            let file_view_clone = file_view.clone();
-            let current_path_clone = current_path.clone();
-            let window_clone = window.clone();
+            let file_view = file_view.clone();
+            let header_bar_clone = header_bar.clone();
+            header_bar.connect_view_toggle(move || {
+                file_view.toggle_view_mode();
+                let is_grid = file_view.is_grid_mode();
+                header_bar_clone.set_view_icon(is_grid);
+            });
+        }
+
+        // Connect new folder
+        {
+            let current_path = current_path.clone();
+            let file_view = file_view.clone();
+            let window_weak = window.downgrade();
 
             header_bar.connect_new_folder(move || {
-                let current = current_path_clone.borrow().clone();
-                crate::widgets::show_new_folder_dialog(&window_clone, &current, &file_view_clone);
+                let current = current_path.borrow().clone();
+                let file_view = file_view.clone();
+                
+                if let Some(window) = window_weak.upgrade() {
+                    let dialog = adw::AlertDialog::builder()
+                        .heading("New Folder")
+                        .body("Enter name for the new folder")
+                        .build();
+
+                    let entry = gtk4::Entry::builder()
+                        .placeholder_text("Folder name")
+                        .text("New Folder")
+                        .build();
+                    entry.add_css_class("nautilus-entry");
+                    entry.set_activates_default(true);
+                    dialog.set_extra_child(Some(&entry));
+
+                    dialog.add_response("cancel", "Cancel");
+                    dialog.add_response("create", "Create");
+                    dialog.set_response_appearance("create", adw::ResponseAppearance::Suggested);
+                    dialog.set_default_response(Some("create"));
+                    dialog.set_close_response("cancel");
+
+                    // Select all text and focus entry when dialog opens
+                    let entry_clone = entry.clone();
+                    glib::idle_add_local_once(move || {
+                        entry_clone.grab_focus();
+                        entry_clone.select_region(0, -1);
+                    });
+
+                    let current_clone = current.clone();
+                    dialog.connect_response(None, move |dialog, response| {
+                        if response == "create" {
+                            if let Some(entry) = dialog.extra_child().and_downcast::<gtk4::Entry>() {
+                                let name = entry.text();
+                                if !name.is_empty() {
+                                    let new_path = current_clone.join(name.as_str());
+                                    if let Err(e) = FileOperations::create_directory(&new_path) {
+                                        eprintln!("Failed to create folder: {}", e);
+                                    } else {
+                                        file_view.refresh();
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    dialog.present(Some(&window));
+                }
             });
         }
 
-        {
-            // New file
-            let file_view_clone = file_view.clone();
-            let current_path_clone = current_path.clone();
-            let window_clone = window.clone();
-
-            header_bar.connect_new_file(move || {
-                let current = current_path_clone.borrow().clone();
-                crate::widgets::show_new_file_dialog(&window_clone, &current, &file_view_clone);
-            });
-        }
-
-        // Connect file view context menu actions
+        // Connect file operations (copy, cut, paste, delete, rename)
         {
             let clipboard_clone = clipboard.clone();
             file_view.connect_copy(move |paths| {
@@ -600,67 +448,253 @@ impl IndexWindow {
             let clipboard_clone = clipboard.clone();
             let current_path_clone = current_path.clone();
             let file_view_clone = file_view.clone();
-
             file_view.connect_paste(move || {
-                let current = current_path_clone.borrow().clone();
-                let mut clip = clipboard_clone.borrow_mut();
-                if let Err(e) = clip.paste(&current) {
+                let dest = current_path_clone.borrow().clone();
+                if let Err(e) = clipboard_clone.borrow_mut().paste(&dest) {
                     eprintln!("Paste error: {}", e);
                 }
-                drop(clip);
-                file_view_clone.load_directory(&current);
+                file_view_clone.refresh();
             });
         }
 
         {
-            let current_path_clone = current_path.clone();
             let file_view_clone = file_view.clone();
-
+            let window_weak = window.downgrade();
             file_view.connect_delete(move |paths| {
-                for path in paths {
-                    if let Err(e) = FileOperations::delete(&path) {
-                        eprintln!("Delete error: {}", e);
-                    }
+                if let Some(window) = window_weak.upgrade() {
+                    let file_view = file_view_clone.clone();
+                    let paths_clone = paths.clone();
+                    
+                    let count = paths.len();
+                    let message = if count == 1 {
+                        format!("Move \"{}\" to trash?", paths[0].file_name().unwrap_or_default().to_string_lossy())
+                    } else {
+                        format!("Move {} items to trash?", count)
+                    };
+
+                    let dialog = adw::AlertDialog::builder()
+                        .heading("Move to Trash")
+                        .body(&message)
+                        .build();
+
+                    dialog.add_response("cancel", "Cancel");
+                    dialog.add_response("trash", "Move to Trash");
+                    dialog.set_response_appearance("trash", adw::ResponseAppearance::Destructive);
+
+                    dialog.connect_response(None, move |_, response| {
+                        if response == "trash" {
+                            for path in &paths_clone {
+                                if let Err(e) = FileOperations::delete(path) {
+                                    eprintln!("Delete error: {}", e);
+                                }
+                            }
+                            file_view.refresh();
+                        }
+                    });
+
+                    dialog.present(Some(&window));
                 }
-                let current = current_path_clone.borrow().clone();
-                file_view_clone.load_directory(&current);
             });
         }
 
+        // Pin callback now uses the app.toggle-pin action via file_view's context menu
+        // The connect_pin is kept for backwards compatibility but the action is preferred
         {
-            let current_path_clone = current_path.clone();
-            let file_view_clone = file_view.clone();
-            let window_clone = window.clone();
-
-            file_view.connect_rename(move |path| {
-                crate::widgets::show_rename_dialog(
-                    &window_clone,
-                    &path,
-                    &current_path_clone,
-                    &file_view_clone,
-                );
-            });
-        }
-
-        {
-            // Pin to sidebar
+            let pinned_store = sidebar.pinned_store().clone();
             let sidebar_clone = sidebar.clone();
             file_view.connect_pin(move |path| {
-                if let Err(e) = crate::core::PinnedManager::add(&path) {
-                    eprintln!("Failed to pin folder: {}", e);
-                } else {
-                    // Refresh sidebar to show newly pinned folder
-                    sidebar_clone.refresh();
+                match pinned_store.toggle_pin(&path) {
+                    Ok(is_now_pinned) => {
+                        if is_now_pinned {
+                            println!("[DEBUG] Pinned folder: {:?}", path);
+                        } else {
+                            println!("[DEBUG] Unpinned folder: {:?}", path);
+                        }
+                        sidebar_clone.refresh();
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to toggle pin: {}", e);
+                    }
                 }
             });
         }
 
         {
-            // Settings button
-            let window_clone = window.clone();
-            header_bar.connect_settings(move || {
-                let settings = SettingsWindow::new(&window_clone);
-                settings.present();
+            let file_view_clone = file_view.clone();
+            let window_weak = window.downgrade();
+            file_view.connect_rename(move |path| {
+                if let Some(window) = window_weak.upgrade() {
+                    let file_view = file_view_clone.clone();
+                    let path_clone = path.clone();
+                    
+                    let current_name = path.file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_default();
+
+                    let dialog = adw::AlertDialog::builder()
+                        .heading("Rename")
+                        .body("Enter new name")
+                        .build();
+
+                    let entry = gtk4::Entry::builder()
+                        .text(&current_name)
+                        .build();
+                    entry.add_css_class("nautilus-entry");
+                    entry.set_activates_default(true);
+                    dialog.set_extra_child(Some(&entry));
+
+                    dialog.add_response("cancel", "Cancel");
+                    dialog.add_response("rename", "Rename");
+                    dialog.set_response_appearance("rename", adw::ResponseAppearance::Suggested);
+                    dialog.set_default_response(Some("rename"));
+                    dialog.set_close_response("cancel");
+
+                    // Select all text and focus entry when dialog opens
+                    let entry_clone = entry.clone();
+                    glib::idle_add_local_once(move || {
+                        entry_clone.grab_focus();
+                        entry_clone.select_region(0, -1);
+                    });
+
+                    let current_name_clone = current_name.clone();
+                    dialog.connect_response(None, move |dialog, response| {
+                        if response == "rename" {
+                            if let Some(entry) = dialog.extra_child().and_downcast::<gtk4::Entry>() {
+                                let new_name = entry.text();
+                                if !new_name.is_empty() && new_name.as_str() != current_name_clone {
+                                    if let Err(e) = FileOperations::rename(&path_clone, &new_name) {
+                                        eprintln!("Rename error: {}", e);
+                                    } else {
+                                        file_view.refresh();
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    dialog.present(Some(&window));
+                }
+            });
+        }
+
+        // Connect open terminal (key 'f')
+        {
+            file_view.connect_open_terminal(move |path| {
+                let dir = if path.is_dir() {
+                    path
+                } else {
+                    path.parent().unwrap_or_else(|| std::path::Path::new("/")).to_path_buf()
+                };
+                
+                // Open terminal in the directory - try common terminal emulators
+                let dir_str = dir.to_string_lossy().to_string();
+                let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
+                
+                // Try different terminal emulators
+                let terminals = vec!["alacritty", "kitty", "gnome-terminal", "xterm", "urxvt", "terminator"];
+                let mut opened = false;
+                
+                for term in terminals {
+                    let result = match term {
+                        "alacritty" => std::process::Command::new("alacritty")
+                            .arg("--working-directory")
+                            .arg(&dir_str)
+                            .spawn(),
+                        "kitty" => std::process::Command::new("kitty")
+                            .arg("--directory")
+                            .arg(&dir_str)
+                            .spawn(),
+                        "gnome-terminal" => std::process::Command::new("gnome-terminal")
+                            .arg("--working-directory")
+                            .arg(&dir_str)
+                            .spawn(),
+                        "xterm" => std::process::Command::new("xterm")
+                            .arg("-e")
+                            .arg("sh")
+                            .arg("-c")
+                            .arg(format!("cd '{}' && exec {}", dir_str, shell))
+                            .spawn(),
+                        "urxvt" => std::process::Command::new("urxvt")
+                            .arg("-cd")
+                            .arg(&dir_str)
+                            .spawn(),
+                        "terminator" => std::process::Command::new("terminator")
+                            .arg("--working-directory")
+                            .arg(&dir_str)
+                            .spawn(),
+                        _ => continue,
+                    };
+                    
+                    if result.is_ok() {
+                        opened = true;
+                        break;
+                    }
+                }
+                
+                if !opened {
+                    eprintln!("Failed to open terminal - no terminal emulator found");
+                }
+            });
+        }
+
+        // Connect open micro (key 'm')
+        {
+            file_view.connect_open_micro(move |path| {
+                if !path.is_dir() {
+                    let path_str = path.to_string_lossy().to_string();
+                    // Open terminal with micro editor
+                    let terminals = vec!["alacritty", "kitty", "gnome-terminal", "xterm", "urxvt", "terminator"];
+                    let mut opened = false;
+                    
+                    for term in terminals {
+                        let result = match term {
+                            "alacritty" => std::process::Command::new("alacritty")
+                                .arg("-e")
+                                .arg("micro")
+                                .arg(&path_str)
+                                .spawn(),
+                            "kitty" => std::process::Command::new("kitty")
+                                .arg("micro")
+                                .arg(&path_str)
+                                .spawn(),
+                            "gnome-terminal" => std::process::Command::new("gnome-terminal")
+                                .arg("--")
+                                .arg("micro")
+                                .arg(&path_str)
+                                .spawn(),
+                            "xterm" => std::process::Command::new("xterm")
+                                .arg("-e")
+                                .arg("micro")
+                                .arg(&path_str)
+                                .spawn(),
+                            "urxvt" => std::process::Command::new("urxvt")
+                                .arg("-e")
+                                .arg("micro")
+                                .arg(&path_str)
+                                .spawn(),
+                            "terminator" => std::process::Command::new("terminator")
+                                .arg("-e")
+                                .arg(format!("micro '{}'", path_str))
+                                .spawn(),
+                            _ => continue,
+                        };
+                        
+                        if result.is_ok() {
+                            opened = true;
+                            break;
+                        }
+                    }
+                    
+                    if !opened {
+                        // Fallback: try to open micro directly
+                        if let Err(e) = std::process::Command::new("micro")
+                            .arg(&path_str)
+                            .spawn()
+                        {
+                            eprintln!("Failed to open micro: {}", e);
+                        }
+                    }
+                }
             });
         }
 

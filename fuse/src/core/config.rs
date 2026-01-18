@@ -22,6 +22,10 @@ pub struct ColorConfig {
     pub notification_sounds_enabled: Option<bool>,
     #[serde(rename = "sidebarVisible", skip_serializing_if = "Option::is_none")]
     pub sidebar_visible: Option<bool>,
+    #[serde(rename = "rounding", skip_serializing_if = "Option::is_none")]
+    pub rounding: Option<String>,
+    #[serde(rename = "showHiddenFiles", skip_serializing_if = "Option::is_none")]
+    pub show_hidden_files: Option<bool>,
 }
 
 impl Default for ColorConfig {
@@ -38,6 +42,8 @@ impl Default for ColorConfig {
             notifications_enabled: Some(true),
             notification_sounds_enabled: Some(true),
             sidebar_visible: Some(true),
+            rounding: Some("rounded".to_string()),
+            show_hidden_files: Some(false),
         }
     }
 }
@@ -174,6 +180,18 @@ impl ColorConfig {
             cmd.arg("");
         }
         
+        if let Some(ref rounding) = self.rounding {
+            cmd.arg(rounding);
+        } else {
+            cmd.arg("");
+        }
+        
+        if let Some(show_hidden) = self.show_hidden_files {
+            cmd.arg(if show_hidden { "true" } else { "false" });
+        } else {
+            cmd.arg("");
+        }
+        
         let output = cmd.output()?;
         if !output.status.success() {
             // Fallback to direct save on error
@@ -232,5 +250,13 @@ impl ColorConfig {
 
     pub fn set_sidebar_visible(&mut self, visible: bool) {
         self.sidebar_visible = Some(visible);
+    }
+
+    pub fn set_rounding(&mut self, rounding: &str) {
+        self.rounding = Some(rounding.to_string());
+    }
+
+    pub fn set_show_hidden_files(&mut self, show_hidden: bool) {
+        self.show_hidden_files = Some(show_hidden);
     }
 }

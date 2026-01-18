@@ -28,7 +28,15 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
 }
 
 const PRESETS: &[(&str, &str, &str, &str, &str, &str)] = &[
-    ("Monochrome", "#000000", "#1a1a1a", "#0d0d0d", "#ffffff", "#b0b0b0"),
+    ("Professional Modern", "#0a0a0a", "#1a1a1a", "#151515", "#ffffff", "#4a9eff"),
+    ("Dark Warm", "#0d0d0d", "#1f1f1f", "#181818", "#f5f5f5", "#ff6b35"),
+    ("Cool Blue", "#080d14", "#0f1419", "#0a1016", "#e1e5e9", "#00d4ff"),
+    ("Minimal Gray", "#0c0c0c", "#161616", "#121212", "#f0f0f0", "#a0a0a0"),
+    ("Forest Green", "#0a0f0a", "#141914", "#0e120e", "#e8f5e8", "#4ade80"),
+    ("Sunset Orange", "#0f0a05", "#1a140d", "#140f09", "#f5e8d8", "#ff9500"),
+    ("Ocean Blue", "#050a0f", "#0d1419", "#091116", "#d8e8f5", "#3b82f6"),
+    ("Deep Purple", "#0a0514", "#140d1f", "#0f0916", "#e8d8f5", "#8b5cf6"),
+    ("GNOME Monochrome", "#242424", "#303030", "#2a2a2a", "#ffffff", "#3584e4"),
 ];
 
 pub struct ColorsTab {
@@ -43,11 +51,11 @@ impl ColorsTab {
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        let content = GtkBox::new(Orientation::Vertical, 32);
-        content.set_margin_start(24);
-        content.set_margin_end(24);
-        content.set_margin_top(24);
-        content.set_margin_bottom(24);
+        let content = GtkBox::new(Orientation::Vertical, 18);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
@@ -82,7 +90,7 @@ impl ColorsTab {
 }
 
 fn create_presets_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 24);
+    let section = GtkBox::new(Orientation::Vertical, 12);
 
     let section_title = Label::new(Some("Color Presets"));
     section_title.add_css_class("section-title");
@@ -144,10 +152,10 @@ fn create_preset_button(
     button.set_can_shrink(true);
 
     let content = GtkBox::new(Orientation::Vertical, 4);
-    content.set_margin_start(16);
-    content.set_margin_end(16);
-    content.set_margin_top(16);
-    content.set_margin_bottom(16);
+    content.set_margin_start(12);
+    content.set_margin_end(12);
+    content.set_margin_top(12);
+    content.set_margin_bottom(12);
 
     // Color preview bars - set background colors directly
     let bg_bar = gtk4::Box::new(Orientation::Horizontal, 0);
@@ -212,7 +220,7 @@ fn create_preset_button(
 }
 
 fn create_custom_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 24);
+    let section = GtkBox::new(Orientation::Vertical, 12);
 
     let section_title = Label::new(Some("Custom Colors"));
     section_title.add_css_class("section-title");

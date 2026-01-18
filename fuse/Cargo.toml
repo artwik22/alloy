@@ -15,3 +15,4 @@ tokio = { version = "1", features = ["full"] }
 image = "0.25"
 glib = "0.19"
 gio = "0.20"
+regex = "1"

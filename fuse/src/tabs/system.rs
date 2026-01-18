@@ -12,11 +12,11 @@ pub struct SystemTab {
 impl SystemTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        let content = GtkBox::new(Orientation::Vertical, 24);
-        content.set_margin_start(20);
-        content.set_margin_end(20);
-        content.set_margin_top(20);
-        content.set_margin_bottom(20);
+        let content = GtkBox::new(Orientation::Vertical, 18);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
 
         let title = Label::new(Some("System Settings"));
         title.add_css_class("title");

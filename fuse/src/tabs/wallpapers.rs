@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox, Picture};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox};
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::fs;
@@ -16,15 +16,17 @@ pub struct WallpapersTab {
 impl WallpapersTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        let content = GtkBox::new(Orientation::Vertical, 32);
-        content.set_margin_start(24);
-        content.set_margin_end(24);
-        content.set_margin_top(24);
-        content.set_margin_bottom(24);
+        // GNOME spacing: 24px section gap, 18px container margins
+        let content = GtkBox::new(Orientation::Vertical, 18);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
-        let header = GtkBox::new(Orientation::Horizontal, 16);
+        // GNOME: 12px gap in header
+        let header = GtkBox::new(Orientation::Horizontal, 12);
         
         let title = Label::new(Some("Select Wallpaper"));
         title.add_css_class("title");
@@ -38,9 +40,10 @@ impl WallpapersTab {
 
         content.append(&header);
 
+        // GNOME: 12px spacing in flowbox
         let flowbox = FlowBox::new();
-        flowbox.set_column_spacing(16);
-        flowbox.set_row_spacing(16);
+        flowbox.set_column_spacing(12);
+        flowbox.set_row_spacing(12);
         flowbox.set_halign(gtk4::Align::Fill);
         flowbox.set_hexpand(true);
         flowbox.set_vexpand(true);

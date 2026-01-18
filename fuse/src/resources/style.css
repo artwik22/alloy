@@ -1,811 +1,1150 @@
-/* ============================================================================
-   FUSE SETTINGS APPLICATION - BRUTALIST INDUSTRIAL UI
-   Design System v1.0.0
-   ZERO BORDER-RADIUS - ALL EDGES 90° SHARP
-   ============================================================================ */
+/* ====================================================================
+   NAUTILUS CLONE - Native Libadwaita Styling
+   Matches GNOME Files (Nautilus) appearance
+   ==================================================================== */
 
-/* ===== CSS VARIABLES - DESIGN TOKENS ===== */
-@define-color index_bg #000000;
-@define-color index_bg_secondary #0a0a0a;
-@define-color index_bg_tertiary #1a1a1a;
-@define-color index_bg_elevated #252525;
-@define-color index_fg #ffffff;
-@define-color index_fg_dim #cccccc;
-@define-color index_fg_tertiary #999999;
-@define-color index_fg_disabled #666666;
-@define-color index_border #333333;
-@define-color index_border_secondary #444444;
-@define-color index_border_focus #ffffff;
-@define-color index_selection rgba(255, 255, 255, 0.15);
-@define-color index_hover rgba(255, 255, 255, 0.08);
-@define-color index_focus rgba(255, 255, 255, 0.12);
-@define-color index_error #ff4444;
-@define-color index_success #44ff44;
-@define-color index_warning #ffaa00;
-@define-color index_info #44aaff;
+/* ===== Color Definitions ===== */
+@define-color window_bg_color #242424;
+@define-color window_fg_color #ffffff;
+@define-color headerbar_bg_color #303030;
+@define-color headerbar_fg_color #ffffff;
+@define-color card_bg_color #383838;
+@define-color card_fg_color #ffffff;
+@define-color accent_bg_color #3584e4;
+@define-color accent_color #3584e4;
+@define-color view_bg_color #1e1e1e;
+@define-color sidebar_bg_color #2a2a2a;
 
-/* ===== GLOBAL RESET - ZERO BORDER-RADIUS ===== */
-* {
-    border-radius: 0;
-    outline-offset: 0;
-    -gtk-outline-radius: 0;
+/* ===== Animations ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
-*:focus {
-    outline: none;
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* ===== WINDOW ===== */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* ===== Window ===== */
 window {
-    background-color: @index_bg;
-    color: @index_fg;
+    background-color: @window_bg_color;
+    color: @window_fg_color;
+    animation: fadeIn 200ms ease-out;
 }
 
 window.background {
-    background-color: @index_bg;
+    background-color: @window_bg_color;
+    animation: fadeIn 200ms ease-out;
 }
 
-/* ===== HEADER BAR ===== */
-headerbar,
-headerbar.default-decoration,
-headerbar.titlebar {
-    background: @index_bg;
-    background-color: @index_bg;
-    background-image: none;
-    border: none;
-    border-bottom: 2px solid @index_border;
-    padding: 14px 20px;
-    min-height: 56px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-    -gtk-icon-shadow: none;
-    transition: box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* ===== Navigation Sidebar ===== */
+.navigation-sidebar {
+    background-color: transparent;
+    padding: 4px;
 }
 
-headerbar.titlebar:backdrop {
-    background: @index_bg;
-    background-color: @index_bg;
-    background-image: none;
-    opacity: 1.0;
+.navigation-sidebar row {
+    border-radius: 6px;
+    margin: 2px 0;
+    min-height: 36px;
+    transition: background-color 200ms ease, transform 150ms ease;
 }
 
-headerbar title {
-    font-weight: 600;
-    font-size: 14px;
-    color: @index_fg;
-    letter-spacing: 0.02em;
+.navigation-sidebar row:selected {
+    background-color: alpha(@accent_bg_color, 0.3);
+    color: @window_fg_color;
 }
 
-headerbar.titlebar title {
-    color: @index_fg;
+.navigation-sidebar row:selected label {
+    color: @window_fg_color;
+    font-weight: 500;
 }
 
-headerbar.titlebar:backdrop title {
-    color: @index_fg;
+.navigation-sidebar row:hover:not(:selected) {
+    background-color: alpha(currentColor, 0.1);
+    transform: translateX(4px);
+}
+
+.navigation-sidebar row:active {
+    background-color: alpha(currentColor, 0.2);
+    transform: translateX(2px);
+}
+
+.navigation-sidebar row:disabled {
+    opacity: 0.5;
+}
+
+/* Fix sidebar background when window is out of focus */
+navigation-split-view > sidebar {
+    background-color: @sidebar_bg_color;
+    border-right: 1px solid alpha(currentColor, 0.1);
+}
+
+navigation-split-view > sidebar:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* Sidebar container styling */
+.sidebar-container {
+    background-color: @sidebar_bg_color;
+}
+
+.sidebar-container:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* ScrolledWindow inside sidebar */
+.sidebar-container scrolledwindow {
+    background-color: @sidebar_bg_color;
+}
+
+.sidebar-container scrolledwindow:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* NavigationPage backdrop */
+navigation-page {
+    background-color: @sidebar_bg_color;
+}
+
+navigation-page:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* Ensure sidebar content maintains background */
+navigation-split-view > sidebar > navigation-page {
+    background-color: @sidebar_bg_color;
+}
+
+navigation-split-view > sidebar > navigation-page:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+.sidebar-row {
+    min-height: 36px;
+}
+
+.sidebar-icon {
+    color: @accent_color;
     opacity: 0.9;
 }
 
-/* ===== HEADER BAR BUTTONS ===== */
-headerbar button {
-    background: transparent;
-    background-color: transparent;
-    background-image: none;
-    border: 2px solid transparent;
-    padding: 10px 14px;
-    min-height: 40px;
-    min-width: 40px;
-    margin: 0 2px;
-    color: @index_fg;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    -gtk-icon-effect: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+.navigation-sidebar row:selected .sidebar-icon {
+    opacity: 1.0;
+    color: @accent_color;
 }
 
-headerbar.titlebar button,
-headerbar.titlebar:backdrop button,
-headerbar.default-decoration button {
+.navigation-sidebar row:disabled .sidebar-icon {
+    opacity: 0.4;
+}
+
+/* Hide separators - they appear as unnamed bars */
+separator {
+    opacity: 0;
+    min-height: 0;
+    margin: 0;
+    background: none;
+    border: none;
+}
+
+.navigation-sidebar separator {
+    opacity: 0;
+    min-height: 0;
+    margin: 0;
+    background: none;
+    border: none;
+}
+
+/* Ensure labels in sidebar have proper color */
+.sidebar-container label {
+    color: @window_fg_color;
+}
+
+.sidebar-container label:backdrop {
+    color: @window_fg_color;
+}
+
+/* Sidebar styling for StackSwitcher (used in fuse) */
+.sidebar {
+    background-color: @sidebar_bg_color;
+    border-right: 1px solid alpha(currentColor, 0.1);
+    padding-top: 12px;
+    padding-bottom: 0px;
+}
+
+.sidebar-switcher button {
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    margin-left: 6px;
+    margin-right: 6px;
+    min-height: 36px;
+    border: none;
     background: transparent;
+    border-radius: 6px;
+    transition: background-color 150ms ease;
+}
+
+.sidebar-switcher button:hover {
+    background-color: alpha(currentColor, 0.1);
+    transform: translateX(2px);
+}
+
+.sidebar-switcher button:checked {
+    background-color: alpha(@accent_bg_color, 0.3);
+    transform: translateX(4px);
+}
+
+.sidebar-switcher button label {
+    color: @window_fg_color;
+    font-size: 11pt;
+    font-weight: 400;
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.sidebar-switcher button:hover label {
+    color: @window_fg_color;
+}
+
+.sidebar-switcher button:checked label {
+    color: @window_fg_color;
+    font-weight: 500;
+}
+
+.sidebar-switcher button image {
+    color: alpha(@window_fg_color, 0.7);
+    margin-right: 12px;
+    min-width: 16px;
+    min-height: 16px;
+    -gtk-icon-style: symbolic;
+}
+
+.sidebar-switcher button:hover image,
+.sidebar-switcher button:checked image {
+    color: @accent_color;
+}
+
+.sidebar-title {
+    font-size: 18pt;
+    font-weight: 700;
+    color: @window_fg_color;
+    padding: 18px 12px 12px 12px;
+    margin-bottom: 0;
+    letter-spacing: 0;
+}
+
+/* ===== Nautilus Path Bar (Breadcrumbs) ===== */
+.nautilus-path-container {
+    min-width: 200px;
+}
+
+.nautilus-path-bar {
+    background-color: alpha(currentColor, 0.06);
+    border-radius: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
+    min-height: 32px;
+}
+
+.nautilus-path-bar button {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    min-height: 28px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.nautilus-path-bar button:hover {
+    background-color: alpha(currentColor, 0.12);
+}
+
+.nautilus-path-bar button:active {
+    background-color: alpha(currentColor, 0.18);
+}
+
+.nautilus-path-bar button.current-path {
+    font-weight: 600;
+    color: @accent_color;
+}
+
+.nautilus-path-bar image {
+    opacity: 0.6;
+    min-width: 14px;
+    margin: 0 2px;
+}
+
+/* Path entry (when editing) */
+.nautilus-path-entry {
+    min-height: 32px;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    background-color: alpha(currentColor, 0.08);
+    border: 1px solid alpha(@accent_color, 0.3);
+}
+
+.nautilus-path-entry:focus {
+    border-color: @accent_color;
+    background-color: alpha(currentColor, 0.1);
+}
+
+/* ===== Nautilus Grid View ===== */
+.nautilus-view {
+    background-color: @view_bg_color;
+}
+
+.nautilus-grid {
     background-color: transparent;
-    background-image: none;
-    color: @index_fg;
+    padding: 16px;
+}
+
+.nautilus-grid > child {
+    margin: 0;
+}
+
+.nautilus-tile {
+    padding: 10px;
+    border-radius: 10px;
+    transition: background-color 150ms ease;
+}
+
+.nautilus-tile:hover {
+    background-color: alpha(currentColor, 0.06);
+}
+
+.nautilus-tile:selected {
+    background-color: alpha(@accent_bg_color, 0.2);
+}
+
+.nautilus-tile:selected:hover {
+    background-color: alpha(@accent_bg_color, 0.25);
+}
+
+.nautilus-icon {
+    -gtk-icon-style: regular;
+}
+
+/* Folder icons get the accent color treatment */
+.nautilus-tile image {
+    -gtk-icon-palette: warning @accent_color;
+}
+
+.nautilus-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: @window_fg_color;
+    margin-top: 6px;
+}
+
+.nautilus-tile:selected .nautilus-label {
+    font-weight: 500;
+}
+
+/* ===== Nautilus List View ===== */
+.nautilus-list {
+    background-color: transparent;
+}
+
+.nautilus-list row {
+    border-radius: 6px;
+    margin: 1px 6px;
+    min-height: 40px;
+}
+
+.nautilus-list row:selected {
+    background-color: alpha(@accent_bg_color, 0.2);
+}
+
+.nautilus-list row:hover:not(:selected) {
+    background-color: alpha(currentColor, 0.05);
+}
+
+.nautilus-list-row {
+    min-height: 40px;
+    padding-top: 4px;
+    padding-bottom: 0px;
+}
+
+.nautilus-list-icon {
+    -gtk-icon-style: regular;
+}
+
+.nautilus-list-name {
+    font-weight: 400;
+    font-size: 13px;
+}
+
+.nautilus-list-size,
+.nautilus-list-date {
+    font-size: 12px;
+}
+
+/* ===== ScrolledWindow ===== */
+.nautilus-scrolled {
+    background-color: @view_bg_color;
+}
+
+.nautilus-scrolled:backdrop {
+    background-color: @view_bg_color;
+}
+
+/* ===== Entry Fields ===== */
+.nautilus-entry {
+    min-height: 36px;
+    border-radius: 8px;
+}
+
+.nautilus-search {
+    min-height: 36px;
+    border-radius: 8px;
+}
+
+entry {
+    background-color: @card_bg_color;
+    border: none;
+    border-radius: 6px;
+    color: @window_fg_color;
+    padding: 6px 12px;
+    min-height: 34px;
+    caret-color: @accent_color;
+    font-size: 11pt;
+    font-weight: 400;
+    transition: box-shadow 200ms ease;
+}
+
+entry:focus {
+    box-shadow: 0 0 0 2px alpha(@accent_color, 0.25);
+}
+
+entry text {
+    color: @window_fg_color;
+}
+
+entry placeholder {
+    color: alpha(@window_fg_color, 0.5);
+}
+
+/* ===== Header Bar ===== */
+headerbar {
+    background-color: @headerbar_bg_color;
     box-shadow: none;
+    border-bottom: 1px solid alpha(currentColor, 0.1);
+}
+
+headerbar:backdrop {
+    background-color: @headerbar_bg_color;
+}
+
+headerbar.flat {
+    background-color: transparent;
+    border-bottom: 1px solid alpha(currentColor, 0.1);
+}
+
+headerbar.flat:backdrop {
+    background-color: transparent;
+}
+
+/* Headerbar buttons */
+headerbar button {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    min-height: 36px;
+    min-width: 36px;
+    margin: 0 4px 0 0;
+    color: @headerbar_fg_color;
+    font-size: 11pt;
+    font-weight: 500;
+    transition: background-color 150ms ease;
 }
 
 headerbar button:hover {
-    background: @index_hover;
-    background-color: @index_hover;
-    background-image: none;
-    border-color: @index_border;
-    color: @index_fg;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-    transform: translateY(-1px);
+    background-color: alpha(@window_fg_color, 0.12);
 }
 
 headerbar button:active,
-headerbar button:checked,
-headerbar button:checked:hover {
-    background: @index_selection;
-    background-color: @index_selection;
-    background-image: none;
-    border-color: @index_border_focus;
-    color: @index_fg;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    transform: translateY(0);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-}
-
-headerbar button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
+headerbar button:checked {
+    background-color: alpha(@window_fg_color, 0.18);
 }
 
 headerbar button image {
-    color: @index_fg;
-    opacity: 0.95;
+    color: inherit;
+    opacity: 0.9;
     -gtk-icon-style: symbolic;
-    -gtk-icon-transform: scale(1.1);
-}
-
-headerbar.titlebar button image,
-headerbar.titlebar:backdrop button image {
-    color: @index_fg;
+    min-width: 18px;
+    min-height: 18px;
 }
 
 headerbar button:hover image {
     opacity: 1.0;
 }
 
-/* ===== SIDEBAR ===== */
-.sidebar,
-.navigation-sidebar {
-    background-color: @index_bg_secondary;
-    border: none;
-    border-right: 2px solid @index_border;
-    padding: 0;
-    min-width: 240px;
-    max-width: 240px;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.4), 1px 0 2px rgba(0, 0, 0, 0.3);
-}
-
-.sidebar-switcher {
-    background-color: transparent;
-}
-
-.sidebar-switcher button {
-    background-color: @index_bg_tertiary;
-    color: @index_fg;
-    border: none;
-    border-bottom: 1px solid @index_border;
-    padding: 14px 20px;
-    margin: 0;
-    min-height: 44px;
-    font-weight: 500;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 0.95;
-    box-shadow: none;
-    text-align: left;
-}
-
-.sidebar-switcher button:hover {
-    background-color: @index_hover;
-    transform: translateX(2px);
-    opacity: 1.0;
-    box-shadow: inset 2px 0 0 @index_border_focus;
-}
-
-.sidebar-switcher button:checked {
-    background-color: @index_selection;
-    color: @index_fg;
-    opacity: 1.0;
-    transform: translateX(0);
-    box-shadow: inset 3px 0 0 @index_fg;
-    font-weight: 600;
-}
-
-.sidebar-switcher button:active {
-    transform: translateX(0);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-    box-shadow: inset 2px 0 0 @index_border_focus;
-}
-
-.version-label {
-    color: @index_fg_tertiary;
-    opacity: 0.8;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-/* ===== CONTENT AREA ===== */
-scrolledwindow {
-    background-color: @index_bg;
-    color: @index_fg;
-}
-
-/* ===== TITLES ===== */
-.title {
-    font-size: 32px;
-    font-weight: 700;
-    color: @index_fg;
-    margin-bottom: 32px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
-    letter-spacing: -0.02em;
-}
-
-.title:hover {
-    opacity: 1.0;
-    transform: translateX(2px);
-}
-
-.section-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: @index_fg;
-    margin-bottom: 20px;
-    margin-top: 12px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
-}
-
-.section-title:hover {
-    opacity: 1.0;
-    transform: translateX(2px);
-}
-
-.section-description {
-    font-size: 14px;
-    font-weight: 400;
-    color: @index_fg_dim;
-    opacity: 0.9;
-    margin-bottom: 24px;
-    margin-top: 6px;
-    line-height: 1.6;
-}
-
-/* ===== SETTINGS ROWS ===== */
-.settings-row {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    padding: 24px 28px;
-    margin-bottom: 24px;
-    min-width: 400px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.settings-row:hover {
-    background-color: rgba(30, 30, 30, 0.95);
-    border-color: @index_border_secondary;
-    transform: translateY(-2px);
-    opacity: 1.0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.row-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: @index_fg;
-    margin-bottom: 8px;
-}
-
-.row-description {
-    font-size: 13px;
-    font-weight: 400;
-    color: @index_fg_dim;
-    opacity: 0.9;
-}
-
-/* ===== TOGGLES ===== */
-switch {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    min-width: 56px;
-    min-height: 32px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-switch:checked {
-    background-color: @index_fg;
-    border-color: @index_fg;
-    box-shadow: 0 0 0 2px @index_focus;
-}
-
-switch slider {
-    background-color: @index_fg_dim;
-    min-width: 26px;
-    min-height: 26px;
-    margin: 1px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-switch:checked slider {
-    background-color: @index_bg;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-switch:hover slider {
-    transform: scale(1.05);
-}
-
-switch:checked:hover slider {
-    transform: scale(1.05);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-/* ===== COLOR PRESETS ===== */
-.preset-button {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    padding: 0;
-    min-width: 180px;
-    min-height: 100px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.preset-button:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
-    opacity: 1.0;
-}
-
-.preset-button:active {
-    transform: translateY(-1px);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.color-bar {
+/* Linked buttons in header */
+headerbar .linked button {
     border-radius: 0;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
+    min-width: 36px;
+    min-height: 36px;
 }
 
-.preset-button:hover .color-bar {
-    opacity: 1.0;
-    transform: scaleY(1.05);
+headerbar .linked button:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
 }
 
-.preset-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: @index_fg;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
+headerbar .linked button:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
-.preset-button:hover .preset-name {
-    opacity: 1.0;
-    transform: translateY(-1px);
+headerbar .linked button:only-child {
+    border-radius: 8px;
 }
 
-/* ===== CUSTOM COLORS ===== */
-.color-preview {
-    background-color: @index_fg;
-    border: 2px solid @index_border;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.color-preview:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
-    transform: scale(1.05) translateY(-2px);
-}
-
-.color-label {
-    font-size: 16px;
-    font-weight: 600;
-    color: @index_fg;
-    margin-bottom: 8px;
-}
-
-.color-entry {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    padding: 10px 18px;
-    color: @index_fg;
-    min-height: 40px;
-    caret-color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.color-entry:hover {
-    border-color: @index_border_secondary;
-    background-color: @index_bg_secondary;
-}
-
-.color-entry:focus {
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
-    background-color: @index_bg_secondary;
-    transform: scale(1.01) translateY(-1px);
-}
-
-.color-entry text {
-    color: @index_fg;
-}
-
-.color-entry placeholder {
-    color: @index_fg_tertiary;
-}
-
-.apply-button {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 12px 24px;
-    min-height: 44px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.apply-button:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.apply-button:active {
-    transform: translateY(0);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.apply-button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
-}
-
-/* ===== WALLPAPERS ===== */
-.refresh-button {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 20px;
-    min-height: 40px;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.refresh-button:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.refresh-button:active {
-    transform: translateY(0);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.refresh-button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
-}
-
-.wallpaper-tile {
-    background-color: transparent;
-    border: 2px solid @index_border;
-    padding: 4px;
-    min-width: 180px;
-    min-height: 101px; /* 16:9 aspect ratio */
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.wallpaper-tile:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
-    opacity: 1.0;
-}
-
-.wallpaper-tile:active {
-    transform: translateY(-1px);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.wallpaper-tile picture {
-    border-radius: 0;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    filter: brightness(0.95);
-}
-
-.wallpaper-tile:hover picture {
-    filter: brightness(1.05);
-    transform: scale(1.02);
-}
-
-/* ===== AUDIO ===== */
-.audio-device-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: @index_fg;
-}
-
-.audio-device-desc {
-    font-size: 14px;
-    font-weight: 400;
-    color: @index_fg_dim;
-    opacity: 0.9;
-}
-
-.audio-section-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: @index_fg;
-}
-
-.mute-button {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    min-width: 52px;
-    min-height: 52px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.mute-button:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.mute-button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
-}
-
-.volume-scale {
-    min-width: 200px;
-}
-
-.volume-scale scale {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-}
-
-.volume-scale scale highlight {
-    background-color: @index_fg;
-}
-
-.volume-scale scale slider {
-    background-color: @index_fg;
-}
-
-/* ===== PLACEHOLDER ===== */
-.placeholder {
-    font-size: 14px;
-    color: @index_fg_dim;
-    opacity: 0.8;
-}
-
-/* ===== BUTTONS ===== */
+/* ===== Buttons ===== */
 button {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 18px;
-    min-height: 40px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background-color: @card_bg_color;
+    border: none;
+    border-radius: 8px;
+    color: @window_fg_color;
+    padding: 8px 16px;
+    min-height: 36px;
+    font-size: 11pt;
+    font-weight: 600;
+    transition: background-color 150ms ease,
+                box-shadow 150ms ease;
 }
 
 button.flat {
     background: transparent;
-    background-color: transparent;
     border: none;
-    box-shadow: none;
+    padding: 6px 12px;
 }
 
 button:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    background-color: alpha(@window_fg_color, 0.1);
+    box-shadow: 0 1px 3px alpha(currentColor, 0.1);
+}
+
+button.flat:hover {
+    background-color: alpha(@window_fg_color, 0.08);
 }
 
 button:active {
-    background-color: @index_selection;
-    transform: translateY(0);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background-color: alpha(@window_fg_color, 0.15);
+    border-color: alpha(@window_fg_color, 0.25);
+    box-shadow: inset 0 1px 2px alpha(currentColor, 0.1);
 }
 
-button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
+button.flat:active {
+    background-color: alpha(@window_fg_color, 0.12);
+}
+
+button:disabled {
+    opacity: 0.5;
+    background-color: alpha(@window_fg_color, 0.05);
+    border-color: alpha(@window_fg_color, 0.08);
 }
 
 button.suggested-action {
-    background-color: @index_fg;
-    border-color: @index_fg;
-    color: @index_bg;
+    background-color: @accent_bg_color;
+    border-color: @accent_bg_color;
+    color: white;
     font-weight: 600;
+    box-shadow: 0 1px 3px alpha(@accent_bg_color, 0.3);
 }
 
 button.suggested-action:hover {
-    background-color: @index_fg;
-    border-color: @index_fg;
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    background-color: alpha(@accent_bg_color, 0.9);
+    border-color: alpha(@accent_bg_color, 0.9);
+    box-shadow: 0 2px 6px alpha(@accent_bg_color, 0.4);
+}
+
+button.suggested-action:active {
+    background-color: alpha(@accent_bg_color, 0.85);
+    box-shadow: inset 0 1px 3px alpha(currentColor, 0.2);
 }
 
 button.destructive-action {
-    background-color: @index_error;
-    border-color: @index_error;
-    color: @index_bg;
+    background-color: #c01c28;
+    border-color: #c01c28;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 1px 3px alpha(#c01c28, 0.3);
 }
 
 button.destructive-action:hover {
-    background-color: #ff6666;
-    border-color: #ff6666;
+    background-color: alpha(#c01c28, 0.9);
+    border-color: alpha(#c01c28, 0.9);
+    box-shadow: 0 2px 6px alpha(#c01c28, 0.4);
+}
+
+button.destructive-action:active {
+    background-color: alpha(#c01c28, 0.85);
+    box-shadow: inset 0 1px 3px alpha(currentColor, 0.2);
 }
 
 button image {
-    opacity: 0.95;
+    opacity: 0.9;
+    -gtk-icon-style: symbolic;
+    min-width: 16px;
+    min-height: 16px;
 }
 
 button:hover image {
     opacity: 1.0;
 }
 
-/* ===== LABELS ===== */
+/* ===== Labels ===== */
 label {
-    color: @index_fg;
-    font-size: 14px;
+    color: @window_fg_color;
+    font-size: 11pt;
     font-weight: 400;
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
 }
 
 label.dim-label {
-    color: @index_fg_dim;
-    font-size: 12px;
+    opacity: 0.55;
+    font-weight: 400;
 }
 
-/* ===== SELECTION ===== */
-selection {
-    background-color: @index_fg;
-    color: @index_bg;
+/* Page title - large beautiful header */
+.title {
+    font-size: 32pt;
+    font-weight: 700;
+    color: @window_fg_color;
+    margin-bottom: 24px;
+    margin-top: 0;
+    padding: 0;
+    letter-spacing: -0.5px;
 }
 
-/* ===== SCROLLBARS ===== */
+/* ===== Popovers ===== */
+popover.menu {
+    padding: 4px;
+}
+
+popover.menu modelbutton {
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-height: 28px;
+}
+
+popover.menu modelbutton:hover {
+    background-color: alpha(currentColor, 0.08);
+}
+
+/* ===== Context Menu ===== */
+popover.menu separator {
+    margin: 4px 8px;
+}
+
+/* ===== Utility Classes ===== */
+.caption {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+}
+
+/* ===== Selection ===== */
+gridview:focus child:selected,
+listview:focus row:selected {
+    outline: 2px solid @accent_color;
+    outline-offset: -2px;
+}
+
+/* ===== Split View ===== */
+navigation-split-view {
+    background-color: @view_bg_color;
+}
+
+navigation-split-view:backdrop {
+    background-color: @view_bg_color;
+}
+
+/* ===== Message Dialogs ===== */
+messagedialog .dialog-action-area button {
+    min-height: 36px;
+    border-radius: 8px;
+}
+
+messagedialog .dialog-action-area button.suggested-action {
+    background-color: @accent_bg_color;
+    color: white;
+}
+
+messagedialog .dialog-action-area button.destructive-action {
+    background-color: #c01c28;
+    color: white;
+}
+
+/* ===== Empty State ===== */
+.nautilus-view {
+    background-color: @view_bg_color;
+}
+
+/* ===== FUSE-SPECIFIC STYLES ===== */
+/* Settings sections and rows */
+.settings-section {
+    background-color: @card_bg_color;
+    border: none;
+    border-radius: 12px;
+    margin: 18px 0;
+    padding: 0;
+    transition: box-shadow 200ms ease;
+}
+
+.settings-section:hover {
+    box-shadow: 0 2px 8px alpha(black, 0.15);
+}
+
+.settings-row {
+    padding: 12px 18px;
+    min-height: 48px;
+    border: none;
+    border-bottom: 1px solid alpha(@window_fg_color, 0.1);
+    border-radius: 0;
+    transition: background-color 150ms ease;
+}
+
+.settings-row:first-child {
+    border-radius: 12px 12px 0 0;
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+    border-radius: 0 0 12px 12px;
+}
+
+.settings-row:only-child {
+    border-radius: 12px;
+    border-bottom: none;
+}
+
+.settings-row:hover {
+    background-color: alpha(@window_fg_color, 0.04);
+}
+
+.settings-row label {
+    color: @window_fg_color;
+    font-size: 11pt;
+    font-weight: 500;
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.settings-row .dim-label,
+.settings-row .row-description {
+    color: alpha(@window_fg_color, 0.55);
+    font-size: 10pt;
+    font-weight: 400;
+    margin-top: 2px;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.settings-row .row-title {
+    font-size: 11pt;
+    font-weight: 600;
+    color: @window_fg_color;
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.settings-row .row-description {
+    font-size: 10pt;
+    font-weight: 400;
+    color: alpha(@window_fg_color, 0.55);
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* Section titles and descriptions */
+.section-title {
+    font-size: 14pt;
+    font-weight: 600;
+    color: @window_fg_color;
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.section-description {
+    font-size: 10pt;
+    font-weight: 400;
+    color: alpha(@window_fg_color, 0.55);
+    padding: 0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* Color input elements */
+.color-preview {
+    background-color: @card_bg_color;
+    border: 2px solid alpha(@window_fg_color, 0.2);
+    border-radius: 8px;
+}
+
+.color-label {
+    font-size: 11pt;
+    font-weight: 500;
+    color: @window_fg_color;
+}
+
+.color-entry {
+    min-height: 36px;
+    border-radius: 8px;
+}
+
+.apply-button {
+    min-height: 40px;
+    font-weight: 600;
+}
+
+/* Switches - Fixed positioning and visual artifacts */
+switch {
+    background-color: rgba(255, 255, 255, 0.25);
+    border: none;
+    border-radius: 9999px;
+    min-height: 20px;
+    min-width: 40px;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    overflow: hidden;
+}
+
+switch:checked {
+    background-color: @accent_bg_color;
+}
+
+switch slider {
+    background-color: white;
+    border-radius: 50%;
+    min-width: 14px;
+    width: 14px;
+    min-height: 14px;
+    height: 14px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    margin-left: 3px;
+    margin-right: 3px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+switch:checked slider {
+    background-color: white;
+    /* Very conservative approach to prevent overflow
+       40px switch - 14px slider - 3px margins
+       Position: 3px + 10px = 13px start
+       End: 13px + 14px = 27px
+       Remaining: 40px - 27px = 13px margin on right */
+    transform: translateX(10px);
+}
+
+switch:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.35);
+    outline: none;
+}
+
+switch:hover:not(:disabled) slider {
+    transform: none;
+}
+
+switch:checked:hover:not(:disabled) {
+    background-color: @accent_bg_color;
+    opacity: 0.9;
+    outline: none;
+}
+
+switch:checked:hover:not(:disabled) slider {
+    transform: translateX(10px);
+}
+
+switch:backdrop {
+    background-color: rgba(255, 255, 255, 0.15);
+    outline: none;
+}
+
+switch:checked:backdrop {
+    background-color: alpha(@accent_bg_color, 0.7);
+    outline: none;
+}
+
+switch:backdrop slider {
+    background-color: rgba(255, 255, 255, 0.9);
+    outline: none;
+    transform: none;
+}
+
+switch:checked:backdrop slider {
+    background-color: rgba(255, 255, 255, 0.9);
+    outline: none;
+    transform: translateX(10px);
+}
+
+switch:disabled {
+    opacity: 0.5;
+    outline: none;
+}
+
+switch:disabled slider {
+    opacity: 0.8;
+    outline: none;
+    transform: none;
+}
+
+switch:checked:disabled slider {
+    transform: translateX(10px);
+}
+
+/* Switch alignment in settings rows */
+.settings-row switch {
+    margin: 0;
+    padding: 0;
+    margin-right: 0;
+}
+
+/* Scales */
+scale {
+    padding-top: 6px;
+    padding-bottom: 0px;
+}
+
+scale trough {
+    background-color: alpha(@window_fg_color, 0.15);
+    border: none;
+    border-radius: 6px;
+    min-height: 6px;
+    min-width: 120px;
+}
+
+scale highlight {
+    background-color: @accent_bg_color;
+    border-radius: 6px;
+}
+
+scale slider {
+    background-color: @window_fg_color;
+    border: none;
+    border-radius: 50%;
+    min-width: 20px;
+    min-height: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+scale slider:hover {
+    background-color: @window_fg_color;
+}
+
+/* Color buttons */
+.color-button {
+    border: 2px solid alpha(@window_fg_color, 0.2);
+    border-radius: 8px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    background: transparent;
+    transition: border-color 200ms ease,
+                box-shadow 200ms ease,
+                transform 150ms ease,
+                border-width 200ms ease;
+}
+
+.color-button:hover {
+    border-color: @accent_color;
+    border-width: 3px;
+    box-shadow: 0 2px 8px alpha(@accent_color, 0.3);
+    transform: scale(1.1);
+}
+
+/* Preset buttons */
+.preset-button {
+    background-color: @card_bg_color;
+    border: 2px solid alpha(@window_fg_color, 0.12);
+    border-radius: 14px;
+    padding: 0;
+    min-height: 140px;
+    transition: border-color 200ms ease,
+                background-color 200ms ease,
+                box-shadow 200ms ease,
+                transform 150ms ease;
+}
+
+.preset-button:hover {
+    border-color: @accent_color;
+    background-color: alpha(@accent_color, 0.08);
+    box-shadow: 0 6px 16px alpha(@accent_color, 0.25);
+    transform: translateY(-2px);
+}
+
+.preset-button:active {
+    box-shadow: 0 3px 8px alpha(@accent_color, 0.2);
+    transform: translateY(0);
+}
+
+.preset-name {
+    font-size: 12pt;
+    font-weight: 600;
+    color: @window_fg_color;
+    letter-spacing: 0.2px;
+}
+
+.color-bar {
+    border-radius: 3px;
+    margin: 3px 0;
+}
+
+/* Combobox */
+combobox button {
+    background-color: @card_bg_color;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-height: 36px;
+    font-size: 11pt;
+    font-weight: 600;
+    transition: background-color 150ms ease;
+}
+
+combobox button:hover {
+    background-color: alpha(@window_fg_color, 0.1);
+}
+
+combobox button:active {
+    background-color: alpha(@window_fg_color, 0.15);
+}
+
+combobox button arrow {
+    color: alpha(@window_fg_color, 0.8);
+    min-width: 16px;
+    min-height: 16px;
+    margin-left: 8px;
+}
+
+/* Wallpaper grid */
+.wallpaper-flowbox {
+    padding: 12px;
+}
+
+.wallpaper-tile {
+    margin: 6px;
+    border: 2px solid alpha(@window_fg_color, 0.1);
+    border-radius: 12px;
+    min-width: 160px;
+    min-height: 100px;
+    background-color: @card_bg_color;
+}
+
+.wallpaper-tile:hover {
+    border-color: @accent_color;
+}
+
+.wallpaper-tile:selected {
+    border-color: @accent_color;
+    border-width: 3px;
+}
+
+.wallpaper-tile image {
+    border-radius: 10px;
+}
+
+/* Version label */
+.version-label {
+    font-size: 10pt;
+    color: alpha(@window_fg_color, 0.5);
+    padding: 12px;
+    margin: 0;
+}
+
+/* Stack */
+stack {
+    background-color: @window_bg_color;
+    margin: 0;
+    padding: 0;
+}
+
+stack > child {
+    animation: fadeIn 250ms ease-out;
+}
+
+/* Scrollbars - very thin line */
 scrollbar {
     background: transparent;
     border: none;
 }
 
 scrollbar slider {
-    background-color: rgba(255, 255, 255, 0.12);
-    min-width: 8px;
-    min-height: 8px;
-    border: none;
-    margin: 2px;
-    border-radius: 0;
-    transition: background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background-color: alpha(@window_fg_color, 0.15);
+    border-radius: 2px;
+    min-width: 2px;
+    min-height: 2px;
+    margin: 0;
+    transition: background-color 150ms ease;
 }
 
 scrollbar slider:hover {
-    background-color: rgba(255, 255, 255, 0.25);
-    min-width: 10px;
-    min-height: 10px;
+    background-color: alpha(@window_fg_color, 0.25);
 }
 
 scrollbar slider:active {
-    background-color: @index_fg;
+    background-color: alpha(@window_fg_color, 0.35);
 }
 
 scrollbar.horizontal slider {
-    min-height: 8px;
-    min-width: 50px;
-}
-
-scrollbar.horizontal slider:hover {
-    min-height: 10px;
+    min-height: 2px;
+    min-width: 40px;
 }
 
 scrollbar.vertical slider {
-    min-width: 8px;
-    min-height: 50px;
-}
-
-scrollbar.vertical slider:hover {
-    min-width: 10px;
-}
-
-/* ===== SEPARATORS ===== */
-separator {
-    background-color: @index_border;
-    margin: 24px 0;
-    min-height: 2px;
-}
-
-/* ===== ENTRY FIELDS ===== */
-entry {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 16px;
+    min-width: 2px;
     min-height: 40px;
-    caret-color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-entry:focus {
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
-    background-color: @index_bg_secondary;
-    transform: translateY(-1px);
-}
-
-entry text {
-    color: @index_fg;
-}
-
-entry placeholder {
-    color: @index_fg_tertiary;
-}
-
-/* ===== GRID ===== */
-grid {
-    background-color: transparent;
-}
-
-/* ===== FLOWBOX ===== */
-flowbox {
-    background-color: transparent;
-}
-
-flowboxchild {
-    background-color: transparent;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    opacity: 1.0;
-}
-
-flowboxchild:hover {
-    opacity: 1.0;
-    transform: scale(1.01);
-}
-
-/* ===== STACK SWITCHER ===== */
-stackswitcher {
-    background-color: transparent;
-}
-
-/* ===== FOCUS INDICATORS ===== */
-button:focus,
-entry:focus,
-row:focus {
-    outline: none;
+scrollbar trough {
+    background: transparent;
+    border: none;
 }

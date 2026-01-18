@@ -1,0 +1,9 @@
+pub mod sidebar;
+pub mod dashboard_view;
+pub mod cpu_view;
+pub mod gpu_view;
+pub mod memory_view;
+pub mod disk_view;
+pub mod network_view;
+pub mod process_view;
+pub mod custom_charts;

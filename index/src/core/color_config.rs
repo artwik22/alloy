@@ -22,22 +22,25 @@ pub struct ColorConfig {
     pub notification_sounds_enabled: Option<bool>,
     #[serde(rename = "sidebarVisible", skip_serializing_if = "Option::is_none")]
     pub sidebar_visible: Option<bool>,
+    #[serde(rename = "rounding", skip_serializing_if = "Option::is_none")]
+    pub rounding: Option<String>,
 }
 
 impl Default for ColorConfig {
     fn default() -> Self {
         Self {
-            background: "#000000".to_string(),
-            primary: "#0a0a0a".to_string(),
-            secondary: "#1a1a1a".to_string(),
+            background: "#0a0a0a".to_string(),
+            primary: "#1a1a1a".to_string(),
+            secondary: "#121212".to_string(),
             text: "#ffffff".to_string(),
-            accent: "#ffffff".to_string(),
+            accent: "#4a9eff".to_string(),
             last_wallpaper: None,
             color_preset: None,
             sidebar_position: None,
             notifications_enabled: None,
             notification_sounds_enabled: None,
             sidebar_visible: None,
+            rounding: Some("rounded".to_string()),
         }
     }
 }

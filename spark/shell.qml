@@ -96,11 +96,24 @@ ShellRoot {
                 if (xhr.status === 200 || xhr.status === 0) {
                     try {
                         var json = JSON.parse(xhr.responseText)
-                        if (json.background) sharedData.colorBackground = json.background
-                        if (json.primary) sharedData.colorPrimary = json.primary
-                        if (json.secondary) sharedData.colorSecondary = json.secondary
-                        if (json.text) sharedData.colorText = json.text
-                        if (json.accent) sharedData.colorAccent = json.accent
+
+                        // Check if a preset is selected and load its colors
+                        if (json.colorPreset && json.presets && json.presets[json.colorPreset]) {
+                            var preset = json.presets[json.colorPreset]
+                            sharedData.colorBackground = preset.background
+                            sharedData.colorPrimary = preset.primary
+                            sharedData.colorSecondary = preset.secondary
+                            sharedData.colorText = preset.text
+                            sharedData.colorAccent = preset.accent
+                            console.log("Loaded preset '" + json.colorPreset + "' from colors.json")
+                        } else {
+                            // Fall back to direct color values
+                            if (json.background) sharedData.colorBackground = json.background
+                            if (json.primary) sharedData.colorPrimary = json.primary
+                            if (json.secondary) sharedData.colorSecondary = json.secondary
+                            if (json.text) sharedData.colorText = json.text
+                            if (json.accent) sharedData.colorAccent = json.accent
+                        }
                         
                         // Load last wallpaper if available
                         if (json.lastWallpaper && json.lastWallpaper.length > 0) {
@@ -321,14 +334,9 @@ ShellRoot {
                                     }
                                 }
                                 
-                                // Load sidebar visibility if available
-                                if (json.sidebarVisible !== undefined) {
-                                    var visible = json.sidebarVisible === true || json.sidebarVisible === "true"
-                                    if (visible !== sharedData.sidebarVisible) {
-                                        sharedData.sidebarVisible = visible
-                                        changed = true
-                                    }
-                                }
+                                // Note: We don't auto-reload sidebarVisible from file watcher
+                                // because user toggles it directly in the UI. Only load it on startup
+                                // to avoid race condition with Dashboard save function
                                 
                                 if (changed) {
                                     console.log("Colors or settings changed, reloaded from colors.json")

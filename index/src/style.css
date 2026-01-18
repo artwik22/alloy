@@ -1,795 +1,496 @@
-/* ============================================================================
-   INDEX FILE EXPLORER - BRUTALIST INDUSTRIAL UI
-   Design System v1.0.0
-   ZERO BORDER-RADIUS - ALL EDGES 90° SHARP
-   ============================================================================ */
+/* ====================================================================
+   NAUTILUS CLONE - Native Libadwaita Styling
+   Matches GNOME Files (Nautilus) appearance
+   ==================================================================== */
 
-/* ===== CSS VARIABLES - DESIGN TOKENS ===== */
-@define-color index_bg #000000;
-@define-color index_bg_secondary #0a0a0a;
-@define-color index_bg_tertiary #1a1a1a;
-@define-color index_bg_elevated #252525;
-@define-color index_fg #ffffff;
-@define-color index_fg_dim #cccccc;
-@define-color index_fg_tertiary #999999;
-@define-color index_fg_disabled #666666;
-@define-color index_border #333333;
-@define-color index_border_secondary #444444;
-@define-color index_border_focus #ffffff;
-@define-color index_selection rgba(255, 255, 255, 0.15);
-@define-color index_hover rgba(255, 255, 255, 0.08);
-@define-color index_focus rgba(255, 255, 255, 0.12);
-@define-color index_error #ff4444;
-@define-color index_success #44ff44;
-@define-color index_warning #ffaa00;
-@define-color index_info #44aaff;
+/* ===== Color Definitions ===== */
+@define-color window_bg_color #242424;
+@define-color window_fg_color #ffffff;
+@define-color headerbar_bg_color #303030;
+@define-color headerbar_fg_color #ffffff;
+@define-color card_bg_color #383838;
+@define-color card_fg_color #ffffff;
+@define-color accent_bg_color #3584e4;
+@define-color accent_color #3584e4;
+@define-color view_bg_color #1e1e1e;
+@define-color sidebar_bg_color #2a2a2a;
 
-/* ===== GLOBAL RESET - ZERO BORDER-RADIUS ===== */
-* {
-    border-radius: 0;
-    outline-offset: 0;
-    -gtk-outline-radius: 0;
+/* ===== Animations ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
-*:focus {
-    outline: none;
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* ===== WINDOW ===== */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===== Window ===== */
 window {
-    background-color: @index_bg;
-    color: @index_fg;
+    animation: fadeIn 200ms ease-out;
 }
 
 window.background {
-    background-color: @index_bg;
+    animation: fadeIn 200ms ease-out;
 }
 
-/* ===== HEADER BAR ===== */
-headerbar,
-headerbar.default-decoration,
-headerbar.titlebar {
-    background: @index_bg;
-    background-color: @index_bg;
-    background-image: none;
-    border: none;
-    border-bottom: 2px solid @index_border;
-    padding: 14px 20px;
-    min-height: 56px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-    -gtk-icon-shadow: none;
-    transition: box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-headerbar.titlebar:backdrop {
-    background: @index_bg;
-    background-color: @index_bg;
-    background-image: none;
-    opacity: 1.0;
-}
-
-headerbar title {
-    font-weight: 600;
-    font-size: 14px;
-    color: @index_fg;
-    letter-spacing: 0.02em;
-}
-
-headerbar.titlebar title {
-    color: @index_fg;
-}
-
-headerbar.titlebar:backdrop title {
-    color: @index_fg;
-    opacity: 0.9;
-}
-
-/* ===== HEADER BAR BUTTONS ===== */
-headerbar button {
-    background: transparent;
-    background-color: transparent;
-    background-image: none;
-    border: 2px solid transparent;
-    padding: 10px 14px;
-    min-height: 40px;
-    min-width: 40px;
-    margin: 0 2px;
-    color: @index_fg;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    -gtk-icon-effect: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-headerbar.titlebar button,
-headerbar.titlebar:backdrop button,
-headerbar.default-decoration button {
-    background: transparent;
-    background-color: transparent;
-    background-image: none;
-    color: @index_fg;
-    box-shadow: none;
-}
-
-headerbar button:hover {
-    background: @index_hover;
-    background-color: @index_hover;
-    background-image: none;
-    border-color: @index_border;
-    color: @index_fg;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-    transform: translateY(-1px);
-}
-
-headerbar button:active,
-headerbar button:checked,
-headerbar button:checked:hover {
-    background: @index_selection;
-    background-color: @index_selection;
-    background-image: none;
-    border-color: @index_border_focus;
-    color: @index_fg;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    transform: translateY(0);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
-}
-
-headerbar button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
-}
-
-headerbar button image {
-    color: @index_fg;
-    opacity: 0.95;
-    -gtk-icon-style: symbolic;
-    -gtk-icon-transform: scale(1.1);
-}
-
-headerbar.titlebar button image,
-headerbar.titlebar:backdrop button image {
-    color: @index_fg;
-}
-
-headerbar button:hover image {
-    opacity: 1.0;
-}
-
-/* Linked button groups */
-headerbar .linked button {
-    margin: 0;
-    border-right-width: 0;
-}
-
-headerbar .linked button:last-child {
-    border-right-width: 2px;
-}
-
-headerbar .linked button:first-child {
-    border-left-width: 2px;
-}
-
-/* ===== SEARCH ENTRY ===== */
-headerbar searchentry,
-headerbar.titlebar searchentry,
-headerbar.titlebar:backdrop searchentry,
-searchentry {
-    background-color: @index_bg_tertiary;
-    background-image: none;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 18px;
-    min-height: 40px;
-    caret-color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-headerbar.titlebar searchentry:backdrop,
-headerbar.titlebar:backdrop searchentry {
-    background-color: @index_bg_tertiary;
-    background-image: none;
-    color: @index_fg;
-}
-
-headerbar searchentry:focus,
-headerbar.titlebar searchentry:focus,
-searchentry:focus {
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
-    background-color: @index_bg_secondary;
-    background-image: none;
-    transform: translateY(-1px);
-}
-
-headerbar searchentry image,
-headerbar.titlebar searchentry image,
-headerbar.titlebar:backdrop searchentry image,
-searchentry image {
-    color: @index_fg_dim;
-    opacity: 0.8;
-}
-
-headerbar searchentry text,
-headerbar.titlebar searchentry text,
-headerbar.titlebar:backdrop searchentry text,
-searchentry text {
-    color: @index_fg;
-}
-
-headerbar searchentry placeholder,
-headerbar.titlebar searchentry placeholder {
-    color: @index_fg_tertiary;
-}
-
-searchentry > * > text > selection {
-    background-color: @index_fg;
-    color: @index_bg;
-}
-
-/* ===== SIDEBAR ===== */
-.sidebar,
+/* ===== Navigation Sidebar ===== */
 .navigation-sidebar {
-    background-color: @index_bg_secondary;
-    border-right: 2px solid @index_border;
-    padding: 0;
-    min-width: 240px;
-    max-width: 240px;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.4), 1px 0 2px rgba(0, 0, 0, 0.3);
+    background-color: transparent;
+    padding: 4px;
 }
 
 .navigation-sidebar row {
-    padding: 0;
-    margin: 0;
-    min-height: 44px;
-    border: none;
-    border-bottom: 1px solid @index_border;
-    background: transparent;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: none;
-}
-
-.navigation-sidebar row:hover {
-    background-color: @index_hover;
-    transform: translateX(2px);
-    box-shadow: inset 2px 0 0 @index_border_focus;
-}
-
-.navigation-sidebar row.sidebar-section-header:hover {
-    background-color: transparent;
-    transform: none;
-    box-shadow: none;
+    border-radius: 6px;
+    margin: 2px 0;
+    min-height: 36px;
+    transition: background-color 200ms ease, transform 150ms ease;
+    animation: slideInFromLeft 250ms ease-out backwards;
 }
 
 .navigation-sidebar row:selected {
-    background-color: @index_selection;
-    box-shadow: inset 3px 0 0 @index_fg;
-    transform: translateX(0);
+    background-color: alpha(@accent_bg_color, 0.3);
+    color: @window_fg_color;
 }
 
 .navigation-sidebar row:selected label {
-    color: @index_fg;
-    font-weight: 600;
+    color: @window_fg_color;
+    font-weight: 500;
 }
 
-.navigation-sidebar row image {
-    color: @index_fg_dim;
-    opacity: 0.9;
-    -gtk-icon-transform: scale(1.1);
+.navigation-sidebar row:hover:not(:selected) {
+    background-color: alpha(currentColor, 0.1);
+    transform: translateX(4px);
 }
 
-.navigation-sidebar row:hover image {
-    opacity: 1.0;
-}
-
-.navigation-sidebar row:selected image {
-    color: @index_fg;
-    opacity: 1.0;
-}
-
-.navigation-sidebar row label {
-    color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-}
-
-.navigation-sidebar row:selected label {
-    font-weight: 600;
-}
-
-/* Sidebar section headers */
-.sidebar-section-header {
-    padding: 12px 16px 8px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: @index_fg_tertiary;
-    opacity: 0.9;
-    pointer-events: none;
-    border-bottom: 2px solid @index_border;
-}
-
-.sidebar-section-header:hover {
-    background-color: transparent;
-    transform: none;
-}
-
-/* ===== PATH BAR ===== */
-.path-bar {
-    background-color: @index_bg;
-    border-bottom: 2px solid @index_border;
-    padding: 16px 24px;
-    min-height: 52px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.path-breadcrumbs {
-}
-
-.path-bar button.path-segment {
-    background: transparent;
-    border: none;
-    color: @index_fg_dim;
-    font-size: 14px;
-    font-weight: 400;
-    padding: 8px 8px;
-    min-height: 36px;
-    min-width: 0;
-    margin: 0 2px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: none;
-}
-
-.path-bar button.path-segment:hover {
-    color: @index_fg;
-    background-color: @index_hover;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    transform: translateY(-1px);
-}
-
-.path-bar button.path-segment.path-current {
-    color: @index_fg;
-    font-weight: 600;
-    background-color: transparent;
-    box-shadow: none;
-}
-
-.path-entry {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-    padding: 10px 16px;
-    min-height: 40px;
-    caret-color: @index_fg;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.path-entry:focus {
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
-    background-color: @index_bg_secondary;
-    transform: translateY(-1px);
-}
-
-.path-entry text {
-    color: @index_fg;
-}
-
-.path-entry placeholder {
-    color: @index_fg_tertiary;
-}
-
-.path-separator {
-    color: @index_fg_tertiary;
-    opacity: 0.7;
-    font-size: 14px;
-    margin: 0;
-    padding: 0 4px;
-}
-
-/* ===== FILE LIST ===== */
-.file-list,
-listview {
-    background-color: @index_bg;
-    color: @index_fg;
-}
-
-listview > row {
-    padding: 0;
-    margin: 0;
-    min-height: 48px;
-    border-bottom: 1px solid @index_border;
-    background: transparent;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: none;
-}
-
-listview > row:hover {
-    background-color: @index_hover;
-    border-bottom-color: @index_border_secondary;
-    box-shadow: inset 2px 0 0 @index_border_focus;
+.navigation-sidebar row:active {
+    background-color: alpha(currentColor, 0.2);
     transform: translateX(2px);
 }
 
-listview > row:selected {
-    background-color: @index_selection;
-    box-shadow: inset 3px 0 0 @index_fg;
+.navigation-sidebar row:disabled {
+    opacity: 0.5;
 }
 
-listview > row:selected label {
-    color: @index_fg;
-    font-weight: 600;
+/* Fix sidebar background when window is out of focus */
+navigation-split-view > sidebar {
+    background-color: @sidebar_bg_color;
+    border-right: 1px solid alpha(currentColor, 0.1);
 }
 
-listview > row > box {
-    padding: 12px 24px;
+navigation-split-view > sidebar:backdrop {
+    background-color: @sidebar_bg_color;
 }
 
-listview > row image {
-    color: @index_fg_dim;
+/* Sidebar container styling */
+.sidebar-container {
+    background-color: @sidebar_bg_color;
+}
+
+.sidebar-container:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* ScrolledWindow inside sidebar */
+.sidebar-container scrolledwindow {
+    background-color: @sidebar_bg_color;
+}
+
+.sidebar-container scrolledwindow:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* NavigationPage backdrop */
+navigation-page {
+    background-color: @sidebar_bg_color;
+}
+
+navigation-page:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+/* Ensure sidebar content maintains background */
+navigation-split-view > sidebar > navigation-page {
+    background-color: @sidebar_bg_color;
+}
+
+navigation-split-view > sidebar > navigation-page:backdrop {
+    background-color: @sidebar_bg_color;
+}
+
+.sidebar-row {
+    min-height: 36px;
+}
+
+.sidebar-icon {
+    color: @accent_color;
     opacity: 0.9;
-    min-width: 28px;
-    min-height: 28px;
-    -gtk-icon-transform: scale(1.1);
 }
 
-listview > row:hover image {
+.navigation-sidebar row:selected .sidebar-icon {
     opacity: 1.0;
+    color: @accent_color;
 }
 
-listview > row:selected image {
-    color: @index_fg;
-    opacity: 1.0;
+.navigation-sidebar row:disabled .sidebar-icon {
+    opacity: 0.4;
 }
 
-listview > row label {
-    color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-}
-
-listview > row:selected label {
-    font-weight: 600;
-}
-
-/* File info labels */
-.dim-label {
-    color: @index_fg_dim;
-    font-size: 12px;
-    font-family: monospace;
-    font-weight: 400;
-}
-
-/* ===== SCROLLBARS ===== */
-scrollbar {
-    background: transparent;
-    border: none;
-}
-
-scrollbar slider {
-    background-color: rgba(255, 255, 255, 0.12);
-    min-width: 8px;
-    min-height: 8px;
-    border: none;
-    margin: 2px;
-    border-radius: 0;
-    transition: background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-scrollbar slider:hover {
-    background-color: rgba(255, 255, 255, 0.25);
-    min-width: 10px;
-    min-height: 10px;
-}
-
-scrollbar slider:active {
-    background-color: @index_fg;
-}
-
-scrollbar.horizontal slider {
-    min-height: 8px;
-    min-width: 50px;
-}
-
-scrollbar.horizontal slider:hover {
-    min-height: 10px;
-}
-
-scrollbar.vertical slider {
-    min-width: 8px;
-    min-height: 50px;
-}
-
-scrollbar.vertical slider:hover {
-    min-width: 10px;
-}
-
-/* ===== PANED SEPARATOR ===== */
-paned > separator {
-    background-color: @index_border;
-    min-width: 2px;
-    min-height: 2px;
-    border: none;
-    opacity: 1.0;
-}
-
-paned > separator:hover {
-    background-color: @index_border_secondary;
-}
-
-/* ===== CONTEXT MENU / POPOVER ===== */
-popover,
-popover.menu {
-    background-color: @index_bg_elevated;
-    border: 2px solid @index_border;
-    padding: 4px 0;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
-    transition: opacity 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-popover contents {
-    background: transparent;
-}
-
-popover modelbutton,
-popover .model {
-    padding: 12px 24px;
-    min-height: 40px;
-    color: @index_fg;
-    background: transparent;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    font-size: 14px;
-    font-weight: 400;
-    margin: 2px 4px;
-    border-bottom: 1px solid @index_border;
-}
-
-popover modelbutton:last-child,
-popover .model:last-child {
-    border-bottom: none;
-}
-
-popover modelbutton:hover {
-    background-color: @index_hover;
-}
-
-popover separator {
-    background-color: @index_border;
-    margin: 4px 0;
-    min-height: 2px;
-}
-
-/* ===== DIALOGS ===== */
-window.dialog,
-dialog {
-    background-color: @index_bg_elevated;
-    border: 2px solid @index_border;
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5), 0 6px 12px rgba(0, 0, 0, 0.4);
-}
-
-dialog headerbar {
-    background-color: @index_bg_tertiary;
-    border-bottom: 2px solid @index_border;
-}
-
-/* ===== SETTINGS WINDOW ===== */
-window.settings {
-    background-color: @index_bg;
-    color: @index_fg;
-}
-
-/* Notebook (tabs) */
-notebook {
-    background-color: @index_bg;
-    color: @index_fg;
-}
-
-notebook > header {
-    background-color: @index_bg_secondary;
-    border-bottom: 2px solid @index_border;
-}
-
-notebook > header > tabs > tab {
-    background-color: transparent;
-    color: @index_fg_dim;
-    padding: 12px 24px;
-    border: none;
-    border-bottom: 3px solid transparent;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-notebook > header > tabs > tab:hover {
-    background-color: @index_hover;
-    color: @index_fg;
-}
-
-notebook > header > tabs > tab:checked {
-    background-color: transparent;
-    color: @index_fg;
-    border-bottom-color: @index_fg;
-    font-weight: 600;
-}
-
-notebook > stack {
-    background-color: @index_bg;
-}
-
-/* Settings content */
-.title-4 {
-    font-size: 16px;
-    font-weight: 600;
-    color: @index_fg;
-    margin-top: 20px;
-    margin-bottom: 12px;
-}
-
+/* Hide separators - they appear as unnamed bars */
 separator {
-    background-color: @index_border;
-    margin: 16px 0;
-    min-height: 2px;
-}
-
-/* Monospace labels for shortcuts */
-.monospace {
-    font-family: monospace;
-    font-size: 12px;
-}
-
-/* ===== ENTRY FIELDS ===== */
-entry {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 16px;
-    min-height: 40px;
-    caret-color: @index_fg;
-    font-size: 14px;
-    font-weight: 400;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-entry:focus {
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus, 0 2px 4px rgba(0, 0, 0, 0.4);
-    background-color: @index_bg_secondary;
-    transform: translateY(-1px);
-}
-
-entry text {
-    color: @index_fg;
-}
-
-entry placeholder {
-    color: @index_fg_tertiary;
-}
-
-/* ===== BUTTONS ===== */
-button {
-    background-color: @index_bg_tertiary;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 18px;
-    min-height: 40px;
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-button.flat {
-    background: transparent;
-    background-color: transparent;
+    opacity: 0;
+    min-height: 0;
+    margin: 0;
+    background: none;
     border: none;
-    box-shadow: none;
 }
 
-button:hover {
-    background-color: @index_hover;
-    border-color: @index_border_secondary;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+.navigation-sidebar separator {
+    opacity: 0;
+    min-height: 0;
+    margin: 0;
+    background: none;
+    border: none;
 }
 
-button:active {
-    background-color: @index_selection;
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    transition: all 150ms cubic-bezier(0.4, 0, 1, 1);
+/* Ensure labels in sidebar have proper color */
+.sidebar-container label {
+    color: @window_fg_color;
 }
 
-button:focus {
-    outline: none;
-    border-color: @index_border_focus;
-    box-shadow: 0 0 0 2px @index_focus;
+.sidebar-container label:backdrop {
+    color: @window_fg_color;
 }
 
-button.suggested-action {
-    background-color: @index_fg;
-    border-color: @index_fg;
-    color: @index_bg;
+/* ===== Nautilus Path Bar (Breadcrumbs) ===== */
+.nautilus-path-container {
+    min-width: 200px;
+    max-width: 600px;
+}
+
+.nautilus-path-bar {
+    background-color: alpha(currentColor, 0.06);
+    border-radius: 8px;
+    padding: 0 6px;
+    min-height: 32px;
+}
+
+.nautilus-path-bar button {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    min-height: 28px;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: background-color 150ms ease, transform 100ms ease;
+}
+
+.nautilus-path-bar button:hover {
+    background-color: alpha(currentColor, 0.12);
+    transform: scale(1.05);
+}
+
+.nautilus-path-bar button:active {
+    background-color: alpha(currentColor, 0.18);
+    transform: scale(0.95);
+}
+
+.nautilus-path-bar button.current-path {
     font-weight: 600;
+    color: @accent_color;
 }
 
-button.suggested-action:hover {
-    background-color: @index_fg;
-    border-color: @index_fg;
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+.nautilus-path-bar image {
+    opacity: 0.6;
+    min-width: 14px;
+    margin: 0 2px;
 }
 
-button.destructive-action {
-    background-color: @index_error;
-    border-color: @index_error;
-    color: @index_bg;
+/* Path entry (when editing) */
+.nautilus-path-entry {
+    min-height: 32px;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    background-color: alpha(currentColor, 0.08);
+    border: 1px solid alpha(@accent_color, 0.3);
+    transition: border-color 200ms ease, background-color 200ms ease, transform 150ms ease;
 }
 
-button.destructive-action:hover {
-    background-color: #ff6666;
-    border-color: #ff6666;
+.nautilus-path-entry:focus {
+    border-color: @accent_color;
+    background-color: alpha(currentColor, 0.1);
+    transform: scale(1.01);
 }
 
-button image {
-    opacity: 0.95;
+/* ===== Nautilus Grid View ===== */
+.nautilus-view {
+    background-color: @view_bg_color;
 }
 
-button:hover image {
-    opacity: 1.0;
+.nautilus-grid {
+    background-color: transparent;
+    padding: 16px;
+    column-spacing: 20px;
+    row-spacing: 20px;
 }
 
-/* ===== LABELS ===== */
-label {
-    color: @index_fg;
-    font-size: 14px;
+.nautilus-grid > child {
+    margin: 0;
+    animation-delay: calc(var(--child-index, 0) * 20ms);
+}
+
+.nautilus-tile {
+    padding: 10px;
+    border-radius: 10px;
+    transition: background-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+    animation: scaleIn 300ms ease-out backwards;
+}
+
+.nautilus-tile:hover {
+    background-color: alpha(currentColor, 0.06);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px alpha(black, 0.15);
+}
+
+.nautilus-tile:selected {
+    background-color: alpha(@accent_bg_color, 0.2);
+    transform: scale(1.03);
+}
+
+.nautilus-tile:selected:hover {
+    background-color: alpha(@accent_bg_color, 0.25);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 16px alpha(@accent_color, 0.25);
+}
+
+.nautilus-icon {
+    -gtk-icon-style: regular;
+}
+
+/* Folder icons get the accent color treatment */
+.nautilus-tile image[icon-name="folder"],
+.nautilus-tile image[icon-name^="folder-"] {
+    -gtk-icon-palette: warning @accent_color;
+}
+
+.nautilus-label {
+    font-size: 11px;
     font-weight: 400;
+    color: @window_fg_color;
+    margin-top: 6px;
 }
 
-label.dim-label {
-    color: @index_fg_dim;
+.nautilus-tile:selected .nautilus-label {
+    font-weight: 500;
+}
+
+/* ===== Nautilus List View ===== */
+.nautilus-list {
+    background-color: transparent;
+}
+
+.nautilus-list row {
+    border-radius: 6px;
+    margin: 1px 6px;
+    min-height: 40px;
+    transition: background-color 200ms ease, transform 150ms ease;
+    animation: slideIn 250ms ease-out backwards;
+}
+
+.nautilus-list row:selected {
+    background-color: alpha(@accent_bg_color, 0.2);
+    transform: translateX(4px);
+}
+
+.nautilus-list row:hover:not(:selected) {
+    background-color: alpha(currentColor, 0.05);
+    transform: translateX(2px);
+}
+
+.nautilus-list-row {
+    min-height: 40px;
+    padding: 4px 0;
+}
+
+.nautilus-list-icon {
+    -gtk-icon-style: regular;
+}
+
+.nautilus-list-name {
+    font-weight: 400;
+    font-size: 13px;
+}
+
+.nautilus-list-size,
+.nautilus-list-date {
     font-size: 12px;
 }
 
-/* ===== SELECTION ===== */
-selection {
-    background-color: @index_fg;
-    color: @index_bg;
+/* ===== ScrolledWindow ===== */
+.nautilus-scrolled {
+    background-color: @view_bg_color;
 }
 
-/* ===== TOOLTIPS ===== */
-tooltip {
-    background-color: @index_bg_elevated;
-    border: 2px solid @index_border;
-    color: @index_fg;
-    padding: 10px 14px;
-    font-size: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+.nautilus-scrolled:backdrop {
+    background-color: @view_bg_color;
 }
 
-/* ===== DRIVE/VOLUME ICONS ===== */
-.drive-item image {
-    color: @index_fg;
+/* ===== Entry Fields ===== */
+.nautilus-entry {
+    min-height: 36px;
+    border-radius: 8px;
 }
 
-.drive-item label {
-    font-size: 14px;
+.nautilus-search {
+    min-height: 36px;
+    border-radius: 8px;
 }
 
-/* ===== EMPTY STATE ===== */
-.empty-state {
-    color: @index_fg_dim;
-    font-size: 14px;
+/* ===== Header Bar ===== */
+headerbar {
+    background-color: @headerbar_bg_color;
+    box-shadow: none;
+    border-bottom: 1px solid alpha(currentColor, 0.1);
+    animation: slideIn 250ms ease-out;
 }
 
-/* ===== FOCUS INDICATORS ===== */
-button:focus,
-entry:focus,
-row:focus {
-    outline: none;
+headerbar:backdrop {
+    background-color: @headerbar_bg_color;
+}
+
+headerbar.flat {
+    background-color: transparent;
+    border-bottom: 1px solid alpha(currentColor, 0.1);
+}
+
+headerbar.flat:backdrop {
+    background-color: transparent;
+}
+
+/* Linked buttons in header */
+headerbar .linked button {
+    border-radius: 0;
+    min-width: 36px;
+    min-height: 36px;
+}
+
+headerbar .linked button:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+headerbar .linked button:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+headerbar .linked button:only-child {
+    border-radius: 8px;
+}
+
+/* ===== Popovers ===== */
+popover.menu {
+    padding: 4px;
+}
+
+popover.menu modelbutton {
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-height: 28px;
+    transition: background-color 150ms ease, transform 100ms ease;
+}
+
+popover.menu modelbutton:hover {
+    background-color: alpha(currentColor, 0.08);
+    transform: translateX(2px);
+}
+
+/* ===== Context Menu ===== */
+popover.menu separator {
+    margin: 4px 8px;
+}
+
+/* ===== Utility Classes ===== */
+.dim-label {
+    opacity: 0.55;
+}
+
+.caption {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+}
+
+/* ===== Selection ===== */
+gridview:focus child:selected,
+listview:focus row:selected {
+    outline: 2px solid @accent_color;
+    outline-offset: -2px;
+}
+
+/* ===== Split View ===== */
+navigation-split-view {
+    background-color: @view_bg_color;
+    transition: background-color 200ms ease;
+}
+
+navigation-split-view:backdrop {
+    background-color: @view_bg_color;
+}
+
+/* ===== Message Dialogs ===== */
+messagedialog .dialog-action-area button {
+    min-height: 36px;
+    border-radius: 8px;
+}
+
+messagedialog .dialog-action-area button.suggested-action {
+    background-color: @accent_bg_color;
+    color: white;
+}
+
+messagedialog .dialog-action-area button.destructive-action {
+    background-color: #c01c28;
+    color: white;
+}
+
+/* ===== Empty State ===== */
+.nautilus-view:empty {
+    background-color: @view_bg_color;
 }

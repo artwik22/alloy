@@ -48,6 +48,10 @@ if "notificationsEnabled" in existing_data:
     colors["notificationsEnabled"] = existing_data["notificationsEnabled"]
 if "notificationSoundsEnabled" in existing_data:
     colors["notificationSoundsEnabled"] = existing_data["notificationSoundsEnabled"]
+if "rounding" in existing_data:
+    colors["rounding"] = existing_data["rounding"]
+if "showHiddenFiles" in existing_data:
+    colors["showHiddenFiles"] = existing_data["showHiddenFiles"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled
@@ -61,6 +65,14 @@ if len(sys.argv) > 11 and sys.argv[11]:
 # Argument 12: sidebarVisible
 if len(sys.argv) > 12 and sys.argv[12]:
     colors["sidebarVisible"] = sys.argv[12] == "true"
+
+# Argument 13: rounding
+if len(sys.argv) > 13 and sys.argv[13]:
+    colors["rounding"] = sys.argv[13]
+
+# Argument 14: showHiddenFiles
+if len(sys.argv) > 14 and sys.argv[14]:
+    colors["showHiddenFiles"] = sys.argv[14] == "true"
 
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)

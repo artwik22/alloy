@@ -1,0 +1,15 @@
+/home/artwik/.config/alloy/Vitals/target/release/deps/target_lexicon-f945e13b0e281de9.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/data_model.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/host.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/parse_error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/targets.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/triple.rs /home/artwik/.config/alloy/Vitals/target/release/build/target-lexicon-f07b8291aa347c6d/out/host.rs
+
+/home/artwik/.config/alloy/Vitals/target/release/deps/libtarget_lexicon-f945e13b0e281de9.rlib: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/data_model.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/host.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/parse_error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/targets.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/triple.rs /home/artwik/.config/alloy/Vitals/target/release/build/target-lexicon-f07b8291aa347c6d/out/host.rs
+
+/home/artwik/.config/alloy/Vitals/target/release/deps/libtarget_lexicon-f945e13b0e281de9.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/data_model.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/host.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/parse_error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/targets.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/triple.rs /home/artwik/.config/alloy/Vitals/target/release/build/target-lexicon-f07b8291aa347c6d/out/host.rs
+
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/lib.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/data_model.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/host.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/parse_error.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/targets.rs:
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.3/src/triple.rs:
+/home/artwik/.config/alloy/Vitals/target/release/build/target-lexicon-f07b8291aa347c6d/out/host.rs:
+
+# env-dep:OUT_DIR=/home/artwik/.config/alloy/Vitals/target/release/build/target-lexicon-f07b8291aa347c6d/out

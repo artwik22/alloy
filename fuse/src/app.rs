@@ -52,13 +52,27 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>) {
     // Load base CSS
     let base_css = include_str!("resources/style.css");
     
-    // Replace CSS variables with colors from colors.json
-    let dynamic_css = base_css
-        .replace("@define-color index_bg #000000", &format!("@define-color index_bg {}", config.background))
-        .replace("@define-color index_bg_secondary #0a0a0a", &format!("@define-color index_bg_secondary {}", config.primary))
-        .replace("@define-color index_bg_tertiary #1a1a1a", &format!("@define-color index_bg_tertiary {}", config.secondary))
-        .replace("@define-color index_fg #ffffff", &format!("@define-color index_fg {}", config.text))
-        .replace("@define-color index_accent #ffffff", &format!("@define-color index_accent {}", config.accent));
+    // Replace Adwaita CSS variables with colors from colors.json
+    let mut dynamic_css = base_css
+        .replace("@define-color window_bg_color #242424", &format!("@define-color window_bg_color {}", config.background))
+        .replace("@define-color window_fg_color #ffffff", &format!("@define-color window_fg_color {}", config.text))
+        .replace("@define-color headerbar_bg_color #303030", &format!("@define-color headerbar_bg_color {}", config.primary))
+        .replace("@define-color headerbar_fg_color #ffffff", &format!("@define-color headerbar_fg_color {}", config.text))
+        .replace("@define-color card_bg_color #383838", &format!("@define-color card_bg_color {}", config.secondary))
+        .replace("@define-color card_fg_color #ffffff", &format!("@define-color card_fg_color {}", config.text))
+        .replace("@define-color accent_bg_color #3584e4", &format!("@define-color accent_bg_color {}", config.accent))
+        .replace("@define-color accent_color #3584e4", &format!("@define-color accent_color {}", config.accent))
+        .replace("@define-color sidebar_bg_color #2a2a2a", &format!("@define-color sidebar_bg_color {}", config.secondary))
+        .replace("@define-color view_bg_color #1e1e1e", &format!("@define-color view_bg_color {}", config.background));
+    
+    // Apply rounding setting
+    let rounding = config.rounding.as_deref().unwrap_or("rounded");
+    if rounding == "sharp" {
+        // Replace all border-radius values with 0px
+        use regex::Regex;
+        let re = Regex::new(r"border-radius:\s*[^;]+;").unwrap();
+        dynamic_css = re.replace_all(&dynamic_css, "border-radius: 0px;").to_string();
+    }
     
     let provider = CssProvider::new();
     provider.load_from_string(&dynamic_css);
