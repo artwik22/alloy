@@ -96,12 +96,16 @@ impl EnhancedSystemMonitor {
                         temperature: 0.0,
                     };
                     
+                    // Clone disks only when needed - we need to keep cached_disks for next iteration
+                    // Since disks are refreshed infrequently, the clone overhead is acceptable
+                    let disks_data = disks.clone();
+                    
                     let enhanced_data = EnhancedSystemData {
                         cpu: data.cpu,
                         memory: data.memory,
                         network: data.network,
                         processes: data.processes,
-                        disks: disks.clone(),
+                        disks: disks_data,
                         gpu,
                     };
                     

@@ -125,23 +125,40 @@ impl SystemMonitor {
                 *last_network = (total_received, total_transmitted);
                 *last_network_time = now;
                 
-                // Process data
+                // Process data - use partial sort to avoid collecting all processes
                 let total_memory_for_processes = total_memory;
-                let mut processes: Vec<ProcessInfo> = system
-                    .processes()
-                    .iter()
-                    .map(|(pid, process)| ProcessInfo {
-                        pid: pid.as_u32(),
-                        name: process.name().to_string_lossy().to_string(),
-                        cpu_usage: process.cpu_usage() as f64,
-                        memory: process.memory(),
-                        memory_percent: (process.memory() as f64 / total_memory_for_processes as f64) * 100.0,
-                    })
-                    .collect();
+                let process_count = system.processes().len();
+                let limit = 50.min(process_count);
                 
-                // Sort by CPU usage
-                processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap());
-                processes.truncate(50); // Limit to top 50
+                // Use a small Vec with capacity for top processes only
+                let mut top_processes = Vec::with_capacity(limit + 10);
+                
+                for (pid, process) in system.processes() {
+                    let cpu_usage = process.cpu_usage() as f64;
+                    
+                    // Only keep top processes using insertion sort approach
+                    if top_processes.len() < limit || cpu_usage > top_processes.last().map(|p: &ProcessInfo| p.cpu_usage).unwrap_or(0.0) {
+                        let process_info = ProcessInfo {
+                            pid: pid.as_u32(),
+                            name: process.name().to_string_lossy().to_string(),
+                            cpu_usage,
+                            memory: process.memory(),
+                            memory_percent: (process.memory() as f64 / total_memory_for_processes as f64) * 100.0,
+                        };
+                        
+                        top_processes.push(process_info);
+                        
+                        // Sort and keep only top N
+                        if top_processes.len() > limit {
+                            top_processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap());
+                            top_processes.truncate(limit);
+                        }
+                    }
+                }
+                
+                // Final sort to ensure correct order
+                top_processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap());
+                let processes = top_processes;
                 
                 drop(system);
                 drop(networks);

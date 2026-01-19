@@ -74,8 +74,13 @@ impl GlobalSearch {
             return;
         }
 
-        // Limit search depth and results
-        if *count > 10000 {
+        // Limit search depth and results to reduce memory usage
+        if *count > 5000 {
+            return;
+        }
+        
+        // Limit results in memory to prevent excessive RAM usage
+        if results.lock().unwrap().len() > 5000 {
             return;
         }
 

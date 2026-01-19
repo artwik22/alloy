@@ -122,15 +122,15 @@ impl ProcessView {
             self.list_box.remove(&child);
         }
         
-        // Update processes data
-        let mut processes_vec = Vec::new();
+        // Update processes data - avoid cloning entire vector
+        let mut processes_vec = Vec::with_capacity(100);
         
-        // Sort processes by CPU usage and limit to top 100
-        let mut sorted_processes = data.processes.clone();
-        sorted_processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap());
-        sorted_processes.truncate(100);
+        // Use references to avoid cloning, limit to top 100 during iteration
+        let mut process_refs: Vec<_> = data.processes.iter().collect();
+        process_refs.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap());
+        process_refs.truncate(100);
         
-        for process in sorted_processes {
+        for process in process_refs {
             processes_vec.push(ProcessRow {
                 name: process.name.clone(),
                 pid: process.pid,

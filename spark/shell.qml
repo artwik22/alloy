@@ -198,7 +198,7 @@ ShellRoot {
     // Funkcja otwierania aplikacji ustawień (fuse)
     function openSettings() {
         // Launch fuse application
-        Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || " + projectPath + "/../fuse/target/release/fuse 2>/dev/null']; running: true }", root)
+        Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null']; running: true }", root)
     }
     
     // Screenshot Service - Take screenshot with area selection

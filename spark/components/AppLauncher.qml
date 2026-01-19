@@ -1692,12 +1692,11 @@ PanelWindow {
                     if (selectedIndex >= 0 && selectedIndex < modesList.count) {
                         var mode = modesList.model.get(selectedIndex)
                         if (mode.mode === 2) {
-                            // Launch fuse directly using launchApp function
-                            launchApp({
-                                name: "Fuse",
-                                exec: "fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null",
-                                icon: "󰒓"
-                            })
+                            // Launch fuse directly using Process
+                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null &']; running: true }", appLauncherRoot)
+                            if (sharedData) {
+                                sharedData.launcherVisible = false
+                            }
                             event.accepted = true
                             return
                         } else {
@@ -1998,12 +1997,11 @@ PanelWindow {
                     
                     onClicked: {
                         if (model.mode === 2) {
-                            // Launch fuse directly using launchApp function
-                            launchApp({
-                                name: "Fuse",
-                                exec: "fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null",
-                                icon: "󰒓"
-                            })
+                            // Launch fuse directly using Process
+                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null &']; running: true }", appLauncherRoot)
+                            if (sharedData) {
+                                sharedData.launcherVisible = false
+                            }
                             return
                         } else {
                             currentMode = model.mode

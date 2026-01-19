@@ -63,13 +63,13 @@ impl FuseWindow {
         let index_tab = IndexTab::new(Arc::clone(&config));
         let bluetooth_tab = BluetoothTab::new(Arc::clone(&config));
 
-        stack.add_titled(general_tab.widget(), Some("general"), "General");
-        stack.add_titled(look_and_feel_tab.widget(), Some("look_and_feel"), "Look & Feel");
-        stack.add_titled(wallpapers_tab.widget(), Some("wallpapers"), "Wallpapers");
-        stack.add_titled(system_tab.widget(), Some("system"), "System");
-        stack.add_titled(audio_tab.widget(), Some("audio"), "Audio");
-        stack.add_titled(index_tab.widget(), Some("index"), "Index");
-        stack.add_titled(bluetooth_tab.widget(), Some("bluetooth"), "Bluetooth");
+        stack.add_titled(general_tab.widget(), Some("general"), "󰟀 General");
+        stack.add_titled(look_and_feel_tab.widget(), Some("look_and_feel"), "󰀶 Look & Feel");
+        stack.add_titled(wallpapers_tab.widget(), Some("wallpapers"), "󰋺 Wallpapers");
+        stack.add_titled(system_tab.widget(), Some("system"), "󰍛 System");
+        stack.add_titled(audio_tab.widget(), Some("audio"), "󰕧 Audio");
+        stack.add_titled(index_tab.widget(), Some("index"), "󰉋 Index");
+        stack.add_titled(bluetooth_tab.widget(), Some("bluetooth"), "󰂯 Bluetooth");
 
         // Content area - GNOME spacing (12px margins)
         stack.set_hexpand(true);
@@ -105,15 +105,8 @@ fn create_sidebar_with_switcher(stack: &Stack) -> GtkBox {
     sidebar.add_css_class("sidebar");
     sidebar.set_margin_start(0);
     sidebar.set_margin_end(0);
-    sidebar.set_margin_top(0);
+    sidebar.set_margin_top(12);
     sidebar.set_margin_bottom(0);
-
-    // Title "Settings" above tabs - GNOME style
-    let title_label = Label::new(Some("Settings"));
-    title_label.add_css_class("sidebar-title");
-    title_label.set_xalign(0.0);
-    title_label.set_halign(gtk4::Align::Start);
-    sidebar.append(&title_label);
 
     // Use StackSwitcher for navigation
     let switcher = StackSwitcher::new();

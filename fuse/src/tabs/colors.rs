@@ -204,8 +204,15 @@ fn create_preset_button(
         if let Err(e) = cfg.save() {
             eprintln!("Error saving colors: {}", e);
         } else {
-            // Update the shared config
-            *config.lock().unwrap() = cfg.clone();
+            // Update the shared config - avoid full clone, update fields directly
+            {
+                let mut shared_cfg = config.lock().unwrap();
+                shared_cfg.background = cfg.background.clone();
+                shared_cfg.primary = cfg.primary.clone();
+                shared_cfg.secondary = cfg.secondary.clone();
+                shared_cfg.text = cfg.text.clone();
+                shared_cfg.accent = cfg.accent.clone();
+            }
             // Wait a bit for file to be written and synced to disk
             std::thread::sleep(std::time::Duration::from_millis(200));
             // Notify quickshell about color change
@@ -270,8 +277,15 @@ fn create_custom_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             if let Err(e) = cfg.save() {
                 eprintln!("Error saving custom colors: {}", e);
             } else {
-                // Update the shared config
-                *config.lock().unwrap() = cfg.clone();
+                // Update the shared config - avoid full clone, update fields directly
+                {
+                    let mut shared_cfg = config.lock().unwrap();
+                    shared_cfg.background = cfg.background.clone();
+                    shared_cfg.primary = cfg.primary.clone();
+                    shared_cfg.secondary = cfg.secondary.clone();
+                    shared_cfg.text = cfg.text.clone();
+                    shared_cfg.accent = cfg.accent.clone();
+                }
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 // Notify quickshell about color change

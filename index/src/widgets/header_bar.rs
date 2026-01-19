@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Button, Entry, MenuButton, Orientation, Popover, SearchEntry, ToggleButton};
+use gtk4::{Box as GtkBox, Button, Entry, Orientation, Popover, SearchEntry, ToggleButton};
 use gtk4::gio;
 use libadwaita as adw;
 use std::cell::RefCell;
@@ -126,26 +126,6 @@ impl NautilusHeaderBar {
             .tooltip_text("New Folder")
             .build();
         container.pack_end(&new_folder_btn);
-
-        // Main menu
-        let menu_btn = MenuButton::builder()
-            .icon_name("open-menu-symbolic")
-            .tooltip_text("Main Menu")
-            .build();
-
-        let menu = gio::Menu::new();
-        menu.append(Some("Show Hidden Files"), Some("app.show-hidden"));
-        menu.append(Some("Sort by Name"), Some("app.sort-name"));
-        menu.append(Some("Sort by Date"), Some("app.sort-date"));
-        menu.append(Some("Sort by Size"), Some("app.sort-size"));
-        
-        let section = gio::Menu::new();
-        section.append(Some("About Files"), Some("app.about"));
-        menu.append_section(None, &section);
-
-        let popover_menu = gtk4::PopoverMenu::from_model(Some(&menu));
-        menu_btn.set_popover(Some(&popover_menu));
-        container.pack_end(&menu_btn);
 
         // Callbacks
         let on_path_clicked: Rc<RefCell<Option<Box<dyn Fn(PathBuf)>>>> = Rc::new(RefCell::new(None));

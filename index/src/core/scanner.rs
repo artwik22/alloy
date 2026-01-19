@@ -43,7 +43,8 @@ impl Scanner {
     }
 
     pub fn scan_with_hidden(path: &Path, show_hidden: bool) -> Result<Vec<FileEntry>, std::io::Error> {
-        let mut entries = Vec::new();
+        // Pre-allocate with reasonable capacity to reduce reallocations
+        let mut entries = Vec::with_capacity(64);
 
         for entry in fs::read_dir(path)? {
             let entry = entry?;

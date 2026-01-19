@@ -23,14 +23,24 @@ PanelWindow {
     implicitWidth: panelPosition === "left" ? 36 : (panelPosition === "top" ? (screen ? screen.width : 1920) : 0)
     implicitHeight: panelPosition === "top" ? 36 : (panelPosition === "left" ? (screen ? screen.height : 1080) : 0)
     color: "transparent"
-    // Visible only when this panel's position matches the current sidebar position
+
+    // Detect if any workspace on this screen has a fullscreen window
+    property bool isFullscreenActive: {
+        if (!Hyprland || !Hyprland.workspaces || !screen) return false;
+        return Hyprland.workspaces.values.some(w => 
+            w.monitor && w.monitor.name === screen.name && 
+            w.lastIpcObject && w.lastIpcObject.hasfullscreen
+        );
+    }
+
+    // Visible only when this panel's position matches the current sidebar position and not in fullscreen
     visible: (sharedData && sharedData.sidebarVisible !== undefined ? sharedData.sidebarVisible : true) && 
-             (sharedData && sharedData.sidebarPosition === panelPosition)
+             (sharedData && sharedData.sidebarPosition === panelPosition) &&
+             !isFullscreenActive
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qssidepanel"
-    exclusiveZone: (sharedData && sharedData.sidebarVisible !== undefined && sharedData.sidebarVisible && sharedData.sidebarPosition === panelPosition) ? 
-        ((panelPosition === "top") ? implicitHeight : implicitWidth) : 0
+    exclusiveZone: visible ? ((panelPosition === "top") ? implicitHeight : implicitWidth) : 0
     
     property var sharedData: null
     
@@ -696,6 +706,106 @@ PanelWindow {
         }
         
     }  // End of sidePanelContent
+    
+    // Settings Button - OUTSIDE sidePanelRect to ensure it's clickable
+    Item {
+        id: settingsButtonContainer
+        width: 32
+        height: 32
+        anchors.horizontalCenter: panelPosition === "left" ? parent.horizontalCenter : undefined
+        anchors.right: panelPosition === "top" ? parent.right : undefined
+        anchors.rightMargin: panelPosition === "top" ? 88 : 0
+        anchors.bottom: panelPosition === "left" ? parent.bottom : undefined
+        anchors.bottomMargin: panelPosition === "left" ? 80 : 0
+        z: 100000  // Very high z to ensure it's on top of everything
+        visible: true
+        enabled: true
+        
+        // Smooth repositioning when panel position changes
+        Behavior on anchors.rightMargin {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on anchors.bottomMargin {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.OutCubic
+            }
+        }
+        
+        Rectangle {
+            id: settingsButton
+            width: 24
+            height: 24
+            anchors.centerIn: parent
+            radius: 0
+            color: settingsButtonMouseArea.containsMouse ? 
+                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
+                ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414")
+            
+            property real buttonScale: settingsButtonMouseArea.pressed ? 0.9 : (settingsButtonMouseArea.containsMouse ? 1.1 : 1.0)
+            
+            Behavior on color {
+                ColorAnimation {
+                    duration: 200
+                    easing.type: Easing.OutQuart
+                }
+            }
+            
+            Behavior on buttonScale {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutQuart
+                }
+            }
+            
+            scale: buttonScale
+            
+            Text {
+                text: "󰒓"  // Settings icon (Nerd Fonts)
+                font.pixelSize: 14
+                anchors.centerIn: parent
+                color: settingsButtonMouseArea.containsMouse ? 
+                    ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
+                
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.OutQuart
+                    }
+                }
+            }
+        }
+        
+        MouseArea {
+            id: settingsButtonMouseArea
+            anchors.fill: parent
+            anchors.margins: -10  // Much larger hit area
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+            enabled: true
+            propagateComposedEvents: false
+            acceptedButtons: Qt.LeftButton
+            z: 10001
+            
+            onClicked: {
+                console.log("=== SETTINGS BUTTON CLICKED ===")
+                console.log("Panel position:", panelPosition)
+                if (settingsFunction) {
+                    settingsFunction()
+                } else {
+                    console.log("settingsFunction is null!")
+                }
+            }
+            
+            onEntered: {
+                console.log("Mouse entered settings button")
+            }
+        }
+    }
     
     // Screenshot Button - OUTSIDE sidePanelRect and sidePanelContent to ensure it's clickable
     Item {
