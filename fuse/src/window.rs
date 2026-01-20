@@ -30,8 +30,8 @@ impl FuseWindow {
         
         // Set minimum size after building
         window.set_default_size(1100, 750);
-        // Set minimum size constraints
-        window.set_size_request(800, 650);
+        // Set minimum size constraints - more flexible for smaller screens
+        window.set_size_request(700, 500);
 
         // Content area with stack
         let stack = Stack::new();
@@ -102,9 +102,11 @@ impl FuseWindow {
 }
 
 fn create_custom_sidebar(stack: &Stack) -> GtkBox {
-    // GNOME Settings style: 240px sidebar width
+    // GNOME Settings style: flexible sidebar width
     let sidebar = GtkBox::new(Orientation::Vertical, 0);
-    sidebar.set_size_request(240, -1);
+    sidebar.set_size_request(200, -1); // Minimum width, but can expand
+    sidebar.set_hexpand(false);
+    sidebar.set_vexpand(true);
     sidebar.add_css_class("sidebar");
     sidebar.set_margin_start(0);
     sidebar.set_margin_end(0);

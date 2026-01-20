@@ -119,14 +119,15 @@ fn create_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     desc.set_margin_bottom(18);
     header.append(&desc);
 
-    // Presets container with FlowBox
+    // Presets container with FlowBox - responsive
     let flowbox = FlowBox::new();
-    flowbox.set_column_spacing(18);
-    flowbox.set_row_spacing(18);
+    flowbox.set_column_spacing(12);
+    flowbox.set_row_spacing(12);
     flowbox.set_halign(gtk4::Align::Fill);
     flowbox.set_hexpand(true);
     flowbox.set_vexpand(true);
-    flowbox.set_max_children_per_line(5);
+    // Responsive: adjust columns based on available width (1-4 columns)
+    flowbox.set_max_children_per_line(4);
     flowbox.set_min_children_per_line(1);
     flowbox.set_selection_mode(gtk4::SelectionMode::None);
     flowbox.set_homogeneous(true);
@@ -176,6 +177,8 @@ fn create_preset_card_with_variants(
     button.set_hexpand(true);
     button.set_vexpand(false);
     button.set_can_shrink(true);
+    // Make button responsive - allow it to shrink and expand
+    button.set_size_request(140, -1); // Minimum width for preset card
 
     let content = GtkBox::new(Orientation::Vertical, 12);
     content.set_margin_start(16);
@@ -251,12 +254,12 @@ fn create_preset_card_with_variants(
 
     button.set_child(Some(&content));
 
-    // Store both variants for click handler
-    let light_bg = light_bg.to_string();
-    let light_primary = light_primary.to_string();
-    let light_secondary = light_secondary.to_string();
-    let light_text = light_text.to_string();
-    let light_accent = light_accent.to_string();
+    // Store dark variant for click handler (light variant stored for potential future use)
+    let _light_bg = light_bg.to_string();
+    let _light_primary = light_primary.to_string();
+    let _light_secondary = light_secondary.to_string();
+    let _light_text = light_text.to_string();
+    let _light_accent = light_accent.to_string();
     let dark_bg = dark_bg.to_string();
     let dark_primary = dark_primary.to_string();
     let dark_secondary = dark_secondary.to_string();
@@ -321,36 +324,40 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     let all_wallpapers = find_wallpapers(&wallpapers_path);
     let current_wallpaper = config.lock().unwrap().last_wallpaper.clone();
 
-    // Create grid container
+    // Create responsive container using FlowBox instead of Grid
     let grid_container = GtkBox::new(Orientation::Vertical, 12);
     grid_container.set_margin_start(18);
     grid_container.set_margin_end(18);
     grid_container.set_margin_bottom(18);
+    grid_container.set_hexpand(true);
+    grid_container.set_vexpand(true);
 
-    // Create 3x3 grid
-    let grid = gtk4::Grid::new();
-    grid.set_column_spacing(12);
-    grid.set_row_spacing(12);
-    grid.set_halign(gtk4::Align::Fill);
-    grid.set_hexpand(true);
+    // Create responsive FlowBox for initial wallpapers (3 columns)
+    let flowbox = FlowBox::new();
+    flowbox.set_column_spacing(12);
+    flowbox.set_row_spacing(12);
+    flowbox.set_halign(gtk4::Align::Fill);
+    flowbox.set_hexpand(true);
+    flowbox.set_vexpand(true);
+    flowbox.set_max_children_per_line(3);
+    flowbox.set_min_children_per_line(1);
+    flowbox.set_selection_mode(gtk4::SelectionMode::None);
+    flowbox.set_homogeneous(true);
 
-    // Show first 9 wallpapers (3x3)
+    // Show first 9 wallpapers
     let initial_wallpapers: Vec<_> = all_wallpapers.iter().take(9).collect();
     let remaining_wallpapers: Vec<_> = all_wallpapers.iter().skip(9).collect();
 
-    for (idx, wallpaper_path) in initial_wallpapers.iter().enumerate() {
-        let row = (idx / 3) as i32;
-        let col = (idx % 3) as i32;
-        
+    for wallpaper_path in initial_wallpapers.iter() {
         let is_selected = current_wallpaper.as_ref()
             .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
             .unwrap_or(false);
         
         let tile = create_wallpaper_tile(wallpaper_path, is_selected, Arc::clone(&config));
-        grid.attach(&tile, col, row, 1, 1);
+        flowbox.append(&tile);
     }
 
-    grid_container.append(&grid);
+    grid_container.append(&flowbox);
 
     // Expand button to show more wallpapers
     if !remaining_wallpapers.is_empty() {
@@ -360,32 +367,33 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
         expand_button.set_halign(gtk4::Align::Center);
         expand_button.set_margin_top(12);
 
-        // Create expanded grid (hidden initially)
-        let expanded_grid = gtk4::Grid::new();
-        expanded_grid.set_column_spacing(12);
-        expanded_grid.set_row_spacing(12);
-        expanded_grid.set_halign(gtk4::Align::Fill);
-        expanded_grid.set_hexpand(true);
-        expanded_grid.set_visible(false);
+        // Create expanded FlowBox (hidden initially) - also responsive
+        let expanded_flowbox = FlowBox::new();
+        expanded_flowbox.set_column_spacing(12);
+        expanded_flowbox.set_row_spacing(12);
+        expanded_flowbox.set_halign(gtk4::Align::Fill);
+        expanded_flowbox.set_hexpand(true);
+        expanded_flowbox.set_vexpand(true);
+        expanded_flowbox.set_max_children_per_line(3);
+        expanded_flowbox.set_min_children_per_line(1);
+        expanded_flowbox.set_selection_mode(gtk4::SelectionMode::None);
+        expanded_flowbox.set_homogeneous(true);
+        expanded_flowbox.set_visible(false);
 
-        // Add remaining wallpapers to expanded grid
-        for (idx, wallpaper_path) in remaining_wallpapers.iter().enumerate() {
-            let row = (idx / 3) as i32;
-            let col = (idx % 3) as i32;
-            
+        // Add remaining wallpapers to expanded FlowBox
+        for wallpaper_path in remaining_wallpapers.iter() {
             let is_selected = current_wallpaper.as_ref()
                 .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
                 .unwrap_or(false);
             
             let tile = create_wallpaper_tile(wallpaper_path, is_selected, Arc::clone(&config));
-            expanded_grid.attach(&tile, col, row, 1, 1);
+            expanded_flowbox.append(&tile);
         }
 
-        let expanded_grid_clone = expanded_grid.clone();
-        let expand_button_clone = expand_button.clone();
+        let expanded_flowbox_clone = expanded_flowbox.clone();
         expand_button.connect_clicked(move |btn| {
-            let is_visible = expanded_grid_clone.is_visible();
-            expanded_grid_clone.set_visible(!is_visible);
+            let is_visible = expanded_flowbox_clone.is_visible();
+            expanded_flowbox_clone.set_visible(!is_visible);
             if is_visible {
                 btn.set_label("Show More");
             } else {
@@ -393,7 +401,7 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             }
         });
 
-        grid_container.append(&expanded_grid);
+        grid_container.append(&expanded_flowbox);
         grid_container.append(&expand_button);
     }
 
@@ -414,13 +422,14 @@ fn create_wallpaper_tile(path: &PathBuf, is_selected: bool, config: Arc<Mutex<Co
     // Use Overlay to add checkmark on selected tile
     let overlay = Overlay::new();
     
-    // Picture widget for wallpaper
+    // Picture widget for wallpaper - responsive
     let picture = Picture::new();
     let file = gtk4::gio::File::for_path(path.as_path());
     picture.set_file(Some(&file));
     picture.set_content_fit(gtk4::ContentFit::Cover);
     picture.set_hexpand(true);
     picture.set_vexpand(true);
+    picture.set_can_shrink(true);
     overlay.set_child(Some(&picture));
 
     // Selected indicator (checkmark)
@@ -442,6 +451,9 @@ fn create_wallpaper_tile(path: &PathBuf, is_selected: bool, config: Arc<Mutex<Co
     button.set_child(Some(&overlay));
     button.set_hexpand(true);
     button.set_vexpand(true);
+    button.set_can_shrink(true);
+    // Set minimum size but allow expansion
+    button.set_size_request(100, 80); // Minimum size for wallpaper tile
 
     let path_str = path.to_string_lossy().to_string();
     button.connect_clicked(move |_| {
