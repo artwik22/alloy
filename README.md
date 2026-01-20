@@ -1,36 +1,38 @@
 # Alloy Desktop Environment
 
-A complete desktop application ecosystem for Linux - modern, high-performance applications written in Rust with GTK4/libadwaita.
+Modern desktop applications for Linux built with Rust and GTK4/libadwaita.
 
 ## 📦 Projects
 
 ### 🎛️ **Fuse** - Settings Manager
-Settings application for Quickshell with full control over system appearance and behavior.
+System settings application with tabs for:
+- Network & Bluetooth
+- Appearance (colors, wallpapers, theme, rounding)
+- Audio
+- Index (file manager settings)
+- Notifications
+- System
+- About
 
 ### 📁 **Index** - File Explorer
-Lightweight and fast file manager with minimalist design.
+Lightweight file manager with minimalist design.
 
 ### 📊 **Vitals** - System Monitor
-Modern system monitor with comprehensive resource tracking.
+System resource monitor with comprehensive tracking.
 
-### ⚡ **Spark** - Shell/Launcher System
-Modern launcher/shell system for Quickshell with Wayland support.
-
-### 🔧 **Core** - Shared Library
-Shared library for system monitoring used by all applications.
+### ⚡ **Spark** - Shell/Launcher
+Quickshell-based launcher and shell system for Wayland.
 
 ## 🚀 Quick Start
 
 ### Requirements
 
 - Rust 1.70+
-- GTK4 development libraries
-- libadwaita development libraries
+- GTK4 and libadwaita development libraries
 
 **For Spark:**
 - Quickshell
 - Wayland compositor (tested with Hyprland)
-- Optional: `cava`, `playerctl`, `pactl`, `grim`, `slurp`
 
 ### Installing Dependencies
 
@@ -49,16 +51,10 @@ sudo apt install rustc libgtk-4-dev libadwaita-1-dev
 sudo dnf install rust gtk4-devel libadwaita-devel
 ```
 
-### Building
+### Building & Installing
 
-**All applications:**
-```bash
-cd ~/.config/alloy
-./rebuild_all.sh
-```
-
-**Individual applications:**
 Each project has its own `install.sh` script:
+
 ```bash
 cd fuse && ./install.sh
 cd index && ./install.sh
@@ -69,52 +65,40 @@ cd spark && ./install.sh
 ### Running
 
 ```bash
-./run_fuse.sh      # Fuse
-./run_index.sh     # Index
+# Fuse
+cd fuse && ./run_fuse.sh
+# or if installed: fuse
+
+# Index
+cd index && ./index
+
+# Vitals
 cd Vitals && ./run.sh
+
+# Spark
 cd spark && ./run.sh
 ```
 
 ## ⚙️ Configuration
 
 **Main configuration:**
-- `spark/colors.json` - Colors, wallpapers, sidebar settings
+- `~/.config/alloy/colors.json` - Colors, wallpapers, theme settings
 - Fallback: `~/.config/sharpshell/colors.json`
 
-**Index:**
-- `~/.config/index/.index_pinned` - Pinned folders
-
 Settings are synchronized automatically between applications.
-
-## ⌨️ Keyboard Shortcuts
-
-**Index:**
-- `Backspace` - Go to parent folder
-- `Enter` - Open selected file/folder
-- `Delete` - Move to trash
-- `Ctrl+H` - Toggle hidden files
-
-**Spark:**
-- `Super+R` - Open launcher
-- `Super+M` - Toggle dashboard
-- `Super+V` - Open clipboard manager
-- `!` - Web search prefix
 
 ## 🔧 Troubleshooting
 
 **Build issues:**
 ```bash
 sudo chown -R $USER:$USER ~/.config/alloy/*/target/
-./rebuild_all.sh
+cd <project> && cargo clean && ./install.sh
 ```
 
 **Spark not working:**
 - Check Quickshell installation
-- Verify keyboard shortcut in compositor
-- Run `./spark/run.sh` to test
-
-**Sidebar visibility:**
-Requires Quickshell restart after changes in Fuse.
+- Verify keyboard shortcuts in compositor
+- Run `cd spark && ./run.sh` to test
 
 ## 📄 License
 

@@ -28,10 +28,10 @@ impl FuseWindow {
             .resizable(true)
             .build();
         
-        // Set minimum size after building
+        // Set minimum size after building - allow smaller sizes for responsiveness
         window.set_default_size(1100, 750);
-        // Set minimum size constraints - more flexible for smaller screens
-        window.set_size_request(700, 500);
+        // Set minimum size constraints - very flexible for responsiveness
+        window.set_size_request(600, 400);
 
         // Content area with stack
         let stack = Stack::new();
@@ -49,6 +49,7 @@ impl FuseWindow {
         main_box.set_margin_bottom(0);
         main_box.set_hexpand(true);
         main_box.set_vexpand(true);
+        main_box.set_homogeneous(false);
 
         // Sidebar (200px width) with custom layout
         let sidebar = create_custom_sidebar(&stack_clone);
@@ -74,7 +75,7 @@ impl FuseWindow {
         stack.add_titled(notifications_tab.widget(), Some("notifications"), "󰂚 Notifications");
         stack.add_titled(about_tab.widget(), Some("about"), "󰋼 About");
 
-        // Content area - GNOME spacing (12px margins)
+        // Content area - GNOME spacing (12px margins), fully responsive
         stack.set_hexpand(true);
         stack.set_vexpand(true);
         stack.set_margin_start(0);
@@ -104,7 +105,7 @@ impl FuseWindow {
 fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     // GNOME Settings style: flexible sidebar width
     let sidebar = GtkBox::new(Orientation::Vertical, 0);
-    sidebar.set_size_request(200, -1); // Minimum width, but can expand
+    sidebar.set_size_request(-1, -1); // Fully responsive - no fixed size
     sidebar.set_hexpand(false);
     sidebar.set_vexpand(true);
     sidebar.add_css_class("sidebar");
@@ -215,10 +216,11 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
         if let Some(row) = row {
             // Get the row index directly (returns i32, not Option)
             let row_index = row.index();
-            // Map index to page (skip separators at index 2 and index 6)
+            // Map index to page (skip separators at index 2 and index 7)
+            // Sidebar: 0=Network, 1=Bluetooth, 2=Separator, 3=Appearance, 4=Audio, 5=Index, 6=Notifications, 7=Separator, 8=System, 9=About
             let page_idx = if row_index < 2 { 
                 row_index as usize
-            } else if row_index < 6 {
+            } else if row_index < 7 {
                 (row_index - 1) as usize
             } else {
                 (row_index - 2) as usize

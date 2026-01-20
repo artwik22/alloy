@@ -73,12 +73,22 @@ PanelWindow {
             }
         }
         
-        // Main dashboard background
+        // Material Design dashboard background with elevation
         Rectangle {
             id: dashboardBackground
             anchors.fill: parent
             radius: 0
             color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a"
+            
+            // Material Design elevation shadow
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -3
+                color: "transparent"
+                border.color: Qt.rgba(0, 0, 0, 0.25)  // Material shadow
+                border.width: 2
+                z: -1
+            }
         }
 
         Column {
@@ -103,7 +113,7 @@ PanelWindow {
                         id: navRepeater
                         model: [
                             { icon: "󰕮", label: "Dashboard" },
-                            { icon: "󰎆", label: "Media" },
+                            { icon: "󰨸", label: "Clipboard" },
                             { icon: "󰂚", label: "Notifications" }
                         ]
                         
@@ -275,19 +285,29 @@ PanelWindow {
                         // Row with Network Stats and Quick Actions side by side
                         Row {
                             width: parent.width
-                            height: 110
-                            spacing: 16
+                            height: 100
+                            spacing: 12
                             
-                            // Network Stats Card (left)
+                            // Material Design Network Stats Card (left)
                         Rectangle {
-                                width: (parent.width - 16) / 2
+                                width: (parent.width - 12) / 2
                                 height: parent.height
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
+                            // Material Design elevation shadow
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                color: "transparent"
+                                border.color: Qt.rgba(0, 0, 0, 0.2)
+                                border.width: 1
+                                z: -1
+                            }
+                            
                             Column {
                                 anchors.centerIn: parent
-                                    spacing: 8
+                                    spacing: 6
                                 
                                 Row {
                                     anchors.horizontalCenter: parent.horizontalCenter
@@ -353,28 +373,38 @@ PanelWindow {
                             }
                         }
                         
-                            // Quick Actions Card (right)
+                            // Material Design Quick Actions Card (right)
                         Rectangle {
-                                width: (parent.width - 16) / 2
+                                width: (parent.width - 12) / 2
                                 height: parent.height
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
+                            // Material Design elevation shadow
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                color: "transparent"
+                                border.color: Qt.rgba(0, 0, 0, 0.2)
+                                border.width: 1
+                                z: -1
+                            }
+                            
                                 Column {
                                     anchors.fill: parent
-                                    anchors.margins: 10
-                                    spacing: 6
+                                    anchors.margins: 8
+                                    spacing: 4
                                     
                                     Grid {
                                         id: quickActionsGrid
                                     columns: 2
-                                    spacing: 6
+                                    spacing: 4
                                     width: parent.width
-                                        height: parent.height - 24  // Pozostaw miejsce na nagłówek
+                                        height: parent.height - 20  // Pozostaw miejsce na nagłówek
                                     
                                     // Toggle Sidebar button
                                     Rectangle {
-                                        width: (quickActionsGrid.width - 6) / 2
+                                        width: (quickActionsGrid.width - 4) / 2
                                         height: 42
                                         radius: 0
                                         clip: true
@@ -391,7 +421,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 6
+                                            spacing: 4
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -422,7 +452,6 @@ PanelWindow {
                                             onClicked: {
                                                 if (sharedData && sharedData.sidebarVisible !== undefined) {
                                                     sharedData.sidebarVisible = !sharedData.sidebarVisible
-                                                    dashboardRoot.saveSidebarSettings()
                                                 }
                                             }
                                         }
@@ -430,7 +459,7 @@ PanelWindow {
                                     
                                     // Do Not Disturb button
                                     Rectangle {
-                                        width: (quickActionsGrid.width - 6) / 2
+                                        width: (quickActionsGrid.width - 4) / 2
                                         height: 42
                                         radius: 0
                                         clip: true
@@ -449,7 +478,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 6
+                                            spacing: 4
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -488,7 +517,7 @@ PanelWindow {
                                     
                                     // Lock button
                                     Rectangle {
-                                        width: (quickActionsGrid.width - 6) / 2
+                                        width: (quickActionsGrid.width - 4) / 2
                                         height: 42
                                         radius: 0
                                         clip: true
@@ -505,7 +534,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 6
+                                            spacing: 4
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -563,7 +592,7 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 6
+                                            spacing: 4
                                             width: Math.min(parent.width - 8, implicitWidth)
                                             
                                             Text {
@@ -958,21 +987,20 @@ PanelWindow {
                         // Media Player Card
                         Rectangle {
                             width: parent.width
-                            height: 220
+                            height: 205
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 20
-                                spacing: 20
+                                anchors.margins: 16
+                                spacing: 16
                                 
                                 // Album Art - wyśrodkowane wertykalnie
                                 Rectangle {
-                                    Layout.preferredWidth: 150
-                                    Layout.preferredHeight: 150
+                                    Layout.preferredWidth: 110
+                                    Layout.preferredHeight: 110
                                     Layout.alignment: Qt.AlignVCenter
-                                    Layout.leftMargin: 10
                                     radius: 0
                                     color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
                                     
@@ -996,7 +1024,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: "󰎆"
-                                        font.pixelSize: 55
+                                        font.pixelSize: 45
                                         anchors.centerIn: parent
                                         visible: !mpArt
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1008,17 +1036,17 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     Layout.alignment: Qt.AlignVCenter
-                                    spacing: 24
+                                    spacing: 10
                                     
                                     // Track Info - wyśrodkowane
                                     Column {
                                         width: parent.width
-                                        spacing: 12
+                                        spacing: 5
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         
                                         Text {
                                             text: mpTitle ? mpTitle : "Nothing playing"
-                                            font.pixelSize: 16
+                                            font.pixelSize: 15
                                             font.family: "sans-serif"
                                             font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1029,7 +1057,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: mpArtist ? mpArtist : "—"
-                                            font.pixelSize: 13
+                                            font.pixelSize: 12
                                             font.family: "sans-serif"
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                             elide: Text.ElideRight
@@ -1041,11 +1069,11 @@ PanelWindow {
                                     // Controls - wyśrodkowane
                                     Row {
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 20
+                                        spacing: 8
                                         
                                         Rectangle {
-                                            width: 44
-                                            height: 44
+                                            width: 36
+                                            height: 36
                                             radius: 0
                                             color: prevAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1097,8 +1125,8 @@ PanelWindow {
                                         }
                                         
                                         Rectangle {
-                                            width: 52
-                                            height: 44
+                                            width: 44
+                                            height: 36
                                             radius: 0
                                             color: playAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1159,8 +1187,8 @@ PanelWindow {
                                         }
                                         
                                         Rectangle {
-                                            width: 44
-                                            height: 44
+                                            width: 36
+                                            height: 36
                                             radius: 0
                                             color: nextAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1217,9 +1245,9 @@ PanelWindow {
                     }
                 }
 
-                // ============ TAB 1: MEDIA ============
+                // ============ TAB 1: CLIPBOARD ============
                 Item {
-                    id: mediaTab
+                    id: clipboardTab
                     anchors.fill: parent
                     visible: currentTab === 1
                     opacity: currentTab === 1 ? 1.0 : 0.0
@@ -1247,303 +1275,150 @@ PanelWindow {
                         }
                     }
                     
-                    Item {
+                    Column {
                         anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 12
                         
-                        // Music Visualizer - wyciemnione cava (poziome) - w tle
+                        // Header
                         Row {
-                            id: mediaVisualizerRow
-                            spacing: 1
-                            anchors.fill: parent
-                            anchors.margins: 20
-                            opacity: 0.4  // Wyciemnione
-                            z: 0  // W tle
+                            width: parent.width
+                            spacing: 12
                             
-                            Repeater {
-                                id: mediaVisualizerBarsRepeater
-                                model: 72  // 72 paski poziomo - więcej pasków = cieńsze
+                            Text {
+                                text: "󰨸 Clipboard"
+                                font.pixelSize: 18
+                                font.family: "sans-serif"
+                                font.weight: Font.Bold
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                            }
+                            
+                            Item { width: parent.width - 200; height: 1 }
+                            
+                            Rectangle {
+                                width: 32
+                                height: 32
+                                radius: 0
+                                color: clearClipboardButtonMouseArea.containsMouse ? 
+                                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
+                                    ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414")
                                 
-                                Rectangle {
-                                    id: mediaVisualizerBar
-                                    width: Math.max(0.5, (parent.width - (71 * parent.spacing)) / 72)  // Bardzo cienkie paski
-                                    height: Math.max(2, mediaVisualizerBarValue)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                    radius: 0
-                                    visible: true
-                                    
-                                    property real mediaVisualizerBarValue: 5
-                                    
-                                    Behavior on height {
-                                        NumberAnimation {
-                                            duration: 80
-                                            easing.type: Easing.OutQuad
-                                        }
+                                property real buttonScale: clearClipboardButtonMouseArea.pressed ? 0.9 : (clearClipboardButtonMouseArea.containsMouse ? 1.1 : 1.0)
+                                
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 200
+                                        easing.type: Easing.OutQuart
                                     }
+                                }
+                                
+                                Behavior on buttonScale {
+                                    NumberAnimation {
+                                        duration: 150
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+                                
+                                scale: buttonScale
+                                
+                                Text {
+                                    text: "󰆐"
+                                    font.pixelSize: 16
+                                    anchors.centerIn: parent
+                                    color: clearClipboardButtonMouseArea.containsMouse ? 
+                                        ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                                        ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
                                     
                                     Behavior on color {
                                         ColorAnimation {
-                                            duration: 100
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Media Player - wyśrodkowany na wierzchu
-                        RowLayout {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.horizontalCenterOffset: 60  // Przesunięcie w prawo
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(800, parent.width - 80)
-                            height: 280
-                            spacing: 32
-                            z: 1  // Na wierzchu
-                            
-                            // Album Art - po lewej
-                            Rectangle {
-                                Layout.preferredWidth: 280
-                                Layout.preferredHeight: 280
-                                radius: 6
-                                color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
-                                
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: 2
-                                    fillMode: Image.PreserveAspectCrop
-                                    source: mpArt ? mpArt : ""
-                                    asynchronous: true
-                                    cache: false
-                                    opacity: source ? 1.0 : 0.0
-                                    
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 400
+                                            duration: 200
                                             easing.type: Easing.OutQuart
                                         }
                                     }
                                 }
                                 
-                                Text {
-                                    text: "󰎆"
-                                    font.pixelSize: 70
-                                    anchors.centerIn: parent
-                                    visible: !mpArt
-                                    color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                MouseArea {
+                                    id: clearClipboardButtonMouseArea
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        dashboardClipboardHistoryModel.clear()
+                                    }
                                 }
                             }
+                        }
+                        
+                        // History list
+                        ScrollView {
+                            width: parent.width
+                            height: parent.height - 60
                             
-                            // Track Info i Controls - po prawej
-                            Column {
-                                Layout.fillWidth: true
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.leftMargin: 12
-                                spacing: 24
+                            ListView {
+                                id: clipboardListView
+                                model: dashboardClipboardHistoryModel
+                                spacing: 8
                                 
-                                // Track Info
-                                Column {
-                                    width: parent.width
-                                    spacing: 12
+                                delegate: Rectangle {
+                                    width: clipboardListView.width
+                                    height: Math.max(40, contentTextClipboard.implicitHeight + 16)
+                                    radius: 0
+                                    // Material Design card color
+                                    color: itemClipboardMouseArea.containsMouse ? 
+                                        ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414") : 
+                                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a")
+                                    
+                                    property real cardElevation: itemClipboardMouseArea.containsMouse ? 2 : 1
+                                    
+                                    // Material Design elevation shadow
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        anchors.margins: -cardElevation
+                                        color: "transparent"
+                                        border.color: Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05)
+                                        border.width: cardElevation
+                                        z: -1
+                                        
+                                        Behavior on border.color {
+                                            ColorAnimation {
+                                                duration: 200
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+                                    }
+                                    
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 200
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
                                     
                                     Text {
-                                        text: mpTitle ? mpTitle : "Nothing playing"
-                                        font.pixelSize: 20
+                                        id: contentTextClipboard
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.leftMargin: 12
+                                        anchors.rightMargin: 12
+                                        text: {
+                                            var txt = model.text || ""
+                                            return txt.length > 100 ? txt.substring(0, 100) + "..." : txt
+                                        }
+                                        font.pixelSize: 13
                                         font.family: "sans-serif"
-                                        font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        wrapMode: Text.Wrap
                                         elide: Text.ElideRight
-                                        width: parent.width
                                     }
                                     
-                                    Text {
-                                        text: mpArtist ? mpArtist : "—"
-                                        font.pixelSize: 17
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        elide: Text.ElideRight
-                                        width: parent.width
-                                    }
-                                    
-                                    Text {
-                                        text: mpAlbum ? mpAlbum : "—"
-                                        font.pixelSize: 15
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.3) : "#aaaaaa"
-                                        elide: Text.ElideRight
-                                        width: parent.width
-                                    }
-                                }
-                                
-                                // Controls
-                                Row {
-                                    spacing: 20
-                                    anchors.left: parent.left
-                                    
-                                    Rectangle {
-                                        width: 44
-                                        height: 44
-                                        radius: 4
-                                        color: prevAreaMedia.containsMouse ? 
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
-                                        
-                                        property real buttonScale: prevAreaMedia.pressed ? 0.9 : (prevAreaMedia.containsMouse ? 1.1 : 1.0)
-                                        
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        Behavior on buttonScale {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        scale: buttonScale
-                                        
-                                        Text {
-                                            text: "󰒮"
-                                            font.pixelSize: 22
-                                            anchors.centerIn: parent
-                                            color: prevAreaMedia.containsMouse ? 
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
-                                            
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: 200
-                                                    easing.type: Easing.OutQuart
-                                                }
-                                            }
-                                        }
-                                        
-                                        MouseArea {
-                                            id: prevAreaMedia
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                playerPrev()
-                                            }
-                                        }
-                                    }
-                                    
-                                    Rectangle {
-                                        width: 52
-                                        height: 44
-                                        radius: 4
-                                        color: playAreaMedia.containsMouse ? 
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
-                                        
-                                        property real buttonScale: playAreaMedia.pressed ? 0.9 : (playAreaMedia.containsMouse ? 1.1 : 1.0)
-                                        
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        Behavior on buttonScale {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        scale: buttonScale
-                                        
-                                        Text {
-                                            text: mpPlaying ? "󰏤" : "󰐊"
-                                            font.pixelSize: 24
-                                            anchors.centerIn: parent
-                                            color: playAreaMedia.containsMouse ? 
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                ((sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a")
-                                            
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: 200
-                                                    easing.type: Easing.OutQuart
-                                                }
-                                            }
-                                            
-                                            rotation: playAreaMedia.pressed ? 5 : 0
-                                            
-                                            Behavior on rotation {
-                                                NumberAnimation {
-                                                    duration: 150
-                                                    easing.type: Easing.OutQuart
-                                                }
-                                            }
-                                        }
-                                        
-                                        MouseArea {
-                                            id: playAreaMedia
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                playerPlayPause()
-                                            }
-                                        }
-                                    }
-                                    
-                                    Rectangle {
-                                        width: 44
-                                        height: 44
-                                        radius: 4
-                                        color: nextAreaMedia.containsMouse ? 
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#161616")
-                                        
-                                        property real buttonScale: nextAreaMedia.pressed ? 0.9 : (nextAreaMedia.containsMouse ? 1.1 : 1.0)
-                                        
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        Behavior on buttonScale {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                        
-                                        scale: buttonScale
-                                        
-                                        Text {
-                                            text: "󰒭"
-                                            font.pixelSize: 22
-                                            anchors.centerIn: parent
-                                            color: nextAreaMedia.containsMouse ? 
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
-                                            
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: 200
-                                                    easing.type: Easing.OutQuart
-                                                }
-                                            }
-                                        }
-                                        
-                                        MouseArea {
-                                            id: nextAreaMedia
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                playerNext()
-                                            }
+                                    MouseArea {
+                                        id: itemClipboardMouseArea
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        hoverEnabled: true
+                                        onClicked: {
+                                            dashboardRoot.copyToClipboard(model.text)
                                         }
                                     }
                                 }
@@ -1665,9 +1540,29 @@ PanelWindow {
                                 width: notificationHistoryList.width
                                 height: notifContent.height + 24
                                 radius: 0
+                                // Material Design card color
                                 color: notifItemMouseArea.containsMouse ? 
                                     ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#252525") : 
                                     ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a")
+                                
+                                property real cardElevation: notifItemMouseArea.containsMouse ? 2 : 1
+                                
+                                // Material Design elevation shadow
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: -cardElevation
+                                    color: "transparent"
+                                    border.color: Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05)
+                                    border.width: cardElevation
+                                    z: -1
+                                    
+                                    Behavior on border.color {
+                                        ColorAnimation {
+                                            duration: 150
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                }
                                 
                                 Behavior on color {
                                     ColorAnimation { duration: 150 }
@@ -1849,87 +1744,25 @@ PanelWindow {
     property var cavaValues: []
     property bool cavaRunning: false
     property string projectPath: ""
-    property string colorConfigPath: ""
+    
+    // Clipboard properties
+    property string lastClipboardContent: ""
+    
+    // Clipboard history model
+    ListModel {
+        id: dashboardClipboardHistoryModel
+    }
+    
+    // Monitor clipboard changes
+    Timer {
+        id: dashboardClipboardMonitorTimer
+        interval: 500  // Check every 500ms
+        running: true
+        repeat: true
+        onTriggered: dashboardRoot.checkClipboard()
+    }
     
     // ============ FUNCTIONS ============
-    
-    // Save settings to colors.json
-    function saveSidebarSettings() {
-        if (!colorConfigPath || colorConfigPath.length === 0) {
-            console.log("Color config path not initialized, cannot save sidebar settings")
-            return
-        }
-        if (!projectPath || projectPath.length === 0) {
-            console.log("Project path not initialized, cannot save sidebar settings")
-            return
-        }
-        
-        // Use Python script to save settings - pass only sidebarVisible as argument 12
-        var scriptPath = projectPath + "/scripts/save-colors.py"
-        
-        // First, read current colors from file to preserve them
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file://" + colorConfigPath)
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200 || xhr.status === 0) {
-                    try {
-                        var json = JSON.parse(xhr.responseText)
-                        var bg = json.background || (sharedData ? sharedData.colorBackground : "#0a0a0a")
-                        var pr = json.primary || (sharedData ? sharedData.colorPrimary : "#1a1a1a")
-                        var sc = json.secondary || (sharedData ? sharedData.colorSecondary : "#141414")
-                        var tx = json.text || (sharedData ? sharedData.colorText : "#ffffff")
-                        var ac = json.accent || (sharedData ? sharedData.colorAccent : "#4a9eff")
-                        
-                        var sidebarVisibleStr = (sharedData && sharedData.sidebarVisible) ? "true" : "false"
-                        
-                        // Build command with all 12 arguments (colors + sidebarVisible)
-                        // Use synchronous write with sh -c to ensure file is written immediately
-                        var cmd = 'python3 "' + scriptPath + '" "' + bg + '" "' + pr + '" "' + sc + '" "' + tx + '" "' + ac + '" "' + colorConfigPath + '" "" "" "" "" "" "' + sidebarVisibleStr + '" && sync'
-                        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + cmd + "']; running: true }", dashboardRoot)
-                        console.log("Saved sidebar visibility to:", colorConfigPath, "value:", sidebarVisibleStr)
-                    } catch (e) {
-                        console.log("Error reading colors.json for save:", e)
-                    }
-                }
-            }
-        }
-        xhr.send()
-    }
-    
-    // Initialize color config path from home directory
-    function initializeColorConfigPath() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_home_dash")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                var home = xhr.responseText.trim()
-                if (home && home.length > 0) {
-                    // Try ~/.config/alloy/colors.json first
-                    var alloyPath = home + "/.config/alloy/colors.json"
-                    var checkXhr = new XMLHttpRequest()
-                    checkXhr.open("GET", "file://" + alloyPath)
-                    checkXhr.onreadystatechange = function() {
-                        if (checkXhr.readyState === XMLHttpRequest.DONE) {
-                            if (checkXhr.status === 200 || checkXhr.status === 0) {
-                                colorConfigPath = alloyPath
-                                console.log("Dashboard: Color config path initialized (Alloy Global):", colorConfigPath)
-                            } else {
-                                colorConfigPath = home + "/.config/sharpshell/colors.json"
-                                console.log("Dashboard: Color config path initialized (SharpShell):", colorConfigPath)
-                            }
-                        }
-                    }
-                    checkXhr.send()
-                } else {
-                    colorConfigPath = "/tmp/sharpshell/colors.json"
-                    console.log("Dashboard: Using fallback color config path")
-                }
-            }
-        }
-        xhr.send()
-    }
-    
     function updateWeather() {
         // Simple weather update - can be extended with API integration
         // For now, uses a simple approach that can be customized
@@ -2637,28 +2470,11 @@ PanelWindow {
                         var colorPrimary = (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a"
                         var colorSecondary = (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
                         
-                        for (var i = 0; i < 72; i++) {
-                            var val = 0
-                            // Mapuj 36 wartości z cava na 72 paski (każda wartość odpowiada 2 paskom)
-                            var sourceIndex = Math.floor(i / 2)
-                            if (sourceIndex < values.length && values[sourceIndex]) {
-                                val = parseInt(values[sourceIndex]) || 0
-                            }
-                            var normalizedHeight = Math.max(2, (val / 100) * 200)  // Wyższe paski - maksymalnie 200px
-                            if (mediaVisualizerBarsRepeater.itemAt(i)) {
-                                mediaVisualizerBarsRepeater.itemAt(i).mediaVisualizerBarValue = normalizedHeight
-                                var intensity = val / 100
-                                if (intensity > 0.7) {
-                                    mediaVisualizerBarsRepeater.itemAt(i).color = colorAccent
-                                } else if (intensity > 0.4) {
-                                    mediaVisualizerBarsRepeater.itemAt(i).color = colorText
-                                } else if (intensity > 0.1) {
-                                    mediaVisualizerBarsRepeater.itemAt(i).color = colorPrimary
-                                } else {
-                                    mediaVisualizerBarsRepeater.itemAt(i).color = colorSecondary
-                                }
-                            }
-                        }
+                        // Store cava values for potential future use (e.g. SidePanel visualizer)
+                        cavaValues = values
+                        
+                        // Note: Media visualizer was removed when Media tab was replaced with Clipboard tab
+                        // If visualizer is needed in the future, it should be added to SidePanel or another component
                     }
                 } else {
                     // No data, silently continue - cavaCheckTimer will handle restart if needed
@@ -2717,10 +2533,9 @@ PanelWindow {
         // Initialize project path
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_cava_path 2>/dev/null || pwd > /tmp/quickshell_cava_path']; running: true }", dashboardRoot)
         Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readCavaPath() }", dashboardRoot)
-        // Initialize color config path
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$HOME\" > /tmp/quickshell_home_dash 2>/dev/null || echo \"\" > /tmp/quickshell_home_dash']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.initializeColorConfigPath() }", dashboardRoot)
         startCava()
+        // Initialize clipboard monitoring
+        checkClipboard()
     }
     
     Connections {
@@ -2758,7 +2573,65 @@ PanelWindow {
     
     // ============ NOTIFICATION FUNCTIONS ============
     function copyToClipboard(text) {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['wl-copy', '" + text.replace(/'/g, "'\\''").replace(/\n/g, "\\n") + "']; running: true }", dashboardRoot)
+        // Write text to temp file first, then copy from file to clipboard
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo -n \"' + text.replace(/\\\"/g, '\\\\\"').replace(/\$/g, '\\\\$').replace(/`/g, '\\\\`') + '\" > /tmp/quickshell_clipboard_copy']; running: true }", dashboardRoot)
+        // Wait a moment and copy to clipboard
+        Qt.createQmlObject("import QtQuick; Timer { interval: 50; running: true; repeat: false; onTriggered: dashboardRoot.copyFromFile() }", dashboardRoot)
+        lastClipboardContent = text
+    }
+    
+    function copyFromFile() {
+        // Copy from file to clipboard using wl-copy (Wayland)
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'cat /tmp/quickshell_clipboard_copy | wl-copy']; running: true }", dashboardRoot)
+    }
+    
+    // ============ CLIPBOARD FUNCTIONS ============
+    function checkClipboard() {
+        // Use wl-paste to read clipboard content (Wayland)
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'wl-paste > /tmp/quickshell_clipboard_content 2>/dev/null || echo \"\" > /tmp/quickshell_clipboard_content']; running: true }", dashboardRoot)
+        // Wait a moment and read the result
+        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readClipboardContent() }", dashboardRoot)
+    }
+    
+    function readClipboardContent() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_clipboard_content")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    var content = xhr.responseText
+                    processClipboardContent(content)
+                }
+            }
+        }
+        xhr.send()
+    }
+    
+    function processClipboardContent(content) {
+        if (!content || content.trim() === "") return
+        
+        var trimmed = content.trim()
+        
+        // Skip if same as last content
+        if (trimmed === lastClipboardContent) return
+        
+        // Skip if already in history
+        for (var i = 0; i < dashboardClipboardHistoryModel.count; i++) {
+            if (dashboardClipboardHistoryModel.get(i).text === trimmed) {
+                // Move to top
+                dashboardClipboardHistoryModel.move(i, 0, 1)
+                lastClipboardContent = trimmed
+                return
+            }
+        }
+        
+        // Add to history (max 50 items)
+        if (dashboardClipboardHistoryModel.count >= 50) {
+            dashboardClipboardHistoryModel.remove(dashboardClipboardHistoryModel.count - 1)
+        }
+        
+        dashboardClipboardHistoryModel.insert(0, { text: trimmed })
+        lastClipboardContent = trimmed
     }
 }
 

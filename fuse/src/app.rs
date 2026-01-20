@@ -58,7 +58,7 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>) {
     let mut dynamic_css = base_css
         .replace("@define-color window_bg_color #242424", &format!("@define-color window_bg_color {}", config.background))
         .replace("@define-color window_fg_color #ffffff", &format!("@define-color window_fg_color {}", config.text))
-        .replace("@define-color headerbar_bg_color #303030", &format!("@define-color headerbar_bg_color {}", config.primary))
+        .replace("@define-color headerbar_bg_color #303030", &format!("@define-color headerbar_bg_color {}", config.background))
         .replace("@define-color headerbar_fg_color #ffffff", &format!("@define-color headerbar_fg_color {}", config.text))
         .replace("@define-color card_bg_color #383838", &format!("@define-color card_bg_color {}", config.secondary))
         .replace("@define-color card_fg_color #ffffff", &format!("@define-color card_fg_color {}", config.text))

@@ -103,11 +103,22 @@ PanelWindow {
             }
         }
         
+        // Material Design clipboard background with elevation
         Rectangle {
             id: clipboardBackground
             anchors.fill: parent
             color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a"
             radius: 0
+            
+            // Material Design elevation shadow
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -3
+                color: "transparent"
+                border.color: Qt.rgba(0, 0, 0, 0.25)  // Material shadow
+                border.width: 2
+                z: -1
+            }
             
             Column {
                 anchors.fill: parent
@@ -129,15 +140,35 @@ PanelWindow {
                     
                     Item { width: parent.width - 200; height: 1 }
                     
+                    // Material Design button with elevation
                     Rectangle {
                         width: 32
                         height: 32
                         radius: 0
+                        // Material Design button color
                         color: clearButtonMouseArea.containsMouse ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414")
+                            ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a")
                         
-                        property real buttonScale: clearButtonMouseArea.pressed ? 0.9 : (clearButtonMouseArea.containsMouse ? 1.1 : 1.0)
+                        property real buttonScale: clearButtonMouseArea.pressed ? 0.95 : (clearButtonMouseArea.containsMouse ? 1.05 : 1.0)
+                        property real buttonElevation: clearButtonMouseArea.pressed ? 1 : (clearButtonMouseArea.containsMouse ? 3 : 2)
+                        
+                        // Material Design elevation shadow
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: -buttonElevation
+                            color: "transparent"
+                            border.color: Qt.rgba(0, 0, 0, 0.15 + buttonElevation * 0.05)
+                            border.width: buttonElevation
+                            z: -1
+                            
+                            Behavior on border.color {
+                                ColorAnimation {
+                                    duration: 200
+                                    easing.type: Easing.OutQuart
+                                }
+                            }
+                        }
                         
                         Behavior on color {
                             ColorAnimation {
@@ -197,9 +228,29 @@ PanelWindow {
                             width: clipboardListView.width
                             height: Math.max(40, contentText.implicitHeight + 16)
                             radius: 0
+                            // Material Design card color
                             color: itemMouseArea.containsMouse ? 
                                 ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414") : 
                                 ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a")
+                            
+                            property real cardElevation: itemMouseArea.containsMouse ? 2 : 1
+                            
+                            // Material Design elevation shadow
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: -cardElevation
+                                color: "transparent"
+                                border.color: Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05)
+                                border.width: cardElevation
+                                z: -1
+                                
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: 200
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+                            }
                             
                             Behavior on color {
                                 ColorAnimation {

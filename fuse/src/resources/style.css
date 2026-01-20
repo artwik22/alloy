@@ -61,11 +61,15 @@ window {
     background-color: @window_bg_color;
     color: @window_fg_color;
     animation: fadeIn 200ms ease-out;
+    min-width: 0;
+    min-height: 0;
 }
 
 window.background {
     background-color: @window_bg_color;
     animation: fadeIn 200ms ease-out;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* ===== Navigation Sidebar ===== */
@@ -108,7 +112,7 @@ window.background {
 /* Fix sidebar background when window is out of focus */
 navigation-split-view > sidebar {
     background-color: @sidebar_bg_color;
-    border-right: 1px solid alpha(currentColor, 0.1);
+    border-right: none;
 }
 
 navigation-split-view > sidebar:backdrop {
@@ -199,7 +203,7 @@ separator {
 /* Sidebar styling for StackSwitcher (used in fuse) */
 .sidebar {
     background-color: @sidebar_bg_color;
-    border-right: 1px solid alpha(currentColor, 0.1);
+    border-right: none;
     padding-top: 12px;
     padding-bottom: 0px;
 }
@@ -545,22 +549,129 @@ entry placeholder {
 
 /* ===== Header Bar ===== */
 headerbar {
-    background-color: @headerbar_bg_color;
-    box-shadow: none;
-    border-bottom: 1px solid alpha(currentColor, 0.1);
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 headerbar:backdrop {
-    background-color: @headerbar_bg_color;
+    background-color: transparent !important;
 }
 
 headerbar.flat {
-    background-color: transparent;
-    border-bottom: 1px solid alpha(currentColor, 0.1);
+    background-color: transparent !important;
+    border-bottom: none !important;
 }
 
 headerbar.flat:backdrop {
-    background-color: transparent;
+    background-color: transparent !important;
+}
+
+/* Hide headerbar completely */
+window headerbar {
+    opacity: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: none !important;
+}
+
+headerbar {
+    opacity: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: none !important;
+}
+
+/* Hide titlebar decoration */
+window decoration {
+    opacity: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+}
+
+window titlebar {
+    opacity: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: none !important;
+}
+
+/* Make window content responsive */
+window {
+    min-width: 0;
+    min-height: 0;
+}
+
+window > box {
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Make sidebar responsive */
+.sidebar {
+    min-width: 190px !important;
+    max-width: 300px !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+}
+
+/* Make stack responsive */
+stack {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+}
+
+/* Make main container responsive */
+window > box {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+}
+
+/* Make all boxes responsive */
+box {
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
+/* Make ScrolledWindow responsive */
+scrolledwindow {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Force responsive behavior */
+applicationwindow > box {
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
+applicationwindow > box > box {
+    min-width: 0 !important;
+    min-height: 0 !important;
 }
 
 /* Headerbar buttons */
@@ -811,26 +922,25 @@ messagedialog .dialog-action-area button.destructive-action {
 /* ===== FUSE-SPECIFIC STYLES ===== */
 /* Settings sections and rows */
 .settings-section {
-    background-color: alpha(@card_bg_color, 0.7);
-    border: 1px solid alpha(@window_fg_color, 0.15);
+    background-color: @card_bg_color;
+    border: none;
     border-radius: 12px;
     margin: 18px 0;
     padding: 0;
-    transition: background-color 200ms ease, border-color 200ms ease;
-    box-shadow: 0 1px 3px alpha(black, 0.1);
+    transition: background-color 200ms ease, box-shadow 200ms ease;
+    box-shadow: 0 2px 8px alpha(black, 0.08);
 }
 
 .settings-section:hover {
-    background-color: alpha(@card_bg_color, 0.8);
-    border-color: alpha(@window_fg_color, 0.2);
-    box-shadow: 0 2px 6px alpha(black, 0.15);
+    background-color: @card_bg_color;
+    box-shadow: 0 4px 12px alpha(black, 0.12);
 }
 
 .settings-row {
     padding: 12px 18px;
     min-height: 48px;
     border: none;
-    border-bottom: 1px solid alpha(@window_fg_color, 0.1);
+    border-bottom: none;
     border-radius: 0;
     transition: background-color 150ms ease;
     background-color: transparent;
@@ -894,22 +1004,22 @@ messagedialog .dialog-action-area button.destructive-action {
 
 /* Section titles and descriptions */
 .section-title {
-    font-size: 15pt;
+    font-size: 16pt;
     font-weight: 600;
     color: @window_fg_color;
     padding: 0;
     margin: 0;
     line-height: 1.3;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.2px;
 }
 
 .section-description {
-    font-size: 11.5pt;
+    font-size: 11pt;
     font-weight: 400;
-    color: alpha(@window_fg_color, 0.75);
+    color: alpha(@window_fg_color, 0.7);
     padding: 0;
-    margin: 0 0 24px 0;
-    line-height: 1.6;
+    margin: 0;
+    line-height: 1.5;
 }
 
 /* Color input elements */
@@ -973,8 +1083,8 @@ switch:checked slider {
 
 /* ===== Enhanced Entry Styles ===== */
 entry {
-    background-color: alpha(@card_bg_color, 0.6);
-    border: 1px solid alpha(@window_fg_color, 0.18);
+    background-color: @card_bg_color;
+    border: none;
     border-radius: 10px;
     padding: 10px 14px;
     min-height: 40px;
@@ -986,21 +1096,19 @@ entry {
 
 entry:focus {
     background-color: @card_bg_color;
-    border-color: @accent_bg_color;
     box-shadow: 0 0 0 3px alpha(@accent_bg_color, 0.25), 0 3px 8px alpha(black, 0.18);
     outline: none;
     transform: translateY(-1px);
 }
 
 entry:hover:not(:focus) {
-    background-color: alpha(@card_bg_color, 0.75);
-    border-color: alpha(@window_fg_color, 0.28);
+    background-color: @card_bg_color;
     box-shadow: 0 2px 6px alpha(black, 0.12);
 }
 
 entry:disabled {
     opacity: 0.5;
-    background-color: alpha(@card_bg_color, 0.3);
+    background-color: @card_bg_color;
 }
 
 entry::placeholder {
@@ -1059,44 +1167,25 @@ checkbutton label {
     padding: 16px 20px;
     margin: 8px 0;
     border-radius: 10px;
-    background-color: alpha(@card_bg_color, 0.45);
+    background-color: @card_bg_color;
     border: none;
     transition: all 200ms ease;
-    box-shadow: none;
+    box-shadow: 0 1px 3px alpha(black, 0.08);
 }
 
 .keybind-row:hover {
-    background-color: alpha(@card_bg_color, 0.6);
+    background-color: @card_bg_color;
     transform: translateX(3px);
-    box-shadow: none;
+    box-shadow: 0 2px 6px alpha(black, 0.12);
 }
 
 .keybind-row:focus-within {
-    background-color: alpha(@card_bg_color, 0.7);
+    background-color: @card_bg_color;
     box-shadow: 0 0 0 2px alpha(@accent_bg_color, 0.25);
     transform: translateY(-1px);
 }
 
 /* ===== Enhanced Section Styles ===== */
-.section-title {
-    font-size: 18pt;
-    font-weight: 700;
-    color: @window_fg_color;
-    padding: 0;
-    margin: 0 0 8px 0;
-    line-height: 1.3;
-    letter-spacing: -0.5px;
-    text-shadow: 0 2px 4px alpha(black, 0.15);
-}
-
-.section-description {
-    font-size: 11pt;
-    font-weight: 400;
-    color: alpha(@window_fg_color, 0.7);
-    padding: 0;
-    margin: 0 0 20px 0;
-    line-height: 1.5;
-}
 
 /* Device status icon for network/bluetooth */
 .device-status-icon {
@@ -1111,8 +1200,8 @@ checkbutton label {
     padding: 28px 32px;
     margin: 36px 0;
     border-radius: 14px;
-    background-color: alpha(@card_bg_color, 0.4);
-    border: 1px solid alpha(@window_fg_color, 0.2);
+    background-color: @card_bg_color;
+    border: none;
     box-shadow: 0 3px 16px alpha(black, 0.15);
 }
 
@@ -1126,8 +1215,8 @@ checkbutton label {
 .modifiers-box {
     padding: 10px 12px;
     border-radius: 10px;
-    background-color: alpha(@card_bg_color, 0.35);
-    border: 1px solid alpha(@window_fg_color, 0.15);
+    background-color: @card_bg_color;
+    border: none;
     box-shadow: 0 1px 3px alpha(black, 0.08);
 }
 
@@ -1137,7 +1226,91 @@ checkbutton label {
                 border-color 200ms ease, 
                 color 200ms ease,
                 transform 150ms ease,
-                box-shadow 200ms ease;
+                box-shadow 200ms ease,
+                opacity 200ms ease;
+}
+
+/* ===== Stack Animation Enhancement ===== */
+stack {
+    transition: all 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* ===== Appearance Tab Animations ===== */
+.settings-section {
+    animation: fadeInSlide 300ms ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Theme cards - improved styling */
+.theme-card {
+    min-width: 0;
+    min-height: 140px;
+    border-radius: 12px;
+    transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    flex: 1 1 auto;
+}
+
+.theme-card:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px alpha(@accent_color, 0.3);
+}
+
+.theme-card-selected {
+    border-width: 2px;
+    box-shadow: 0 0 0 3px alpha(@accent_color, 0.2);
+}
+
+/* Preset buttons - improved styling (using main style below) */
+
+/* Rounding buttons */
+.rounding-button {
+    min-width: 0;
+    padding: 12px 24px;
+    border-radius: 8px;
+    transition: all 200ms ease;
+    flex: 1 1 auto;
+}
+
+.rounding-button:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive row - stacks vertically on small screens */
+.responsive-row {
+    flex-wrap: wrap;
+}
+
+/* Settings sections - responsive */
+.settings-section {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Make theme cards and buttons flexible */
+.responsive-row .theme-card,
+.responsive-row .rounding-button {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* FlowBox responsive adjustments */
+flowbox {
+    min-width: 0;
+}
+
+flowbox child {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 /* ===== About Page Styles ===== */
@@ -1297,44 +1470,52 @@ scale slider:hover {
 .preset-button {
     background-color: @card_bg_color;
     border: none;
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 0;
-    min-height: 140px;
-    transition: background-color 200ms ease,
-                box-shadow 200ms ease,
-                transform 150ms ease;
+    min-width: 0;
+    min-height: 200px;
+    transition: all 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 2px 8px alpha(black, 0.08);
 }
 
 .preset-button:hover {
     background-color: alpha(@accent_color, 0.08);
-    box-shadow: 0 4px 12px alpha(@accent_color, 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 20px alpha(@accent_color, 0.3);
+    transform: translateY(-4px) scale(1.04);
 }
 
 .preset-button:active {
-    box-shadow: 0 3px 8px alpha(@accent_color, 0.2);
-    transform: translateY(0);
+    box-shadow: 0 4px 12px alpha(@accent_color, 0.25);
+    transform: translateY(-2px) scale(1.02);
 }
 
 .preset-name {
-    font-size: 12pt;
-    font-weight: 600;
+    font-size: 14pt;
+    font-weight: 700;
     color: @window_fg_color;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.2px;
+    text-align: center;
 }
 
 .color-bar {
-    border-radius: 3px;
-    margin: 3px 0;
+    border-radius: 6px;
+    margin: 0;
+    box-shadow: 0 1px 3px alpha(black, 0.1);
+}
+
+.color-bar-large {
+    min-height: 14px;
+    border-radius: 6px;
 }
 
 /* Preset variant labels */
 .preset-variant-label {
-    font-size: 10pt;
-    font-weight: 500;
-    color: alpha(@window_fg_color, 0.7);
+    font-size: 9pt;
+    font-weight: 600;
+    color: alpha(@window_fg_color, 0.8);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    text-align: center;
 }
 
 /* Expand wallpapers button */
@@ -1354,18 +1535,19 @@ scale slider:hover {
     border: none;
     border-radius: 12px;
     padding: 0;
-    min-width: 200px;
+    min-width: 180px;
     min-height: 160px;
-    transition: box-shadow 200ms ease, transform 150ms ease;
+    transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 2px 6px alpha(black, 0.08);
 }
 
 .theme-card:hover {
-    box-shadow: 0 2px 8px alpha(@accent_color, 0.15);
-    transform: translateY(-1px);
+    box-shadow: 0 4px 12px alpha(@accent_color, 0.3);
+    transform: translateY(-2px) scale(1.02);
 }
 
 .theme-card-selected {
-    box-shadow: 0 0 0 2px @accent_color, 0 2px 12px alpha(@accent_color, 0.2);
+    box-shadow: 0 0 0 3px alpha(@accent_color, 0.3), 0 4px 12px alpha(@accent_color, 0.25);
 }
 
 .theme-preview {
@@ -1390,15 +1572,15 @@ scale slider:hover {
 
 /* Wallpaper grid tiles - responsive */
 .wallpaper-tile-appearance {
-    min-width: 100px;
-    min-height: 80px;
+    min-width: 0;
+    min-height: 180px;
+    height: 180px;
     border-radius: 8px;
     overflow: hidden;
     border: none;
     transition: box-shadow 200ms ease, transform 150ms ease;
     /* Allow tiles to shrink and expand */
-    width: 100%;
-    height: 100%;
+    flex: 1 1 auto;
 }
 
 .wallpaper-tile-appearance:hover {

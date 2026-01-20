@@ -408,7 +408,6 @@ ShellRoot {
                     panelPosition: "left"
                     sharedData: root.sharedData
                     launcherFunction: root.openLauncher
-                    clipboardFunction: root.openClipboardManager
                     screenshotFunction: root.takeScreenshot
                 }
                 
@@ -419,7 +418,6 @@ ShellRoot {
                     panelPosition: "top"
                     sharedData: root.sharedData
                     launcherFunction: root.openLauncher
-                    clipboardFunction: root.openClipboardManager
                     screenshotFunction: root.takeScreenshot
                 }
                 

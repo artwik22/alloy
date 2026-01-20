@@ -1511,6 +1511,7 @@ PanelWindow {
         }
         
         // Tło z gradientem
+        // Material Design launcher background with elevation
         Rectangle {
             id: launcherBackground
             anchors.fill: parent
@@ -1518,6 +1519,16 @@ PanelWindow {
             
             // Użyj sharedData.colorBackground jeśli dostępny - jednolite tło bez gradientu
             color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : colorBackground
+            
+            // Material Design elevation shadow
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -3
+                color: "transparent"
+                border.color: Qt.rgba(0, 0, 0, 0.25)  // Material shadow
+                border.width: 2
+                z: -1
+            }
         }
         
         // Obsługa klawiszy na kontenerze - przekieruj do TextInput tylko w trybie Launch App
@@ -1893,18 +1904,40 @@ PanelWindow {
                 id: modeItem
                 width: modesList.width
                 height: 72
-                color: "transparent"
                 radius: 0
+                // Material Design card color
+                color: (selectedIndex === index || modeItemMouseArea.containsMouse) ?
+                    ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                    "transparent"
                 scale: (selectedIndex === index || modeItemMouseArea.containsMouse) ? 1.02 : 1.0
+                
+                property real cardElevation: (selectedIndex === index || modeItemMouseArea.containsMouse) ? 2 : 0
 
-                // Bottom accent line for selected items
+                // Material Design elevation shadow
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: -cardElevation
+                    color: "transparent"
+                    border.color: cardElevation > 0 ? Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05) : "transparent"
+                    border.width: cardElevation
+                    z: -1
+                    
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuart
+                        }
+                    }
+                }
+
+                // Bottom accent line for selected items (Material Design ripple effect)
                 Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
                     height: 3
                     color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                    radius: 1.5
+                    radius: 0
 
                     Behavior on width {
                         NumberAnimation {
@@ -2193,9 +2226,31 @@ PanelWindow {
                                     id: appItem
                                     width: appsList.width
                                     height: 72
-                                    color: (selectedIndex === index) ? (sharedData && sharedData.colorPrimary ? Qt.darker(sharedData.colorPrimary, 0.85) : "#2a2a2a") : "transparent"
                                     radius: 0
+                                    // Material Design card color
+                                    color: (selectedIndex === index || appItemMouseArea.containsMouse) ?
+                                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                        "transparent"
                                     scale: (selectedIndex === index || appItemMouseArea.containsMouse) ? 1.02 : 1.0
+                                    
+                                    property real cardElevation: (selectedIndex === index || appItemMouseArea.containsMouse) ? 2 : 0
+                                    
+                                    // Material Design elevation shadow
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        anchors.margins: -cardElevation
+                                        color: "transparent"
+                                        border.color: cardElevation > 0 ? Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05) : "transparent"
+                                        border.width: cardElevation
+                                        z: -1
+                                        
+                                        Behavior on border.color {
+                                            ColorAnimation {
+                                                duration: 200
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+                                    }
                                     
                                     Behavior on color {
                                         ColorAnimation {
@@ -2212,14 +2267,14 @@ PanelWindow {
                                         }
                                     }
 
-                                // Bottom accent line for selected items
+                                // Bottom accent line for selected items (Material Design ripple)
                                 Rectangle {
                                     anchors.bottom: parent.bottom
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
                                     height: 3
                                     color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                    radius: 1.5
+                                    radius: 0
 
                                     Behavior on width {
                                         NumberAnimation {
