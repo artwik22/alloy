@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::core::config::ColorConfig;
 use crate::tabs::{appearance::AppearanceTab,
-                  system::SystemTab, audio::AudioTab, index::IndexTab, bluetooth::BluetoothTab, network::NetworkTab, notifications::NotificationsTab, about::AboutTab};
+                  system::SystemTab, audio::AudioTab, index::IndexTab, bluetooth::BluetoothTab, network::NetworkTab, notifications::NotificationsTab, about::AboutTab, quickshell::QuickshellTab};
 
 pub struct FuseWindow {
     window: ApplicationWindow,
@@ -63,16 +63,18 @@ impl FuseWindow {
         let bluetooth_tab = BluetoothTab::new(Arc::clone(&config));
         let network_tab = NetworkTab::new(Arc::clone(&config));
         let notifications_tab = NotificationsTab::new(Arc::clone(&config));
+        let quickshell_tab = QuickshellTab::new(Arc::clone(&config));
         let about_tab = AboutTab::new(Arc::clone(&config));
 
         // Add tabs in order: Network and Bluetooth first, then separator, then others
         stack.add_titled(network_tab.widget(), Some("network"), "󰤨 Network");
         stack.add_titled(bluetooth_tab.widget(), Some("bluetooth"), "󰂯 Bluetooth");
         stack.add_titled(appearance_tab.widget(), Some("appearance"), "󰋺 Appearance");
-        stack.add_titled(system_tab.widget(), Some("system"), "󰍛 System");
         stack.add_titled(audio_tab.widget(), Some("audio"), "󰕧 Audio");
         stack.add_titled(index_tab.widget(), Some("index"), "󰉋 Index");
         stack.add_titled(notifications_tab.widget(), Some("notifications"), "󰂚 Notifications");
+        stack.add_titled(quickshell_tab.widget(), Some("quickshell"), "󰍜 QuickShell");
+        stack.add_titled(system_tab.widget(), Some("system"), "󰍛 System");
         stack.add_titled(about_tab.widget(), Some("about"), "󰋼 About");
 
         // Content area - GNOME spacing (12px margins), fully responsive
@@ -156,7 +158,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     };
     
     // Store page names in order (excluding separators)
-    let page_names = vec!["network", "bluetooth", "appearance", "audio", "index", "notifications", "system", "about"];
+    let page_names = vec!["network", "bluetooth", "appearance", "audio", "index", "notifications", "quickshell", "system", "about"];
     
     // Add Network and Bluetooth at the top
     let network_row = create_row("Network", "󰤨", "network").0;
@@ -190,6 +192,9 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     let notifications_row = create_row("Notifications", "󰂚", "notifications").0;
     list_box.append(&notifications_row);
     
+    let quickshell_row = create_row("QuickShell", "󰍜", "quickshell").0;
+    list_box.append(&quickshell_row);
+    
     // Add separator before System and About
     let separator2 = Separator::new(Orientation::Horizontal);
     separator2.set_margin_top(8);
@@ -216,11 +221,11 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
         if let Some(row) = row {
             // Get the row index directly (returns i32, not Option)
             let row_index = row.index();
-            // Map index to page (skip separators at index 2 and index 7)
-            // Sidebar: 0=Network, 1=Bluetooth, 2=Separator, 3=Appearance, 4=Audio, 5=Index, 6=Notifications, 7=Separator, 8=System, 9=About
+            // Map index to page (skip separators at index 2 and index 8)
+            // Sidebar: 0=Network, 1=Bluetooth, 2=Separator, 3=Appearance, 4=Audio, 5=Index, 6=Notifications, 7=QuickShell, 8=Separator, 9=System, 10=About
             let page_idx = if row_index < 2 { 
                 row_index as usize
-            } else if row_index < 7 {
+            } else if row_index < 8 {
                 (row_index - 1) as usize
             } else {
                 (row_index - 2) as usize

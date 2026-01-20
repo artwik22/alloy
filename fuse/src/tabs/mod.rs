@@ -6,3 +6,4 @@ pub mod bluetooth;
 pub mod network;
 pub mod notifications;
 pub mod about;
+pub mod quickshell;
