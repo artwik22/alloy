@@ -158,6 +158,7 @@ navigation-split-view > sidebar > navigation-page:backdrop {
 .sidebar-icon {
     color: @accent_color;
     opacity: 0.9;
+    margin-right: 20px;
 }
 
 .navigation-sidebar row:selected .sidebar-icon {
@@ -201,6 +202,50 @@ separator {
     border-right: 1px solid alpha(currentColor, 0.1);
     padding-top: 12px;
     padding-bottom: 0px;
+}
+
+/* Custom sidebar ListBox */
+.sidebar-listbox {
+    background-color: transparent;
+    padding: 4px;
+}
+
+.sidebar-listbox row {
+    border-radius: 6px;
+    margin: 2px 0;
+    min-height: 36px;
+    transition: background-color 200ms ease, transform 150ms ease;
+}
+
+.sidebar-listbox row:selected {
+    background-color: alpha(@accent_bg_color, 0.3);
+    color: @window_fg_color;
+}
+
+.sidebar-listbox row:selected label {
+    color: @window_fg_color;
+    font-weight: 500;
+}
+
+.sidebar-listbox row:hover:not(:selected) {
+    background-color: alpha(currentColor, 0.1);
+    transform: translateX(2px);
+}
+
+.sidebar-listbox row:active {
+    background-color: alpha(currentColor, 0.2);
+    transform: translateX(1px);
+}
+
+.sidebar-listbox row:disabled {
+    opacity: 0.5;
+}
+
+.sidebar-listbox separator {
+    opacity: 0.3;
+    background-color: alpha(currentColor, 0.2);
+    min-height: 1px;
+    margin: 8px 12px;
 }
 
 .sidebar-switcher button {
@@ -247,7 +292,7 @@ separator {
 
 .sidebar-switcher button image {
     color: alpha(@window_fg_color, 0.7);
-    margin-right: 12px;
+    margin-right: 20px;
     min-width: 16px;
     min-height: 16px;
     -gtk-icon-style: symbolic;
@@ -421,6 +466,35 @@ separator {
 
 .nautilus-scrolled:backdrop {
     background-color: @view_bg_color;
+}
+
+/* Hide scrollbars */
+scrolledwindow {
+    border: none;
+}
+
+scrolledwindow scrollbar {
+    opacity: 0;
+    min-width: 0;
+    min-height: 0;
+    transition: opacity 200ms ease;
+}
+
+scrolledwindow scrollbar:hover {
+    opacity: 0;
+}
+
+scrolledwindow scrollbar:backdrop {
+    opacity: 0;
+}
+
+/* Hide scrollbar trough and slider */
+scrolledwindow scrollbar trough {
+    opacity: 0;
+}
+
+scrolledwindow scrollbar slider {
+    opacity: 0;
 }
 
 /* ===== Entry Fields ===== */
@@ -650,10 +724,12 @@ label.dim-label {
     font-size: 32pt;
     font-weight: 700;
     color: @window_fg_color;
-    margin-bottom: 24px;
+    margin-bottom: 36px;
     margin-top: 0;
     padding: 0;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.8px;
+    text-shadow: 0 2px 4px alpha(black, 0.15);
+    line-height: 1.2;
 }
 
 /* ===== Popovers ===== */
@@ -784,40 +860,43 @@ messagedialog .dialog-action-area button.destructive-action {
 }
 
 .settings-row .row-title {
-    font-size: 11pt;
+    font-size: 12.5pt;
     font-weight: 600;
     color: @window_fg_color;
     padding: 0;
-    margin: 0;
-    line-height: 1.2;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
 }
 
 .settings-row .row-description {
-    font-size: 10pt;
+    font-size: 11pt;
     font-weight: 400;
-    color: alpha(@window_fg_color, 0.55);
+    color: alpha(@window_fg_color, 0.75);
     padding: 0;
     margin: 0;
-    line-height: 1.2;
+    line-height: 1.5;
 }
 
 /* Section titles and descriptions */
 .section-title {
-    font-size: 14pt;
-    font-weight: 600;
+    font-size: 18pt;
+    font-weight: 700;
     color: @window_fg_color;
     padding: 0;
-    margin: 0;
-    line-height: 1.2;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px alpha(black, 0.15);
 }
 
 .section-description {
-    font-size: 10pt;
+    font-size: 11.5pt;
     font-weight: 400;
-    color: alpha(@window_fg_color, 0.55);
+    color: alpha(@window_fg_color, 0.75);
     padding: 0;
-    margin: 0;
-    line-height: 1.2;
+    margin: 0 0 24px 0;
+    line-height: 1.6;
 }
 
 /* Color input elements */
@@ -877,6 +956,218 @@ switch slider {
 
 switch:checked slider {
     background-color: white;
+}
+
+/* ===== Enhanced Entry Styles ===== */
+entry {
+    background-color: alpha(@card_bg_color, 0.6);
+    border: 1px solid alpha(@window_fg_color, 0.18);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-height: 40px;
+    font-size: 11.5pt;
+    color: @window_fg_color;
+    transition: all 200ms ease;
+    box-shadow: 0 2px 4px alpha(black, 0.1);
+}
+
+entry:focus {
+    background-color: @card_bg_color;
+    border-color: @accent_bg_color;
+    box-shadow: 0 0 0 3px alpha(@accent_bg_color, 0.25), 0 3px 8px alpha(black, 0.18);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+entry:hover:not(:focus) {
+    background-color: alpha(@card_bg_color, 0.75);
+    border-color: alpha(@window_fg_color, 0.28);
+    box-shadow: 0 2px 6px alpha(black, 0.12);
+}
+
+entry:disabled {
+    opacity: 0.5;
+    background-color: alpha(@card_bg_color, 0.3);
+}
+
+entry::placeholder {
+    color: alpha(@window_fg_color, 0.4);
+    font-style: italic;
+}
+
+/* ===== Enhanced CheckButton Styles ===== */
+checkbutton {
+    margin: 0;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 150ms ease;
+}
+
+checkbutton:hover {
+    background-color: alpha(@accent_bg_color, 0.1);
+}
+
+checkbutton:active {
+    background-color: alpha(@accent_bg_color, 0.2);
+}
+
+checkbutton check {
+    background-color: alpha(@card_bg_color, 0.8);
+    border: 2px solid alpha(@window_fg_color, 0.3);
+    border-radius: 4px;
+    min-width: 18px;
+    min-height: 18px;
+    margin: 0;
+    transition: all 200ms ease;
+}
+
+checkbutton check:checked {
+    background-color: @accent_bg_color;
+    border-color: @accent_bg_color;
+    background-image: none;
+}
+
+checkbutton check:checked:after {
+    content: "✓";
+    color: white;
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+checkbutton label {
+    margin-left: 8px;
+    font-size: 10pt;
+    color: @window_fg_color;
+    font-weight: 500;
+}
+
+/* ===== Enhanced Keybind Row Styles ===== */
+.keybind-row {
+    padding: 16px 20px;
+    margin: 8px 0;
+    border-radius: 10px;
+    background-color: alpha(@card_bg_color, 0.45);
+    border: 1px solid alpha(@window_fg_color, 0.18);
+    transition: all 200ms ease;
+    box-shadow: 0 2px 4px alpha(black, 0.1);
+}
+
+.keybind-row:hover {
+    background-color: alpha(@card_bg_color, 0.6);
+    border-color: alpha(@accent_bg_color, 0.45);
+    transform: translateX(3px);
+    box-shadow: 0 3px 8px alpha(black, 0.15);
+}
+
+.keybind-row:focus-within {
+    background-color: alpha(@card_bg_color, 0.7);
+    border-color: @accent_bg_color;
+    box-shadow: 0 0 0 3px alpha(@accent_bg_color, 0.25), 0 3px 10px alpha(black, 0.2);
+    transform: translateY(-1px);
+}
+
+/* ===== Enhanced Section Styles ===== */
+.section-title {
+    font-size: 18pt;
+    font-weight: 700;
+    color: @window_fg_color;
+    padding: 0;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px alpha(black, 0.15);
+}
+
+.section-description {
+    font-size: 11pt;
+    font-weight: 400;
+    color: alpha(@window_fg_color, 0.7);
+    padding: 0;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+}
+
+/* ===== Enhanced Settings Row ===== */
+.settings-row {
+    padding: 16px 20px;
+    margin: 8px 0;
+    border-radius: 10px;
+    transition: all 200ms ease;
+    background-color: alpha(@card_bg_color, 0.2);
+    border: 1px solid alpha(@window_fg_color, 0.12);
+    box-shadow: 0 1px 3px alpha(black, 0.08);
+}
+
+.settings-row:hover {
+    background-color: alpha(@card_bg_color, 0.35);
+    border-color: alpha(@accent_bg_color, 0.3);
+    transform: translateX(3px);
+    box-shadow: 0 2px 6px alpha(black, 0.12);
+}
+
+/* ===== Better Spacing for Keybind Section ===== */
+.keybind-section {
+    padding: 28px 32px;
+    margin: 36px 0;
+    border-radius: 14px;
+    background-color: alpha(@card_bg_color, 0.4);
+    border: 1px solid alpha(@window_fg_color, 0.2);
+    box-shadow: 0 3px 16px alpha(black, 0.15);
+}
+
+/* ===== Content Section Spacing ===== */
+.content-section {
+    margin: 40px 0;
+    padding: 24px 0;
+}
+
+/* ===== Enhanced Modifiers Box ===== */
+.modifiers-box {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: alpha(@card_bg_color, 0.35);
+    border: 1px solid alpha(@window_fg_color, 0.15);
+    box-shadow: 0 1px 3px alpha(black, 0.08);
+}
+
+/* ===== Smooth Transitions ===== */
+* {
+    transition: background-color 200ms ease, 
+                border-color 200ms ease, 
+                color 200ms ease,
+                transform 150ms ease,
+                box-shadow 200ms ease;
+}
+
+/* ===== About Page Styles ===== */
+.about-logo {
+    font-size: 64pt;
+    font-weight: 400;
+    margin: 20px 0;
+    color: @accent_bg_color;
+}
+
+.about-name {
+    font-size: 32pt;
+    font-weight: 700;
+    color: @window_fg_color;
+    margin: 8px 0;
+    letter-spacing: -0.8px;
+    text-shadow: 0 2px 4px alpha(black, 0.15);
+}
+
+.about-tagline {
+    font-size: 12pt;
+    font-weight: 400;
+    color: alpha(@window_fg_color, 0.7);
+    margin: 8px 0 24px 0;
+    font-style: italic;
+}
+
+.component-icon {
+    font-size: 24pt;
+    color: @accent_bg_color;
+}
     /* Very conservative approach to prevent overflow
        40px switch - 14px slider - 3px margins
        Position: 3px + 10px = 13px start
@@ -1036,6 +1327,46 @@ scale slider:hover {
 .color-bar {
     border-radius: 3px;
     margin: 3px 0;
+}
+
+/* Preset variant labels */
+.preset-variant-label {
+    font-size: 10pt;
+    font-weight: 500;
+    color: alpha(@window_fg_color, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Expand wallpapers button */
+.expand-wallpapers-button {
+    font-weight: 500;
+    color: @accent_color;
+    padding: 8px 16px;
+}
+
+.expand-wallpapers-button:hover {
+    background-color: alpha(@accent_color, 0.1);
+}
+
+/* Wallpaper grid tiles */
+.wallpaper-tile-appearance {
+    min-width: 120px;
+    min-height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid alpha(@window_fg_color, 0.1);
+    transition: border-color 200ms ease, transform 150ms ease;
+}
+
+.wallpaper-tile-appearance:hover {
+    border-color: @accent_color;
+    transform: scale(1.02);
+}
+
+.wallpaper-tile-selected {
+    border-color: @accent_color;
+    border-width: 3px;
 }
 
 /* Combobox */

@@ -32,11 +32,6 @@ impl GeneralTab {
         title.set_halign(gtk4::Align::Start);
         content.append(&title);
 
-        // Notifications section
-        let notifications_section = create_notifications_section(Arc::clone(&config));
-        notifications_section.set_hexpand(true);
-        content.append(&notifications_section);
-
         scrolled.set_child(Some(&content));
 
         Self {
@@ -50,55 +45,7 @@ impl GeneralTab {
     }
 }
 
-fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 12);
-
-    let section_title = Label::new(Some("Notifications"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section.append(&section_title);
-
-    // Show Notifications toggle
-    let notifications_row = create_toggle_row(
-        "Show Notifications",
-        "Enable or disable notification display",
-        {
-            let config = Arc::clone(&config);
-            move |enabled| {
-                let mut cfg = config.lock().unwrap();
-                cfg.set_notifications_enabled(enabled);
-                let _ = cfg.save();
-            }
-        },
-        {
-            let cfg = config.lock().unwrap();
-            cfg.notifications_enabled.unwrap_or(true)
-        },
-    );
-    section.append(&notifications_row);
-
-    // Notification Sounds toggle
-    let sounds_row = create_toggle_row(
-        "Notification Sounds",
-        "Play sound when notification arrives",
-        {
-            let config_clone = Arc::clone(&config);
-            move |enabled| {
-                let mut cfg = config_clone.lock().unwrap();
-                cfg.set_notification_sounds_enabled(enabled);
-                let _ = cfg.save();
-            }
-        },
-        {
-            let cfg = config.lock().unwrap();
-            cfg.notification_sounds_enabled.unwrap_or(true)
-        },
-    );
-    section.append(&sounds_row);
-
-    section
-}
-
+#[allow(dead_code)]
 fn create_toggle_row(
     title: &str,
     description: &str,

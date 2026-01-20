@@ -1,12 +1,13 @@
 {
-  "background": "#0c0c0c",
-  "primary": "#161616",
-  "secondary": "#121212",
-  "text": "#f0f0f0",
+  "background": "#0a0a0a",
+  "primary": "#1a1a1a",
+  "secondary": "#151515",
+  "text": "#e8e8e8",
   "accent": "#a0a0a0",
   "lastWallpaper": "/home/artwik/Pictures/Wallpapers/wallhaven-g7pq83.png",
-  "colorPreset": "Minimal Gray",
+  "colorPreset": "Monochrome",
   "sidebarPosition": "left",
   "sidebarVisible": true,
-  "rounding": "sharp"
+  "rounding": "rounded",
+  "showHiddenFiles": true
 }

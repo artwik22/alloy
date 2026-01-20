@@ -407,7 +407,6 @@ ShellRoot {
                     screen: modelData
                     panelPosition: "left"
                     sharedData: root.sharedData
-                    settingsFunction: root.openSettings
                     launcherFunction: root.openLauncher
                     clipboardFunction: root.openClipboardManager
                     screenshotFunction: root.takeScreenshot
@@ -419,7 +418,6 @@ ShellRoot {
                     screen: modelData
                     panelPosition: "top"
                     sharedData: root.sharedData
-                    settingsFunction: root.openSettings
                     launcherFunction: root.openLauncher
                     clipboardFunction: root.openClipboardManager
                     screenshotFunction: root.takeScreenshot

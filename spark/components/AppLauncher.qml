@@ -487,7 +487,7 @@ PanelWindow {
     // Calculator properties
     property string calculatorResult: ""
     property bool isCalculatorMode: false
-    property int currentMode: -1  // -1 = mode selection, 0 = Launcher, 1 = Packages, 2 = Settings, 3 = Notes
+    property int currentMode: -1  // -1 = mode selection, 0 = Launcher, 1 = Packages, 2 = Fuse, 3 = Notes
     property int currentNotesMode: -1  // -1 = menu, 0 = new note, 1 = edit note
     property string notesFileName: ""  // Current note file name
     property string pendingNoteContent: ""  // Content to load into editor
@@ -1677,13 +1677,6 @@ PanelWindow {
                         removeAurPackagesList.positionViewAtIndex(selectedIndex, ListView.Center)
                     }
                     event.accepted = true
-                    // W trybie Bluetooth - nawigacja po liście urządzeń
-                    if (bluetoothSelectedIndex < bluetoothDevicesModel.count - 1) {
-                        bluetoothSelectedIndex++
-                        bluetoothDevicesList.currentIndex = bluetoothSelectedIndex
-                        bluetoothDevicesList.positionViewAtIndex(bluetoothSelectedIndex, ListView.Center)
-                    }
-                    event.accepted = true
                 }
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 // Enter - wybierz tryb, pakiet lub aplikację
@@ -1693,27 +1686,26 @@ PanelWindow {
                         var mode = modesList.model.get(selectedIndex)
                         if (mode.mode === 2) {
                             // Launch fuse directly using Process
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null &']; running: true }", appLauncherRoot)
+                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse &']; running: true }", appLauncherRoot)
                             if (sharedData) {
                                 sharedData.launcherVisible = false
                             }
                             event.accepted = true
                             return
-                        } else {
-                            currentMode = mode.mode
-                            selectedIndex = 0
-                            modesList.currentIndex = -1
-                            appsList.currentIndex = -1
-                            packagesOptionsList.currentIndex = -1
-                            if (currentMode === 1) {
-                                currentPackageMode = -1
-                                installSourceMode = -1
-                                removeSourceMode = -1
-                            } else if (currentMode === 3) {
-                                currentNotesMode = -1
-                                notesMenuIndex = 0
-                                loadNotesList()
-                            }
+                        }
+                        currentMode = mode.mode
+                        selectedIndex = 0
+                        modesList.currentIndex = -1
+                        appsList.currentIndex = -1
+                        packagesOptionsList.currentIndex = -1
+                        if (currentMode === 1) {
+                            currentPackageMode = -1
+                            installSourceMode = -1
+                            removeSourceMode = -1
+                        } else if (currentMode === 3) {
+                            currentNotesMode = -1
+                            notesMenuIndex = 0
+                            loadNotesList()
                         }
                     }
                     event.accepted = true
@@ -1751,23 +1743,11 @@ PanelWindow {
                     // W trybie Remove search - przekieruj do TextInput
                     if (removeSearchInput) removeSearchInput.forceActiveFocus()
                     event.accepted = false
-                    // W trybie Bluetooth - połącz z wybranym urządzeniem
-                    if (bluetoothSelectedIndex >= 0 && bluetoothSelectedIndex < bluetoothDevicesModel.count && !bluetoothConnecting) {
-                        var device = bluetoothDevicesModel.get(bluetoothSelectedIndex)
-                        if (device && device.mac) {
-                            connectBluetoothDevice(device.mac)
-                        }
-                    }
-                    event.accepted = true
                 } else if (currentMode === 0) {
                     // W trybie Launch App - przekieruj do TextInput
                     searchInput.forceActiveFocus()
                     event.accepted = false
                 }
-            } else if (currentMode === 0) {
-                // W trybie Launch App - przekieruj do TextInput
-                searchInput.forceActiveFocus()
-                event.accepted = false  // Pozwól propagować
             } else if (currentMode === 1 && currentPackageMode === -1) {
                 // W trybie Packages - nawigacja po liście opcji
                 if (event.key === Qt.Key_Up) {
@@ -1905,8 +1885,8 @@ PanelWindow {
             model: ListModel {
                 ListElement { name: "Launcher"; description: "Launch applications"; mode: 0; icon: "󰈙" }
                 ListElement { name: "Packages"; description: "Manage packages"; mode: 1; icon: "󰏖" }
+                ListElement { name: "Fuse"; description: "Open settings application"; mode: 2; icon: "󰒓" }
                 ListElement { name: "Notes"; description: "Quick notes and reminders"; mode: 3; icon: "󰎞" }
-                ListElement { name: "Settings"; description: "Open settings application"; mode: 2; icon: "󰒓" }
             }
             
             delegate: Rectangle {
@@ -1998,18 +1978,17 @@ PanelWindow {
                     onClicked: {
                         if (model.mode === 2) {
                             // Launch fuse directly using Process
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null &']; running: true }", appLauncherRoot)
+                            Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse &']; running: true }", appLauncherRoot)
                             if (sharedData) {
                                 sharedData.launcherVisible = false
                             }
                             return
-                        } else {
-                            currentMode = model.mode
-                            selectedIndex = 0
-                            modesList.currentIndex = -1
-                            if (model.mode === 1) {
-                                currentPackageMode = -1
-                            }
+                        }
+                        currentMode = model.mode
+                        selectedIndex = 0
+                        modesList.currentIndex = -1
+                        if (model.mode === 1) {
+                            currentPackageMode = -1
                         }
                     }
                 }
