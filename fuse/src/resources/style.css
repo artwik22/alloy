@@ -627,8 +627,8 @@ window > box {
 
 /* Make sidebar responsive */
 .sidebar {
-    min-width: 190px !important;
-    max-width: 300px !important;
+    min-width: 210px !important;
+    max-width: 320px !important;
     flex: 0 0 auto !important;
     width: auto !important;
 }
