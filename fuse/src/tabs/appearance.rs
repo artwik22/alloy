@@ -75,6 +75,10 @@ impl AppearanceTab {
         title.set_xalign(0.0);
         content.append(&title);
 
+        // Theme selection (Light/Dark mode)
+        let theme_section = create_theme_section(Arc::clone(&config));
+        content.append(&theme_section);
+
         // Colors section with presets
         let colors_section = create_colors_section(Arc::clone(&config));
         content.append(&colors_section);
@@ -82,6 +86,10 @@ impl AppearanceTab {
         // Background section
         let background_section = create_background_section(Arc::clone(&config));
         content.append(&background_section);
+
+        // Rounding section
+        let rounding_section = create_rounding_section(Arc::clone(&config));
+        content.append(&rounding_section);
 
         scrolled.set_child(Some(&content));
 
@@ -94,6 +102,163 @@ impl AppearanceTab {
     pub fn widget(&self) -> &ScrolledWindow {
         &self.widget
     }
+}
+
+fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    // Section header
+    let header = GtkBox::new(Orientation::Vertical, 0);
+    let section_title = Label::new(Some("Theme"));
+    section_title.add_css_class("section-title");
+    section_title.set_xalign(0.0);
+    section_title.set_margin_start(18);
+    section_title.set_margin_end(18);
+    section_title.set_margin_top(18);
+    section_title.set_margin_bottom(8);
+    header.append(&section_title);
+
+    let desc = Label::new(Some("Choose between light and dark theme"));
+    desc.add_css_class("section-description");
+    desc.set_xalign(0.0);
+    desc.set_margin_start(18);
+    desc.set_margin_end(18);
+    desc.set_margin_bottom(18);
+    header.append(&desc);
+
+    // Theme cards container
+    let cards_container = GtkBox::new(Orientation::Horizontal, 18);
+    cards_container.set_margin_start(18);
+    cards_container.set_margin_end(18);
+    cards_container.set_margin_bottom(18);
+    cards_container.set_halign(gtk4::Align::Start);
+
+    // Light theme card
+    let light_card = create_theme_card("Light", "light", true);
+    let dark_card = create_theme_card("Dark", "dark", false);
+    
+    // Store references for selection management
+    let light_card_clone = light_card.clone();
+    let dark_card_clone = dark_card.clone();
+    
+    // Connect Light card click - apply light variant of current preset
+    {
+        let dark_ref = dark_card_clone.clone();
+        let config_clone = Arc::clone(&config);
+        light_card.connect_clicked(move |btn| {
+            btn.add_css_class("theme-card-selected");
+            dark_ref.remove_css_class("theme-card-selected");
+            
+            // Get current preset name or use first preset
+            let current_cfg = config_clone.lock().unwrap();
+            let preset_name = current_cfg.color_preset.clone().unwrap_or_else(|| "Ocean Breeze".to_string());
+            drop(current_cfg);
+            
+            // Find light variant - try current preset first, then try all presets
+            let light_preset = COLOR_PRESETS.iter()
+                .find(|p| p.0 == preset_name && p.1 == "light")
+                .or_else(|| COLOR_PRESETS.iter().find(|p| p.1 == "light"));
+            
+            if let Some(light_preset) = light_preset {
+                let mut cfg = ColorConfig::load();
+                cfg.update_colors(light_preset.2, light_preset.3, light_preset.4, light_preset.5, light_preset.6);
+                cfg.set_preset(light_preset.0);
+                if let Err(e) = cfg.save() {
+                    eprintln!("Error saving light theme: {}", e);
+                } else {
+                    *config_clone.lock().unwrap() = cfg.clone();
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    if let Err(e) = quickshell::notify_color_change() {
+                        eprintln!("Error notifying quickshell: {}", e);
+                    }
+                    println!("Light theme applied: {}", light_preset.0);
+                }
+            } else {
+                eprintln!("No light preset found!");
+            }
+        });
+    }
+    
+    // Connect Dark card click - apply dark variant of current preset
+    {
+        let light_ref = light_card_clone.clone();
+        let config_clone = Arc::clone(&config);
+        dark_card.connect_clicked(move |btn| {
+            btn.add_css_class("theme-card-selected");
+            light_ref.remove_css_class("theme-card-selected");
+            
+            // Get current preset name or use first preset
+            let current_cfg = config_clone.lock().unwrap();
+            let preset_name = current_cfg.color_preset.clone().unwrap_or_else(|| "Ocean Breeze".to_string());
+            drop(current_cfg);
+            
+            // Find dark variant - try current preset first, then try all presets
+            let dark_preset = COLOR_PRESETS.iter()
+                .find(|p| p.0 == preset_name && p.1 == "dark")
+                .or_else(|| COLOR_PRESETS.iter().find(|p| p.1 == "dark"));
+            
+            if let Some(dark_preset) = dark_preset {
+                let mut cfg = ColorConfig::load();
+                cfg.update_colors(dark_preset.2, dark_preset.3, dark_preset.4, dark_preset.5, dark_preset.6);
+                cfg.set_preset(dark_preset.0);
+                if let Err(e) = cfg.save() {
+                    eprintln!("Error saving dark theme: {}", e);
+                } else {
+                    *config_clone.lock().unwrap() = cfg.clone();
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    if let Err(e) = quickshell::notify_color_change() {
+                        eprintln!("Error notifying quickshell: {}", e);
+                    }
+                    println!("Dark theme applied: {}", dark_preset.0);
+                }
+            } else {
+                eprintln!("No dark preset found!");
+            }
+        });
+    }
+    
+    cards_container.append(&light_card);
+    cards_container.append(&dark_card);
+
+    section.append(&header);
+    section.append(&cards_container);
+
+    section
+}
+
+fn create_theme_card(name: &str, theme: &str, is_selected: bool) -> Button {
+    let button = Button::new();
+    button.add_css_class("theme-card");
+    
+    if is_selected {
+        button.add_css_class("theme-card-selected");
+    }
+
+    let card_content = GtkBox::new(Orientation::Vertical, 0);
+    card_content.set_hexpand(true);
+    card_content.set_vexpand(true);
+
+    // Preview area
+    let preview_container = GtkBox::new(Orientation::Vertical, 0);
+    preview_container.add_css_class("theme-preview");
+    preview_container.add_css_class(&format!("theme-preview-{}", theme));
+    preview_container.set_size_request(200, 120);
+    preview_container.set_hexpand(true);
+    preview_container.set_vexpand(true);
+
+    card_content.append(&preview_container);
+
+    // Theme name label
+    let name_label = Label::new(Some(name));
+    name_label.add_css_class("theme-name");
+    name_label.set_margin_top(12);
+    name_label.set_margin_bottom(12);
+    card_content.append(&name_label);
+
+    button.set_child(Some(&card_content));
+
+    button
 }
 
 fn create_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
@@ -497,4 +662,112 @@ fn find_wallpapers(path: &PathBuf) -> Vec<PathBuf> {
     wallpapers.sort();
     wallpapers.truncate(6);
     wallpapers
+}
+
+fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    let section_title = Label::new(Some("Rounding"));
+    section_title.add_css_class("section-title");
+    section_title.set_xalign(0.0);
+    section_title.set_margin_start(18);
+    section_title.set_margin_end(18);
+    section_title.set_margin_top(18);
+    section_title.set_margin_bottom(8);
+    section.append(&section_title);
+
+    let desc = Label::new(Some("Choose corner rounding style"));
+    desc.add_css_class("section-description");
+    desc.set_xalign(0.0);
+    desc.set_margin_start(18);
+    desc.set_margin_end(18);
+    desc.set_margin_bottom(18);
+    section.append(&desc);
+
+    let content = GtkBox::new(Orientation::Horizontal, 12);
+    content.set_margin_start(18);
+    content.set_margin_end(18);
+    content.set_margin_bottom(18);
+    content.set_valign(gtk4::Align::Center);
+    
+    let text_box = GtkBox::new(Orientation::Vertical, 2);
+    text_box.set_hexpand(true);
+
+    let title = Label::new(Some("Global Rounding"));
+    title.add_css_class("row-title");
+    title.set_xalign(0.0);
+    text_box.append(&title);
+
+    let desc_text = Label::new(Some("Choose corner rounding style: Rounded or Sharp"));
+    desc_text.add_css_class("row-description");
+    desc_text.set_xalign(0.0);
+    text_box.append(&desc_text);
+
+    content.append(&text_box);
+
+    let button_box = GtkBox::new(Orientation::Horizontal, 10);
+    button_box.set_valign(gtk4::Align::Center);
+    
+    let current_rounding = config.lock().unwrap().rounding.clone().unwrap_or_else(|| "rounded".to_string());
+    let is_rounded = current_rounding == "rounded";
+    let is_sharp = current_rounding == "sharp";
+
+    let rounded_button = Button::with_label("Rounded");
+    if is_rounded {
+        rounded_button.add_css_class("suggested-action");
+    }
+    let sharp_button = Button::with_label("Sharp");
+    if is_sharp {
+        sharp_button.add_css_class("suggested-action");
+    }
+    
+    {
+        let config = Arc::clone(&config);
+        let sharp_btn = sharp_button.clone();
+        rounded_button.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_rounding("rounded");
+            if let Err(e) = cfg.save() {
+                eprintln!("Error saving rounding: {}", e);
+            } else {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                sharp_btn.remove_css_class("suggested-action");
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                if let Err(e) = quickshell::notify_color_change() {
+                    eprintln!("Error notifying quickshell: {}", e);
+                }
+                println!("Rounding set to: rounded");
+            }
+        });
+    }
+    button_box.append(&rounded_button);
+
+    {
+        let config = Arc::clone(&config);
+        let rounded_btn = rounded_button.clone();
+        sharp_button.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_rounding("sharp");
+            if let Err(e) = cfg.save() {
+                eprintln!("Error saving rounding: {}", e);
+            } else {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                rounded_btn.remove_css_class("suggested-action");
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                if let Err(e) = quickshell::notify_color_change() {
+                    eprintln!("Error notifying quickshell: {}", e);
+                }
+                println!("Rounding set to: sharp");
+            }
+        });
+    }
+    button_box.append(&sharp_button);
+
+    content.append(&button_box);
+    section.append(&content);
+
+    section
 }

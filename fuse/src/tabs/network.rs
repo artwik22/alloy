@@ -28,7 +28,7 @@ impl NetworkTab {
         content.set_vexpand(true);
 
         // Title
-        let title = Label::new(Some("Network Settings"));
+        let title = Label::new(Some("Network"));
         title.add_css_class("title");
         title.set_xalign(0.0);
         title.set_halign(gtk4::Align::Start);
@@ -38,14 +38,6 @@ impl NetworkTab {
         let wifi_section = create_wifi_section();
         wifi_section.set_hexpand(true);
         content.append(&wifi_section);
-
-        // Separator
-        let separator = Separator::new(Orientation::Horizontal);
-        separator.set_margin_start(0);
-        separator.set_margin_end(0);
-        separator.set_margin_top(18);
-        separator.set_margin_bottom(18);
-        content.append(&separator);
 
         // Network Interfaces section
         let interfaces_section = create_interfaces_section();
@@ -66,13 +58,22 @@ impl NetworkTab {
 }
 
 fn create_wifi_section() -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 16);
-    section.add_css_class("content-section");
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    let header = GtkBox::new(Orientation::Horizontal, 12);
+    header.set_margin_start(18);
+    header.set_margin_end(18);
+    header.set_margin_top(18);
+    header.set_margin_bottom(12);
+    header.set_valign(gtk4::Align::Center);
 
     let section_title = Label::new(Some("Wi-Fi"));
     section_title.add_css_class("section-title");
     section_title.set_xalign(0.0);
-    section.append(&section_title);
+    section_title.set_halign(gtk4::Align::Start);
+    section_title.set_hexpand(true);
+    header.append(&section_title);
 
     // Wi-Fi toggle
     let wifi_enabled = is_wifi_enabled();
@@ -92,7 +93,6 @@ fn create_wifi_section() -> GtkBox {
             } else {
                 disable_wifi();
             }
-            // Refresh after a delay
             let toggle_clone = wifi_toggle_clone.clone();
             gtk4::glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
                 toggle_clone.set_active(is_wifi_enabled());
@@ -101,12 +101,8 @@ fn create_wifi_section() -> GtkBox {
         });
     }
     
-    let wifi_row = create_toggle_row_with_switch(
-        "Enable Wi-Fi",
-        "Turn Wi-Fi on or off",
-        wifi_toggle,
-    );
-    section.append(&wifi_row);
+    header.append(&wifi_toggle);
+    section.append(&header);
 
     // Current Wi-Fi connection
     let current_wifi = get_current_wifi();
@@ -114,16 +110,21 @@ fn create_wifi_section() -> GtkBox {
         "Connected to",
         &current_wifi,
     );
+    wifi_info_row.set_margin_start(18);
+    wifi_info_row.set_margin_end(18);
+    wifi_info_row.set_margin_bottom(12);
     section.append(&wifi_info_row);
 
     // Scan for networks button
     let scan_button = Button::with_label("Scan for Networks");
+    scan_button.add_css_class("flat");
     scan_button.add_css_class("suggested-action");
     scan_button.set_halign(gtk4::Align::Start);
-    scan_button.set_margin_top(12);
+    scan_button.set_margin_start(18);
+    scan_button.set_margin_end(18);
+    scan_button.set_margin_bottom(18);
     
     scan_button.connect_clicked(move |_| {
-        // Open network manager or scan
         let _ = Command::new("nm-connection-editor")
             .spawn();
     });
@@ -134,19 +135,50 @@ fn create_wifi_section() -> GtkBox {
 }
 
 fn create_interfaces_section() -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 16);
-    section.add_css_class("content-section");
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    let header = GtkBox::new(Orientation::Horizontal, 12);
+    header.set_margin_start(18);
+    header.set_margin_end(18);
+    header.set_margin_top(18);
+    header.set_margin_bottom(12);
+    header.set_valign(gtk4::Align::Center);
 
     let section_title = Label::new(Some("Network Interfaces"));
     section_title.add_css_class("section-title");
     section_title.set_xalign(0.0);
-    section.append(&section_title);
+    section_title.set_halign(gtk4::Align::Start);
+    section_title.set_hexpand(true);
+    header.append(&section_title);
+
+    section.append(&header);
 
     let interfaces = get_network_interfaces();
     
-    for interface in interfaces {
-        let interface_row = create_interface_row(&interface);
-        section.append(&interface_row);
+    if interfaces.is_empty() {
+        let placeholder = Label::new(Some("No network interfaces found"));
+        placeholder.add_css_class("dim-label");
+        placeholder.set_xalign(0.0);
+        placeholder.set_margin_start(18);
+        placeholder.set_margin_end(18);
+        placeholder.set_margin_top(12);
+        placeholder.set_margin_bottom(18);
+        section.append(&placeholder);
+    } else {
+        for interface in interfaces {
+            let interface_row = create_interface_row(&interface);
+            interface_row.set_margin_start(18);
+            interface_row.set_margin_end(18);
+            interface_row.set_margin_bottom(0);
+            section.append(&interface_row);
+        }
+        // Add bottom margin to last item
+        if let Some(last_child) = section.last_child() {
+            if let Some(row) = last_child.downcast_ref::<GtkBox>() {
+                row.set_margin_bottom(18);
+            }
+        }
     }
 
     section
@@ -155,17 +187,14 @@ fn create_interfaces_section() -> GtkBox {
 fn create_interface_row(interface: &NetworkInterface) -> GtkBox {
     let row = GtkBox::new(Orientation::Horizontal, 12);
     row.add_css_class("settings-row");
-    row.set_margin_start(0);
-    row.set_margin_end(0);
-    row.set_margin_top(0);
-    row.set_margin_bottom(0);
     row.set_hexpand(true);
     row.set_halign(gtk4::Align::Fill);
+    row.set_valign(gtk4::Align::Center);
 
     // Icon
     let icon = Label::new(Some(if interface.interface_type == "wifi" { "󰤨" } else { "󰈀" }));
+    icon.add_css_class("device-status-icon");
     icon.set_margin_end(12);
-    icon.set_size_request(24, -1);
     row.append(&icon);
 
     // Text box
@@ -192,15 +221,17 @@ fn create_interface_row(interface: &NetworkInterface) -> GtkBox {
     row.append(&text_box);
 
     // Status indicator
-    let status_indicator = Label::new(Some(if interface.is_up { "●" } else { "○" }));
-    status_indicator.set_margin_start(12);
-    status_indicator.set_size_request(20, -1);
-    status_indicator.set_markup(&format!(
+    let status_text = if interface.is_up { "Connected" } else { "Disconnected" };
+    let status_label = Label::new(Some(status_text));
+    status_label.add_css_class("row-description");
+    status_label.set_markup(&format!(
         "<span foreground='{}'>{}</span>",
         if interface.is_up { "#4ade80" } else { "#ef4444" },
-        if interface.is_up { "●" } else { "○" }
+        status_text
     ));
-    row.append(&status_indicator);
+    status_label.set_halign(gtk4::Align::End);
+    status_label.set_margin_start(12);
+    row.append(&status_label);
 
     row
 }

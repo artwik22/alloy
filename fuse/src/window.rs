@@ -126,14 +126,14 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
         let hbox = GtkBox::new(Orientation::Horizontal, 0);
         hbox.set_margin_start(12);
         hbox.set_margin_end(12);
-        hbox.set_margin_top(8);
-        hbox.set_margin_bottom(8);
+        hbox.set_margin_top(6);
+        hbox.set_margin_bottom(6);
         hbox.set_halign(gtk4::Align::Fill);
         
         // Icon label (using emoji/icon font)
         let icon_label = Label::new(Some(icon));
         icon_label.add_css_class("sidebar-icon");
-        icon_label.set_margin_end(20); // Increased spacing
+        icon_label.set_margin_end(8); // Reduced spacing to 8px
         hbox.append(&icon_label);
         
         // Text label
@@ -154,8 +154,8 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
         (row, page_name.to_string())
     };
     
-    // Store page names in order (excluding separator)
-    let page_names = vec!["network", "bluetooth", "appearance", "system", "audio", "index", "notifications", "about"];
+    // Store page names in order (excluding separators)
+    let page_names = vec!["network", "bluetooth", "appearance", "audio", "index", "notifications", "system", "about"];
     
     // Add Network and Bluetooth at the top
     let network_row = create_row("Network", "󰤨", "network").0;
@@ -176,12 +176,9 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     separator_row.set_child(Some(&separator));
     list_box.append(&separator_row);
     
-    // Add remaining tabs
+    // Add main tabs
     let appearance_row = create_row("Appearance", "󰋺", "appearance").0;
     list_box.append(&appearance_row);
-    
-    let system_row = create_row("System", "󰍛", "system").0;
-    list_box.append(&system_row);
     
     let audio_row = create_row("Audio", "󰕧", "audio").0;
     list_box.append(&audio_row);
@@ -191,6 +188,22 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     
     let notifications_row = create_row("Notifications", "󰂚", "notifications").0;
     list_box.append(&notifications_row);
+    
+    // Add separator before System and About
+    let separator2 = Separator::new(Orientation::Horizontal);
+    separator2.set_margin_top(8);
+    separator2.set_margin_bottom(8);
+    separator2.set_margin_start(12);
+    separator2.set_margin_end(12);
+    let separator_row2 = ListBoxRow::new();
+    separator_row2.set_selectable(false);
+    separator_row2.set_activatable(false);
+    separator_row2.set_child(Some(&separator2));
+    list_box.append(&separator_row2);
+    
+    // Add System and About at the bottom
+    let system_row = create_row("System", "󰍛", "system").0;
+    list_box.append(&system_row);
     
     let about_row = create_row("About", "󰋼", "about").0;
     list_box.append(&about_row);
@@ -202,11 +215,13 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
         if let Some(row) = row {
             // Get the row index directly (returns i32, not Option)
             let row_index = row.index();
-            // Map index to page (skip separator at index 2)
+            // Map index to page (skip separators at index 2 and index 6)
             let page_idx = if row_index < 2 { 
                 row_index as usize
-            } else { 
+            } else if row_index < 6 {
                 (row_index - 1) as usize
+            } else {
+                (row_index - 2) as usize
             };
             if page_idx < page_names_clone.len() {
                 stack_clone.set_visible_child_name(page_names_clone[page_idx]);
