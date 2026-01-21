@@ -603,11 +603,11 @@ PanelWindow {
         Item {
             id: musicVisualizerColumnContainer
             width: 24
-            height: parent.height - 130  // Height minus space for system icons and screenshot button
+            height: parent.height - 50  // Height minus space for screenshot button
             visible: panelPosition === "left"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 130  // Above system icons (90px + 10px spacing) and screenshot button (32px + spacing)
+            anchors.bottomMargin: 50  // Above screenshot button (32px + 10px margin + ~8px spacing)
             z: 0  // Lower z-order to ensure buttons are clickable
             
             Column {
