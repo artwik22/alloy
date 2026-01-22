@@ -113,6 +113,7 @@ PanelWindow {
                         id: navRepeater
                         model: [
                             { icon: "󰕮", label: "Dashboard" },
+                            { icon: "󰕧", label: "Audio" },
                             { icon: "󰨸", label: "Clipboard" },
                             { icon: "󰂚", label: "Notifications" }
                         ]
@@ -1245,14 +1246,349 @@ PanelWindow {
                     }
                 }
 
-                // ============ TAB 1: CLIPBOARD ============
+                // ============ TAB 1: AUDIO ============
                 Item {
-                    id: clipboardTab
+                    id: audioTab
                     anchors.fill: parent
                     visible: currentTab === 1
                     opacity: currentTab === 1 ? 1.0 : 0.0
                     x: currentTab === 1 ? 0 : (currentTab < 1 ? -parent.width * 0.3 : parent.width * 0.3)
                     scale: currentTab === 1 ? 1.0 : 0.95
+                    
+                    Behavior on opacity {
+                        NumberAnimation { 
+                            duration: 400
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: 400
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 400
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 16
+                        
+                        // Header
+                        Text {
+                            text: "󰕧 Audio"
+                            font.pixelSize: 18
+                            font.family: "sans-serif"
+                            font.weight: Font.Bold
+                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                        }
+                        
+                        // Volume Control Section
+                        Rectangle {
+                            width: parent.width
+                            height: 200
+                            radius: 0
+                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
+                            // Material Design elevation shadow
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                color: "transparent"
+                                border.color: Qt.rgba(0, 0, 0, 0.15)
+                                border.width: 2
+                                z: -1
+                            }
+                            
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 16
+                                width: parent.width - 32
+                                
+                                // Volume Icon
+                                Text {
+                                    id: audioVolumeIcon
+                                    text: {
+                                        if (audioMuted || audioVolumeValue === 0) return "󰝟"
+                                        else if (audioVolumeValue < 33) return "󰕿"
+                                        else if (audioVolumeValue < 66) return "󰖀"
+                                        else return "󰕾"
+                                    }
+                                    font.pixelSize: 32
+                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                }
+                                
+                                // Volume Slider
+                                Item {
+                                    width: parent.width
+                                    height: 80
+                                    
+                                    // Track
+                                    Rectangle {
+                                        id: audioVolumeTrack
+                                        anchors.centerIn: parent
+                                        width: parent.width
+                                        height: 6
+                                        color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
+                                        radius: 3
+                                    }
+                                    
+                                    // Fill
+                                    Rectangle {
+                                        anchors.left: audioVolumeTrack.left
+                                        anchors.verticalCenter: audioVolumeTrack.verticalCenter
+                                        height: audioVolumeTrack.height
+                                        width: audioVolumeTrack.width * (audioVolumeValue / 100)
+                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        radius: 3
+                                        
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: 150
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+                                    }
+                                    
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        
+                                        function setVolumeFromMouse(mouse) {
+                                            var newVolume = Math.round((mouse.x / parent.width) * 100)
+                                            if (newVolume < 0) newVolume = 0
+                                            if (newVolume > 100) newVolume = 100
+                                            setSystemVolume(newVolume)
+                                        }
+                                        
+                                        onClicked: function(mouse) {
+                                            setVolumeFromMouse(mouse)
+                                        }
+                                        
+                                        onPositionChanged: function(mouse) {
+                                            if (pressed) {
+                                                setVolumeFromMouse(mouse)
+                                            }
+                                        }
+                                        
+                                        onWheel: function(wheel) {
+                                            var delta = wheel.angleDelta.y > 0 ? 5 : -5
+                                            var newVolume = audioVolumeValue + delta
+                                            if (newVolume < 0) newVolume = 0
+                                            if (newVolume > 100) newVolume = 100
+                                            setSystemVolume(newVolume)
+                                            wheel.accepted = true
+                                        }
+                                    }
+                                }
+                                
+                                // Volume Value and Mute Button
+                                Row {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    spacing: 12
+                                    
+                                    Text {
+                                        text: Math.round(audioVolumeValue) + "%"
+                                        font.pixelSize: 14
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    
+                                    Rectangle {
+                                        width: 32
+                                        height: 32
+                                        radius: 0
+                                        color: muteButtonMouseArea.containsMouse ?
+                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
+                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
+                                        
+                                        Text {
+                                            text: audioMuted ? "󰝟" : "󰕾"
+                                            font.pixelSize: 16
+                                            anchors.centerIn: parent
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        }
+                                        
+                                        MouseArea {
+                                            id: muteButtonMouseArea
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                toggleMute()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Music Player Section
+                        Rectangle {
+                            width: parent.width
+                            height: 180
+                            radius: 0
+                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            visible: audioPlayerStatus !== "stopped"
+                            
+                            // Material Design elevation shadow
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                color: "transparent"
+                                border.color: Qt.rgba(0, 0, 0, 0.15)
+                                border.width: 2
+                                z: -1
+                            }
+                            
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 12
+                                width: parent.width - 32
+                                
+                                // Track Info
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+                                    
+                                    Text {
+                                        text: audioPlayerTitle || "No track"
+                                        font.pixelSize: 16
+                                        font.family: "sans-serif"
+                                        font.weight: Font.Bold
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        elide: Text.ElideRight
+                                        width: parent.width
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                    
+                                    Text {
+                                        text: audioPlayerArtist || ""
+                                        font.pixelSize: 12
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        elide: Text.ElideRight
+                                        width: parent.width
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                }
+                                
+                                // Player Controls
+                                Row {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    spacing: 12
+                                    
+                                    // Previous
+                                    Rectangle {
+                                        width: 40
+                                        height: 40
+                                        radius: 0
+                                        color: prevButtonMouseArea.containsMouse ?
+                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
+                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
+                                        
+                                        Text {
+                                            text: "󰒮"
+                                            font.pixelSize: 18
+                                            anchors.centerIn: parent
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        }
+                                        
+                                        MouseArea {
+                                            id: prevButtonMouseArea
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['playerctl', 'previous']; running: true }", dashboardRoot)
+                                                getAudioPlayerInfo()
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Play/Pause
+                                    Rectangle {
+                                        width: 50
+                                        height: 50
+                                        radius: 0
+                                        color: playPauseButtonMouseArea.containsMouse ?
+                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
+                                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
+                                        
+                                        Text {
+                                            text: audioPlayerStatus === "playing" ? "󰏤" : "󰐊"
+                                            font.pixelSize: 24
+                                            anchors.centerIn: parent
+                                            color: playPauseButtonMouseArea.containsMouse ?
+                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") :
+                                                ((sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a")
+                                        }
+                                        
+                                        MouseArea {
+                                            id: playPauseButtonMouseArea
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['playerctl', 'play-pause']; running: true }", dashboardRoot)
+                                                getAudioPlayerInfo()
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Next
+                                    Rectangle {
+                                        width: 40
+                                        height: 40
+                                        radius: 0
+                                        color: nextButtonMouseArea.containsMouse ?
+                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
+                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
+                                        
+                                        Text {
+                                            text: "󰒭"
+                                            font.pixelSize: 18
+                                            anchors.centerIn: parent
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        }
+                                        
+                                        MouseArea {
+                                            id: nextButtonMouseArea
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['playerctl', 'next']; running: true }", dashboardRoot)
+                                                getAudioPlayerInfo()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ============ TAB 2: CLIPBOARD ============
+                Item {
+                    id: clipboardTab
+                    anchors.fill: parent
+                    visible: currentTab === 2
+                    opacity: currentTab === 2 ? 1.0 : 0.0
+                    x: currentTab === 2 ? 0 : (currentTab < 2 ? -parent.width * 0.3 : parent.width * 0.3)
+                    scale: currentTab === 2 ? 1.0 : 0.95
                     
                     Behavior on opacity {
                         NumberAnimation { 
@@ -1427,14 +1763,14 @@ PanelWindow {
                     }
                 }
 
-                // ============ TAB 2: NOTIFICATIONS ============
+                // ============ TAB 3: NOTIFICATIONS ============
                 Item {
                     id: notificationsTab
                     anchors.fill: parent
-                    visible: currentTab === 2
-                    opacity: currentTab === 2 ? 1.0 : 0.0
-                    x: currentTab === 2 ? 0 : (currentTab < 2 ? -parent.width * 0.3 : parent.width * 0.3)
-                    scale: currentTab === 2 ? 1.0 : 0.95
+                    visible: currentTab === 3
+                    opacity: currentTab === 3 ? 1.0 : 0.0
+                    x: currentTab === 3 ? 0 : (currentTab < 3 ? -parent.width * 0.3 : parent.width * 0.3)
+                    scale: currentTab === 3 ? 1.0 : 0.95
                     
                     Behavior on opacity {
                         NumberAnimation { 
@@ -1723,6 +2059,13 @@ PanelWindow {
     property bool mpPlaying: false
     property real mpPosition: 0
     property int mpLength: 0
+    
+    // Audio tab properties
+    property real audioVolumeValue: 50
+    property bool audioMuted: false
+    property string audioPlayerStatus: "stopped"  // "playing", "paused", "stopped"
+    property string audioPlayerTitle: ""
+    property string audioPlayerArtist: ""
     
     // Calendar days model
     property var calendarDays: []
@@ -2052,6 +2395,105 @@ PanelWindow {
     function playerPrev() {
         Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["playerctl", "previous"]; running: true }', dashboardRoot)
         Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: dashboardRoot.updatePlayerMetadata() }", dashboardRoot)
+    }
+    
+    // ============ AUDIO TAB FUNCTIONS ============
+    function getSystemVolume() {
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk \\\"{print $5}\\\" | tr -d % > /tmp/quickshell_volume']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: dashboardRoot.readSystemVolume() }", dashboardRoot)
+    }
+    
+    function readSystemVolume() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_volume")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
+                var vol = parseInt(xhr.responseText.trim())
+                if (!isNaN(vol) && vol >= 0 && vol <= 100) {
+                    audioVolumeValue = vol
+                }
+            }
+        }
+        xhr.send()
+    }
+    
+    function setSystemVolume(value) {
+        audioVolumeValue = Math.round(value)
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl','set-sink-volume','@DEFAULT_SINK@','" + Math.round(value) + "%']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.getSystemVolume() }", dashboardRoot)
+    }
+    
+    function toggleMute() {
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl','set-sink-mute','@DEFAULT_SINK@','toggle']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.checkMuteStatus() }", dashboardRoot)
+    }
+    
+    function checkMuteStatus() {
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','pactl get-sink-mute @DEFAULT_SINK@ | grep -q yes && echo 1 > /tmp/quickshell_audio_muted || echo 0 > /tmp/quickshell_audio_muted']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: dashboardRoot.readMuteStatus() }", dashboardRoot)
+    }
+    
+    function readMuteStatus() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_audio_muted")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
+                audioMuted = xhr.responseText.trim() === "1"
+            }
+        }
+        xhr.send()
+    }
+    
+    function getAudioPlayerInfo() {
+        // Get player status
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','playerctl status 2>/dev/null | head -1 > /tmp/quickshell_player_status || echo stopped > /tmp/quickshell_player_status']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readAudioPlayerStatus() }", dashboardRoot)
+        
+        // Get track title
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','playerctl metadata title 2>/dev/null | head -1 > /tmp/quickshell_player_title || echo > /tmp/quickshell_player_title']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readAudioPlayerTitle() }", dashboardRoot)
+        
+        // Get artist
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','playerctl metadata artist 2>/dev/null | head -1 > /tmp/quickshell_player_artist || echo > /tmp/quickshell_player_artist']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readAudioPlayerArtist() }", dashboardRoot)
+    }
+    
+    function readAudioPlayerStatus() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_player_status")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
+                var status = xhr.responseText.trim().toLowerCase()
+                if (status === "playing" || status === "paused" || status === "stopped") {
+                    audioPlayerStatus = status
+                } else {
+                    audioPlayerStatus = "stopped"
+                }
+            }
+        }
+        xhr.send()
+    }
+    
+    function readAudioPlayerTitle() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_player_title")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
+                audioPlayerTitle = xhr.responseText.trim()
+            }
+        }
+        xhr.send()
+    }
+    
+    function readAudioPlayerArtist() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_player_artist")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
+                audioPlayerArtist = xhr.responseText.trim()
+            }
+        }
+        xhr.send()
     }
 
     // ============ TIMERS ============
@@ -2520,6 +2962,35 @@ PanelWindow {
         }
     }
 
+    // Audio tab timers
+    Timer {
+        id: audioVolumeTimer
+        interval: 1000
+        repeat: true
+        running: true
+        onTriggered: {
+            getSystemVolume()
+            checkMuteStatus()
+        }
+        Component.onCompleted: {
+            getSystemVolume()
+            checkMuteStatus()
+        }
+    }
+    
+    Timer {
+        id: audioPlayerInfoTimer
+        interval: 2000
+        repeat: true
+        running: true
+        onTriggered: {
+            getAudioPlayerInfo()
+        }
+        Component.onCompleted: {
+            getAudioPlayerInfo()
+        }
+    }
+    
     Component.onCompleted: {
         // Initialize weatherCity from sharedData if available
         if (sharedData && sharedData.weatherCity !== undefined) {

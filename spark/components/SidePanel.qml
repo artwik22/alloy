@@ -296,15 +296,15 @@ PanelWindow {
                     Rectangle {
                         id: workspaceLine
                         anchors.centerIn: parent
-                        width: workspaceItem.isActive ? 5 : (workspaceItem.hasWindows ? 3.5 : 3)
-                        height: workspaceItem.isActive ? 45 : (workspaceItem.hasWindows ? 36 : 30)
+                        width: workspaceItem.isActive ? 3 : (workspaceItem.hasWindows ? 3 : 2.5)
+                        height: workspaceItem.isActive ? 45 : (workspaceItem.hasWindows ? 42 : 38)
                         color: workspaceItem.isActive ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                             workspaceItem.hasWindows ? 
                             ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
                         radius: 0
-                        opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 0.8 : 0.5)
+                        opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 1.0 : 0.85)
                         
                         Behavior on width {
                             NumberAnimation { 
@@ -391,7 +391,7 @@ PanelWindow {
                         onExited: {
                             if (!workspaceItem.isActive) {
                                 workspaceLine.scale = 1.0
-                                workspaceLine.opacity = workspaceItem.hasWindows ? 0.8 : 0.5
+                                workspaceLine.opacity = workspaceItem.hasWindows ? 1.0 : 0.85
                             }
                         }
                         
@@ -471,15 +471,15 @@ PanelWindow {
                     Rectangle {
                         id: workspaceLineTop
                         anchors.centerIn: parent
-                        height: workspaceItemTop.isActive ? 5 : (workspaceItemTop.hasWindows ? 3.5 : 3)
-                        width: workspaceItemTop.isActive ? 45 : (workspaceItemTop.hasWindows ? 36 : 30)
+                        height: workspaceItemTop.isActive ? 3 : (workspaceItemTop.hasWindows ? 3 : 2.5)
+                        width: workspaceItemTop.isActive ? 45 : (workspaceItemTop.hasWindows ? 42 : 38)
                         color: workspaceItemTop.isActive ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                             workspaceItemTop.hasWindows ? 
                             ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
                         radius: 0
-                        opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 0.8 : 0.5)
+                        opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 1.0 : 0.85)
                         
                         Behavior on width {
                             NumberAnimation { 
@@ -566,7 +566,7 @@ PanelWindow {
                         onExited: {
                             if (!workspaceItemTop.isActive) {
                                 workspaceLineTop.scale = 1.0
-                                workspaceLineTop.opacity = workspaceItemTop.hasWindows ? 0.8 : 0.5
+                                workspaceLineTop.opacity = workspaceItemTop.hasWindows ? 1.0 : 0.85
                             }
                         }
                         
