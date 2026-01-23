@@ -36,11 +36,6 @@ PanelWindow {
         id: notificationServer
         
         onNotification: function(notification) {
-            console.log("=== New Notification Received ===")
-            console.log("Summary:", notification.summary)
-            console.log("Body:", notification.body)
-            console.log("AppName:", notification.appName)
-            console.log("AppIcon:", notification.appIcon)
             
             // Add to notification history
             if (sharedData) {
@@ -57,7 +52,6 @@ PanelWindow {
             
             // Check if notifications are enabled
             if (sharedData && !sharedData.notificationsEnabled) {
-                console.log("Notifications disabled, ignoring")
                 return
             }
             
@@ -75,7 +69,6 @@ PanelWindow {
     property int maxNotifications: 5
     
     function addNotification(notification) {
-        console.log("addNotification called with notification:", notification ? notification.summary : "null")
         
         // Remove oldest if we exceed max
         if (notifications.length >= maxNotifications) {
@@ -97,7 +90,6 @@ PanelWindow {
         })
         
         if (notificationItem) {
-            console.log("NotificationItem created directly, notification:", notificationItem.notification ? notificationItem.notification.summary : "null")
             
             // Update array in a way that triggers QML property change (using spread or concat)
             notifications = [...notifications, notificationItem]
@@ -110,7 +102,6 @@ PanelWindow {
     }
     
     function removeNotification(item) {
-        console.log("removeNotification called")
         var currentNotifs = notifications
         var index = currentNotifs.indexOf(item)
         if (index !== -1) {
@@ -122,7 +113,6 @@ PanelWindow {
             // Wait a bit for animation to complete, then destroy
             var destroyTimer = Qt.createQmlObject('import QtQuick; Timer { interval: 400; running: true; repeat: false }', notificationDisplayRoot)
             destroyTimer.triggered.connect(function() {
-                console.log("Destroying notification item after animation")
                 if (item) {
                     item.destroy()
                 }

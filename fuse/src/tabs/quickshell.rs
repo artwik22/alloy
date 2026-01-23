@@ -96,7 +96,6 @@ fn create_sidebar_visible_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_visible(enabled);
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar visibility: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -104,9 +103,7 @@ fn create_sidebar_visible_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 // Notify quickshell about change
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Sidebar visibility set to: {}", enabled);
             }
         });
     }
@@ -169,7 +166,6 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("left");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar position: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -179,9 +175,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Sidebar position set to: left");
             }
         });
     }
@@ -195,7 +189,6 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("top");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar position: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -205,9 +198,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Sidebar position set to: top");
             }
         });
     }
@@ -263,7 +254,6 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_notifications_enabled(enabled);
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving notifications enabled: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -271,9 +261,7 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 // Notify quickshell about change
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Notifications enabled set to: {}", enabled);
             }
         });
     }
@@ -328,7 +316,6 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_notification_sounds_enabled(enabled);
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving notification sounds enabled: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -336,9 +323,7 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 // Notify quickshell about change
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Notification sounds enabled set to: {}", enabled);
             }
         });
     }

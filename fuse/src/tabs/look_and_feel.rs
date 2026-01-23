@@ -227,7 +227,6 @@ fn create_preset_button(
         cfg.update_colors(&bg, &primary, &secondary, &text, &accent);
         cfg.set_preset(&name);
         if let Err(e) = cfg.save() {
-            eprintln!("Error saving colors: {}", e);
         } else {
             // Update the shared config
             *config.lock().unwrap() = cfg.clone();
@@ -235,9 +234,7 @@ fn create_preset_button(
             std::thread::sleep(std::time::Duration::from_millis(200));
             // Notify quickshell about color change
             if let Err(e) = quickshell::notify_color_change() {
-                eprintln!("Error notifying quickshell: {}", e);
             }
-            println!("Color preset '{}' applied and saved", name);
         }
     });
 
@@ -282,7 +279,6 @@ fn create_sidebar_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 let mut cfg = ColorConfig::load();
                 cfg.set_sidebar_visible(enabled);
                 if let Err(e) = cfg.save() {
-                    eprintln!("Error saving sidebar visibility: {}", e);
                 } else {
                     // Update the shared config
                     *config.lock().unwrap() = cfg.clone();
@@ -290,9 +286,7 @@ fn create_sidebar_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                     std::thread::sleep(std::time::Duration::from_millis(200));
                     // Notify quickshell about change
                     if let Err(e) = quickshell::notify_color_change() {
-                        eprintln!("Error notifying quickshell: {}", e);
                     }
-                    println!("Sidebar visibility set to: {}", enabled);
                 }
             }
         },
@@ -408,7 +402,6 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("left");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar position: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -418,9 +411,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Sidebar position set to: left");
             }
         });
     }
@@ -434,7 +425,6 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("top");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar position: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -444,9 +434,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Sidebar position set to: top");
             }
         });
     }
@@ -543,7 +531,6 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_rounding("rounded");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving rounding: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -553,9 +540,7 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Rounding set to: rounded");
             }
         });
     }
@@ -569,7 +554,6 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_rounding("sharp");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving rounding: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -579,9 +563,7 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Rounding set to: sharp");
             }
         });
     }

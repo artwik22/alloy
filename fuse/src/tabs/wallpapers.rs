@@ -101,7 +101,6 @@ fn load_wallpapers_into_flowbox(flowbox: &FlowBox, config: &Arc<Mutex<ColorConfi
     let wallpapers_path = quickshell::get_wallpapers_path();
     let wallpapers = find_wallpapers(&wallpapers_path);
 
-    println!("Loading {} wallpapers from {:?}", wallpapers.len(), wallpapers_path);
 
     // Clear existing - remove all children
     let mut child = flowbox.first_child();
@@ -113,16 +112,13 @@ fn load_wallpapers_into_flowbox(flowbox: &FlowBox, config: &Arc<Mutex<ColorConfi
 
     // Add wallpapers - FlowBox will automatically wrap based on available width
     for (idx, wallpaper_path) in wallpapers.iter().enumerate() {
-        println!("  [{}/{}] Adding wallpaper: {:?}", idx + 1, wallpapers.len(), wallpaper_path);
         if !wallpaper_path.exists() {
-            eprintln!("    WARNING: File does not exist!");
             continue;
         }
         let tile = create_wallpaper_tile(wallpaper_path, Arc::clone(config));
         flowbox.append(&tile);
     }
     
-    println!("Finished loading wallpapers");
 }
 
 fn find_wallpapers(path: &PathBuf) -> Vec<PathBuf> {
@@ -194,7 +190,6 @@ fn create_wallpaper_tile(path: &PathBuf, _config: Arc<Mutex<ColorConfig>>) -> Bu
 
     button.connect_clicked(move |_| {
         if let Err(e) = quickshell::set_wallpaper(&path_str) {
-            eprintln!("Error setting wallpaper: {}", e);
         }
     });
 

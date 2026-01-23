@@ -35,7 +35,6 @@ PanelWindow {
     }
     
     onCurrentWallpaperChanged: {
-        console.log("WallpaperBackground: currentWallpaper changed to:", currentWallpaper)
     }
     
     // Image element do wyświetlenia tapety
@@ -49,9 +48,7 @@ PanelWindow {
         
         onStatusChanged: {
             if (status === Image.Error) {
-                console.log("WallpaperBackground: Error loading wallpaper:", source)
             } else if (status === Image.Ready) {
-                console.log("WallpaperBackground: Successfully loaded wallpaper:", source)
             }
         }
         

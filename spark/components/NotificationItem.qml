@@ -18,7 +18,6 @@ Rectangle {
     // Helper function to start auto-dismiss timer
     function startAutoDismissTimer() {
         if (timerStarted) {
-            console.log("Timer already started, skipping")
             return
         }
         
@@ -26,14 +25,12 @@ Rectangle {
         var notif = notification || storedNotification
         
         if (!notif) {
-            console.log("No notification available, cannot start timer. notification:", notification, "storedNotification:", storedNotification)
             return
         }
         
         // Check expireTimeout - handle undefined, null, 0, -1, and positive values
         var expireTimeout = notif.expireTimeout
         
-        console.log("startAutoDismissTimer: expireTimeout =", expireTimeout, "type:", typeof expireTimeout)
         
         // Always use default 5 seconds for auto-dismiss, regardless of expireTimeout
         // Many notifications have expireTimeout = -1, but we want them to auto-dismiss anyway
@@ -43,12 +40,9 @@ Rectangle {
         if (expireTimeout && expireTimeout > 0 && expireTimeout !== -1) {
             // Use the notification's timeout if it's valid and positive
             timeout = expireTimeout
-            console.log("Using notification's expireTimeout:", timeout)
         } else {
-            console.log("Using default timeout: 5000ms (expireTimeout was:", expireTimeout, ")")
         }
         
-        console.log("Starting auto-dismiss timer with interval:", timeout, "ms")
         
         // Stop timer if already running
         if (autoDismissTimer.running) {
@@ -58,9 +52,7 @@ Rectangle {
         // Set interval first
         autoDismissTimer.interval = timeout
         
-        console.log("About to call autoDismissTimer.start() - interval:", timeout)
         autoDismissTimer.start()
-        console.log("autoDismissTimer.start() called - running:", autoDismissTimer.running)
         
         // Start progress bar animation - wait for progressBar to be ready
         var startProgressAnimation = function() {
@@ -73,9 +65,7 @@ Rectangle {
                 progressBarAnimation.duration = timeout
                 // Start animation
                 progressBarAnimation.start()
-                console.log("Progress bar animation started - from:", progressBar.width, "to: 0, duration:", timeout, "ms")
             } else {
-                console.log("Progress bar not ready, retrying...")
                 // Retry after a short delay
                 var retryTimer = Qt.createQmlObject('import QtQuick; Timer { interval: 200; running: true; repeat: false }', notificationItem)
                 retryTimer.triggered.connect(startProgressAnimation)
@@ -87,12 +77,10 @@ Rectangle {
         
         timerStarted = true
         
-        console.log("Auto-dismiss timer started - running:", autoDismissTimer.running, "interval:", autoDismissTimer.interval)
         
         // Verify after a moment
         var verifyTimer = Qt.createQmlObject('import QtQuick; Timer { interval: 200; running: true; repeat: false }', notificationItem)
         verifyTimer.triggered.connect(function() {
-            console.log("Timer verification after 200ms - running:", autoDismissTimer.running, "interval:", autoDismissTimer.interval, "timerStarted:", timerStarted)
         })
     }
     
@@ -103,13 +91,9 @@ Rectangle {
         running: false
         repeat: false
         onTriggered: {
-            console.log("=== Auto-dismiss timer TRIGGERED ===")
-            console.log("Timer interval was:", interval, "ms")
-            console.log("Calling startExitAnimation()")
             startExitAnimation()
         }
         onRunningChanged: {
-            console.log("autoDismissTimer.running changed to:", running)
         }
     }
     
@@ -294,22 +278,18 @@ Rectangle {
                         acceptedButtons: Qt.LeftButton
                         enabled: true
                         onClicked: function(mouse) {
-                            console.log("=== CLOSE BUTTON CLICKED ===")
                             mouse.accepted = true
                             
                             // Try to dismiss notification - use storedNotification as fallback
                             var notif = notificationItem.notification || notificationItem.storedNotification
                             if (notif) {
-                                console.log("Calling notification.dismiss()")
                                 try {
                                     notif.dismiss()
                                 } catch(e) {
-                                    console.log("Error dismissing:", e)
                                     // Fallback: start exit animation
                                     notificationItem.startExitAnimation()
                                 }
                             } else {
-                                console.log("notification is null, starting exit animation")
                                 // If notification is null, start exit animation
                                 notificationItem.startExitAnimation()
                             }
@@ -406,7 +386,6 @@ Rectangle {
             var clickX = mouse.x
             var buttonAreaStart = width - 50
             if (clickX < buttonAreaStart) {
-                console.log("Notification clicked, dismissing")
                 if (notification) {
                     notification.dismiss()
                 } else {
@@ -434,7 +413,6 @@ Rectangle {
     
     // Component.onCompleted - update texts if notification is already set
     Component.onCompleted: {
-        console.log("=== NotificationItem Component.onCompleted ===")
         
         if (notification) {
             storedNotification = notification
@@ -561,7 +539,6 @@ Rectangle {
         enabled: notification !== null
         
         function onClosed(reason) {
-            console.log("Notification closed signal received, reason:", reason)
             startExitAnimation()
         }
     }

@@ -735,7 +735,6 @@ PanelWindow {
         
         // Debug: Make sure button is visible and clickable
         Component.onCompleted: {
-            console.log("Screenshot button container created at z:", z, "visible:", visible, "enabled:", enabled)
         }
 
         // Smooth repositioning when panel position changes
@@ -829,23 +828,16 @@ PanelWindow {
             z: 10001
             
             onClicked: {
-                console.log("=== SCREENSHOT BUTTON CLICKED ===")
-                console.log("Panel position:", panelPosition)
-                console.log("Container size:", screenshotButtonContainer.width, "x", screenshotButtonContainer.height)
-                console.log("Container position:", screenshotButtonContainer.x, ",", screenshotButtonContainer.y)
                 if (screenshotFunction) {
                     screenshotFunction()
                 } else {
-                    console.log("screenshotFunction is null!")
                 }
             }
 
             onPressed: {
-                console.log("Screenshot button pressed")
             }
 
             onEntered: {
-                console.log("Mouse entered screenshot button")
             }
         }
     }
@@ -872,7 +864,6 @@ PanelWindow {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var available = xhr.responseText.trim() === "1"
-                console.log("Cava available:", available, "cavaRunning:", cavaRunning)
                 if (available && !cavaRunning) {
                     // Użyj skryptu start-cava.sh do uruchomienia cava z poprawną konfiguracją
                     // Use projectPath if available, otherwise try to detect
@@ -884,14 +875,12 @@ PanelWindow {
                         return
                     }
                     if (!scriptPath || scriptPath.length === 0 || scriptPath === "/scripts/start-cava.sh") {
-                        console.log("Invalid script path for cava:", scriptPath)
                         return
                     }
                     var absScriptPath = scriptPath
                     Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["bash", "' + absScriptPath + '"]; running: true }', sidePanel)
                     
                     cavaRunning = true
-                    console.log("Cava started with script...")
                     Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: sidePanel.readCavaData() }", sidePanel)
                 }
             }
@@ -908,7 +897,6 @@ PanelWindow {
                 if (xhr.status !== 200 && xhr.status !== 0) {
                     // File not accessible, try to restart cava
                     if (cavaRunning) {
-                        console.log("Cava file not accessible, status:", xhr.status)
                         cavaRunning = false
                         startCava()
                     }
@@ -1002,7 +990,6 @@ PanelWindow {
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         if (xhr.status !== 200 && xhr.status !== 0) {
-                            console.log("Cava file not accessible, restarting...")
                             cavaRunning = false
                             startCava()
                         }
@@ -1051,13 +1038,11 @@ PanelWindow {
                 var path = xhr.responseText.trim()
                 if (path && path.length > 0) {
                     projectPath = path
-                    console.log("SidePanel project path loaded:", projectPath)
                     // Start cava after path is loaded
                     startCava()
                 } else {
                     // Fallback to default
                     projectPath = "/tmp/sharpshell"
-                    console.log("SidePanel using fallback project path:", projectPath)
                     startCava()
                 }
             }
@@ -1073,13 +1058,11 @@ PanelWindow {
                 var path = xhr.responseText.trim()
                 if (path && path.length > 0) {
                     projectPath = path
-                    console.log("SidePanel project path loaded from cava path:", projectPath)
                     // Retry starting cava
                     startCava()
                 } else {
                     // Fallback
                     projectPath = "/tmp/sharpshell"
-                    console.log("SidePanel using fallback project path (from readCavaPath):", projectPath)
                     startCava()
                 }
             }

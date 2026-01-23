@@ -92,4 +92,13 @@ impl Clipboard {
     pub fn mode(&self) -> ClipboardMode {
         self.mode
     }
+    
+    pub fn get_paths(&self) -> Vec<PathBuf> {
+        self.paths.clone()
+    }
+    
+    pub fn clear(&mut self) {
+        self.paths.clear();
+        self.mode = ClipboardMode::None;
+    }
 }

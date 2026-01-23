@@ -1,15 +1,19 @@
 use gtk4::glib::{self, clone};
 use gtk4::prelude::*;
-use gtk4::{gio, Box as GtkBox, Orientation, ScrolledWindow};
+use gtk4::{gio, Box as GtkBox, Orientation, ProgressBar, ScrolledWindow, Label};
 use libadwaita as adw;
 use adw::prelude::*;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::thread;
+use std::time::Duration;
+use async_channel;
 
-use crate::core::{Clipboard, FileOperations, SidebarPrefs};
+use crate::core::{Clipboard, ClipboardMode, FileOperations, SidebarPrefs, ProgressInfo};
 use crate::widgets::{FileGridView, NautilusHeaderBar, NautilusSidebar};
 
 // #region agent log
@@ -435,12 +439,164 @@ impl IndexWindow {
             let clipboard_clone = clipboard.clone();
             let current_path_clone = current_path.clone();
             let file_view_clone = file_view.clone();
+            let window_clone = window.clone();
             file_view.connect_paste(move || {
                 let dest = current_path_clone.borrow().clone();
-                if let Err(e) = clipboard_clone.borrow_mut().paste(&dest) {
-                    eprintln!("Paste error: {}", e);
+                let clipboard_guard = clipboard_clone.borrow();
+                let paths = clipboard_guard.get_paths();
+                let mode = clipboard_guard.mode();
+                drop(clipboard_guard);
+                
+                if mode == ClipboardMode::None || paths.is_empty() {
+                    return;
                 }
-                file_view_clone.refresh();
+                
+                // Calculate total size for progress
+                let (total_size, total_files) = FileOperations::calculate_total_size(&paths);
+                
+                // Create progress dialog
+                let progress_info = Arc::new(Mutex::new(ProgressInfo {
+                    current_file: String::new(),
+                    bytes_copied: 0,
+                    total_bytes: total_size,
+                    files_copied: 0,
+                    total_files,
+                }));
+                
+                let (progress_bar, status_label, file_label) = Self::create_progress_dialog(&window_clone, mode);
+                let progress_info_clone = progress_info.clone();
+                
+                // Update UI periodically
+                let progress_bar_weak = progress_bar.downgrade();
+                let status_label_weak = status_label.downgrade();
+                let file_label_weak = file_label.downgrade();
+                
+                glib::timeout_add_local(Duration::from_millis(100), move || {
+                    let progress_info = progress_info_clone.lock().unwrap();
+                    
+                    if let Some(progress_bar) = progress_bar_weak.upgrade() {
+                        if progress_info.total_bytes > 0 {
+                            let fraction = progress_info.bytes_copied as f64 / progress_info.total_bytes as f64;
+                            progress_bar.set_fraction(fraction);
+                        } else if progress_info.total_files > 0 {
+                            let fraction = progress_info.files_copied as f64 / progress_info.total_files as f64;
+                            progress_bar.set_fraction(fraction);
+                        }
+                    }
+                    
+                    if let Some(status_label) = status_label_weak.upgrade() {
+                        if progress_info.total_bytes > 0 {
+                            let mb_copied = progress_info.bytes_copied as f64 / (1024.0 * 1024.0);
+                            let mb_total = progress_info.total_bytes as f64 / (1024.0 * 1024.0);
+                            status_label.set_text(&format!("{:.1} MB / {:.1} MB", mb_copied, mb_total));
+                        } else {
+                            status_label.set_text(&format!("{} / {} files", progress_info.files_copied, progress_info.total_files));
+                        }
+                    }
+                    
+                    if let Some(file_label) = file_label_weak.upgrade() {
+                        if !progress_info.current_file.is_empty() {
+                            file_label.set_text(&progress_info.current_file);
+                        }
+                    }
+                    
+                    // Continue updating if not complete
+                    if progress_info.files_copied < progress_info.total_files {
+                        glib::ControlFlow::Continue
+                    } else {
+                        glib::ControlFlow::Break
+                    }
+                });
+                
+                // Perform operation in background thread
+                let dest_clone = dest.clone();
+                let paths_clone = paths.clone();
+                let mode_clone = mode;
+                let progress_info_thread = progress_info.clone();
+                let progress_bar_weak_final = progress_bar.downgrade();
+                let file_view_clone_final = file_view_clone.clone();
+                let clipboard_clone_final = clipboard_clone.clone();
+                
+                // Create channel for completion signal
+                let (tx, rx) = async_channel::unbounded::<ClipboardMode>();
+                
+                // Listen for completion on UI thread (before spawning worker thread)
+                glib::spawn_future_local(async move {
+                    if let Ok(mode) = rx.recv().await {
+                        // Clear clipboard after cut (on UI thread)
+                        if mode == ClipboardMode::Cut {
+                            clipboard_clone_final.borrow_mut().clear();
+                        }
+                        
+                        if let Some(progress_bar) = progress_bar_weak_final.upgrade() {
+                            if let Some(dialog) = progress_bar.parent().and_then(|p| p.parent()) {
+                                if let Some(dialog) = dialog.downcast_ref::<adw::Window>() {
+                                    dialog.close();
+                                }
+                            }
+                        }
+                        
+                        // Defer refresh to avoid blocking - use a small delay to let filesystem settle
+                        glib::timeout_add_local(Duration::from_millis(500), move || {
+                            file_view_clone_final.refresh();
+                            glib::ControlFlow::Break
+                        });
+                    }
+                });
+                
+                // Spawn worker thread (without any GTK objects)
+                thread::spawn(move || {
+                    for source in &paths_clone {
+                        let file_name: String = match source.file_name() {
+                            Some(name) => name.to_string_lossy().to_string(),
+                            None => continue,
+                        };
+                        
+                        let mut dest_path = dest_clone.join(&file_name);
+                        
+                        // Handle duplicate names
+                        let mut counter = 1;
+                        while dest_path.exists() {
+                            let stem = source
+                                .file_stem()
+                                .map(|s: &std::ffi::OsStr| s.to_string_lossy().to_string())
+                                .unwrap_or_default();
+                            let extension = source
+                                .extension()
+                                .map(|e: &std::ffi::OsStr| format!(".{}", e.to_string_lossy()))
+                                .unwrap_or_default();
+                            
+                            let new_name = format!("{} ({}){}", stem, counter, extension);
+                            dest_path = dest_clone.join(new_name);
+                            counter += 1;
+                        }
+                        
+                        match mode_clone {
+                            ClipboardMode::Copy => {
+                                if let Err(e) = FileOperations::copy_file_with_progress(
+                                    source,
+                                    &dest_path,
+                                    Some(progress_info_thread.clone()),
+                                ) {
+                                    eprintln!("Copy error: {}", e);
+                                }
+                            }
+                            ClipboardMode::Cut => {
+                                if let Err(e) = FileOperations::move_file_with_progress(
+                                    source,
+                                    &dest_path,
+                                    Some(progress_info_thread.clone()),
+                                ) {
+                                    eprintln!("Move error: {}", e);
+                                }
+                            }
+                            ClipboardMode::None => {}
+                        }
+                    }
+                    
+                    // Signal completion
+                    let _ = tx.send_blocking(mode_clone);
+                });
             });
         }
 
@@ -697,5 +853,47 @@ impl IndexWindow {
 
     pub fn present(&self) {
         self.window.present();
+    }
+    
+    fn create_progress_dialog(
+        window: &adw::ApplicationWindow,
+        mode: ClipboardMode,
+    ) -> (ProgressBar, Label, Label) {
+        let dialog = adw::Window::builder()
+            .transient_for(window)
+            .modal(true)
+            .title(if mode == ClipboardMode::Copy { "Copying files..." } else { "Moving files..." })
+            .default_width(400)
+            .resizable(false)
+            .build();
+        
+        let content_box = GtkBox::new(Orientation::Vertical, 12);
+        content_box.set_margin_top(20);
+        content_box.set_margin_bottom(20);
+        content_box.set_margin_start(20);
+        content_box.set_margin_end(20);
+        
+        let file_label = Label::builder()
+            .halign(gtk4::Align::Start)
+            .ellipsize(gtk4::pango::EllipsizeMode::Middle)
+            .build();
+        file_label.set_text("Preparing...");
+        content_box.append(&file_label);
+        
+        let progress_bar = ProgressBar::new();
+        progress_bar.set_show_text(false);
+        content_box.append(&progress_bar);
+        
+        let status_label = Label::builder()
+            .halign(gtk4::Align::Start)
+            .css_classes(vec!["dim-label"])
+            .build();
+        status_label.set_text("0 / 0");
+        content_box.append(&status_label);
+        
+        dialog.set_content(Some(&content_box));
+        dialog.present();
+        
+        (progress_bar, status_label, file_label)
     }
 }

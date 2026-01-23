@@ -8,9 +8,9 @@ mod scanner;
 mod search;
 mod sidebar_prefs;
 
-pub use clipboard::Clipboard;
+pub use clipboard::{Clipboard, ClipboardMode};
 pub use color_config::ColorConfig;
-pub use file_ops::FileOperations;
+pub use file_ops::{FileOperations, ProgressInfo};
 pub use scanner::{FileEntry, Scanner};
 
 // These are available but not currently used in the Nautilus clone

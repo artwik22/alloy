@@ -29,7 +29,6 @@ PanelWindow {
                 var path = xhr.responseText.trim()
                 if (path && path.length > 0) {
                     projectPath = path
-                    console.log("Project path loaded from environment:", projectPath)
                 } else {
                     // Try to detect from current script location
                     if (Qt.application && Qt.application.arguments && Qt.application.arguments.length > 0) {
@@ -38,7 +37,6 @@ PanelWindow {
                     } else {
                         // Last resort fallback
                         projectPath = "/tmp/sharpshell"
-                        console.log("Using fallback project path (no Qt.application.arguments):", projectPath)
                     }
                 }
             }
@@ -54,11 +52,9 @@ PanelWindow {
                 var dir = xhr.responseText.trim()
                 if (dir && dir.length > 0) {
                     projectPath = dir
-                    console.log("Project path auto-detected:", projectPath)
                 } else {
                     // Last resort: use current working directory concept
                     projectPath = "/tmp/sharpshell"
-                    console.log("Using fallback project path:", projectPath)
                 }
             }
         }
@@ -130,9 +126,7 @@ PanelWindow {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200 || xhr.status === 0) {
                     notesText.text = xhr.responseText
-                    console.log("Notes loaded from:", notesPath)
                 } else {
-                    console.log("Notes file doesn't exist, showing default message")
                     notesText.text = "No notes yet.\n\nClick 'Edit Notes' to add your first note!"
                 }
             }
@@ -155,20 +149,16 @@ PanelWindow {
     function processNotesList() {
         // For now, manually add known existing files
         // TODO: Implement proper directory reading
-        console.log("Processing notes list...")
         notesModel.clear()
 
         var existingFiles = ["notes.txt", "test.txt", "wybickiego14c.txt", "12312321.txt"]
 
         if (existingFiles.length === 0) {
             notesModel.append({ name: "Brak zapisanych notatek", file: "" })
-            console.log("No notes found")
         } else {
-            console.log("Found", existingFiles.length, "note files")
             for (var i = 0; i < existingFiles.length; i++) {
                 var fileName = existingFiles[i].replace('.txt', '')
                 notesModel.append({ name: fileName, file: existingFiles[i] })
-                console.log("Added note:", fileName, "->", existingFiles[i])
             }
         }
     }
@@ -197,7 +187,6 @@ PanelWindow {
         var escapedContent = content.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`')
 
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"" + escapedContent + "\" > \"" + notesPath + "\"']; running: true }", appLauncherRoot)
-        console.log("Note saved to:", notesPath)
 
         // Reload notes list and go back to menu
         loadNotesList()
@@ -206,23 +195,17 @@ PanelWindow {
     }
 
     function loadNoteContent(fileName) {
-        console.log("Loading note content for file:", fileName)
         var notesPath = notesDir + "/" + fileName
-        console.log("Full path:", notesPath)
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file://" + notesPath)
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                console.log("XMLHttpRequest readyState DONE, status:", xhr.status)
                 if (xhr.status === 200 || xhr.status === 0) {
                     pendingNoteContent = xhr.responseText
-                    console.log("Note content loaded, length:", xhr.responseText.length)
-                    console.log("Content preview:", xhr.responseText.substring(0, 50))
                     // Use timer to set content after UI is ready
                     Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: appLauncherRoot.applyPendingNoteContent() }", appLauncherRoot)
                 } else {
                     pendingNoteContent = "Błąd ładowania notatki"
-                    console.log("Failed to load note from:", notesPath, "status:", xhr.status)
                     Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: appLauncherRoot.applyPendingNoteContent() }", appLauncherRoot)
                 }
             }
@@ -231,13 +214,10 @@ PanelWindow {
     }
 
     function applyPendingNoteContent() {
-        console.log("Applying pending note content, text length:", pendingNoteContent.length)
         if (notesEditText && pendingNoteContent !== "") {
             notesEditText.text = pendingNoteContent
-            console.log("Note content applied to TextEdit")
             pendingNoteContent = ""
         } else {
-            console.log("Cannot apply content - notesEditText exists:", !!notesEditText, "pending content length:", pendingNoteContent.length)
         }
     }
 
@@ -256,13 +236,10 @@ PanelWindow {
                         if (checkXhr.readyState === XMLHttpRequest.DONE) {
                             if (checkXhr.status === 200 || checkXhr.status === 0) {
                                 colorConfigPath = alloyPath
-                                console.log("AppLauncher: Color config path initialized (Alloy Global):", colorConfigPath)
                             } else {
                                 colorConfigPath = home + "/.config/sharpshell/colors.json"
-                                console.log("AppLauncher: Color config path initialized (SharpShell):", colorConfigPath)
                             }
                             notesDir = home + "/Documents/Notes"
-                            console.log("Paths initialized - home:", home, "colorConfig:", colorConfigPath, "notes:", notesDir)
                         }
                     }
                     checkXhr.send()
@@ -270,7 +247,6 @@ PanelWindow {
                     // Fallback to defaults
                     colorConfigPath = "/tmp/sharpshell/colors.json"
                     notesDir = "/tmp/Documents/Notes"
-                    console.log("Using fallback paths")
                 }
             }
         }
@@ -281,66 +257,55 @@ PanelWindow {
     function saveColors() {
         // Validate paths before saving
         if (!projectPath || projectPath.length === 0) {
-            console.log("Project path not initialized, cannot save colors")
             return
         }
         if (!colorConfigPath || colorConfigPath.length === 0) {
-            console.log("Color config path not initialized, cannot save colors")
             return
         }
         // Use Python script to save colors - pass colors as arguments
         var scriptPath = projectPath + "/scripts/save-colors.py"
         var cmd = 'python3 "' + scriptPath + '" "' + colorBackground + '" "' + colorPrimary + '" "' + colorSecondary + '" "' + colorText + '" "' + colorAccent + '" "' + colorConfigPath + '"'
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + cmd + "']; running: true }", appLauncherRoot)
-        console.log("Saving colors to:", colorConfigPath)
     }
     
     
     
     function updateColor(colorType, value) {
-        console.log("Updating color:", colorType, "to", value)
         var oldValue = ""
         switch(colorType) {
             case "background": 
                 oldValue = colorBackground
                 colorBackground = value
                 if (sharedData) sharedData.colorBackground = value
-                console.log("colorBackground changed from", oldValue, "to", colorBackground)
                 break
             case "primary": 
                 oldValue = colorPrimary
                 colorPrimary = value
                 if (sharedData) sharedData.colorPrimary = value
-                console.log("colorPrimary changed from", oldValue, "to", colorPrimary)
                 break
             case "secondary": 
                 oldValue = colorSecondary
                 colorSecondary = value
                 if (sharedData) sharedData.colorSecondary = value
-                console.log("colorSecondary changed from", oldValue, "to", colorSecondary)
                 break
             case "text": 
                 oldValue = colorText
                 colorText = value
                 if (sharedData) sharedData.colorText = value
-                console.log("colorText changed from", oldValue, "to", colorText)
                 break
             case "accent": 
                 oldValue = colorAccent
                 colorAccent = value
                 if (sharedData) sharedData.colorAccent = value
-                console.log("colorAccent changed from", oldValue, "to", colorAccent)
                 break
         }
         saveColors()
-        console.log("Colors saved and sharedData updated")
     }
     
     // Color presets
     function applyPreset(presetName) {
         var preset = colorPresets[presetName]
         if (!preset) {
-            console.log("Preset not found:", presetName)
             return
         }
         
@@ -363,7 +328,6 @@ PanelWindow {
         // Save to file
         saveColors()
         
-        console.log("Applied preset:", presetName)
     }
     
     property var colorPresets: {
@@ -538,7 +502,6 @@ PanelWindow {
         // Open kitty, set as floating, size 1200x700 and center
         var command = "hyprctl dispatch exec \"kitty --class=floating_kitty -e bash " + scriptPath + "\"; sleep 0.3; hyprctl dispatch focuswindow \"class:floating_kitty\"; hyprctl dispatch togglefloating; hyprctl dispatch resizeactive exact 1200 700; hyprctl dispatch centerwindow"
         
-        console.log("Executing update command:", command)
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + command.replace(/'/g, "\\'") + "']; running: true }", appLauncherRoot)
         
         // Close launcher after execution
@@ -581,13 +544,10 @@ PanelWindow {
     }
     
     function toggleBluetooth() {
-        console.log("Toggling Bluetooth, current state:", bluetoothEnabled)
         if (bluetoothEnabled) {
-            console.log("Turning Bluetooth OFF")
             // Block with rfkill and turn off
             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rfkill block bluetooth; /usr/bin/bluetoothctl power off']; running: true }", appLauncherRoot)
         } else {
-            console.log("Turning Bluetooth ON")
             // Unblock with rfkill, wait, then turn on
             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rfkill unblock bluetooth; sleep 1; /usr/bin/bluetoothctl power on']; running: true }", appLauncherRoot)
         }
@@ -598,7 +558,6 @@ PanelWindow {
         if (!bluetoothEnabled || bluetoothScanning) return
         bluetoothScanning = true
         bluetoothDevicesModel.clear()
-        console.log("Starting Bluetooth scan...")
         
         // Use bluetoothctl with timeout - this will scan for 10 seconds and then automatically stop
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'bluetoothctl --timeout 10 scan on > /tmp/quickshell_bt_scan_output 2>&1']; running: true }", appLauncherRoot)
@@ -608,7 +567,6 @@ PanelWindow {
     }
     
     function getBluetoothDevices() {
-        console.log("Getting Bluetooth devices...")
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'bluetoothctl devices > /tmp/quickshell_bt_devices']; running: true }", appLauncherRoot)
         Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: appLauncherRoot.readBluetoothDevices() }", appLauncherRoot)
     }
@@ -620,32 +578,23 @@ PanelWindow {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 bluetoothDevicesModel.clear()
                 var content = xhr.responseText || ""
-                console.log("Bluetooth devices file content:", content)
-                console.log("Content length:", content.length)
                 var lines = content.trim().split("\n")
-                console.log("Found", lines.length, "lines")
                 for (var i = 0; i < lines.length; i++) {
                     var line = lines[i].trim()
-                    console.log("Processing line", i, ":", line)
                     if (line.length > 0) {
                         if (line.startsWith("Device")) {
                             // Format: "Device MAC_ADDRESS Device_Name"
                             var parts = line.split(" ")
-                            console.log("Line parts:", parts.length, parts)
                             if (parts.length >= 3) {
                                 var mac = parts[1]
                                 var name = parts.slice(2).join(" ") || "Unknown Device"
-                                console.log("Adding device - Name:", name, "MAC:", mac)
                                 bluetoothDevicesModel.append({ mac: mac, name: name, connected: false })
                             } else {
-                                console.log("Line has less than 3 parts, skipping")
                             }
                         } else {
-                            console.log("Line doesn't start with 'Device', skipping")
                         }
                     }
                 }
-                console.log("Total devices found:", bluetoothDevicesModel.count)
                 bluetoothScanning = false
             }
         }
@@ -653,30 +602,21 @@ PanelWindow {
     }
     
     function connectBluetoothDevice(mac) {
-        console.log("=== connectBluetoothDevice called ===")
-        console.log("MAC received:", mac, "type:", typeof mac)
         if (bluetoothConnecting) {
-            console.log("Already connecting, skipping")
             return
         }
         bluetoothConnecting = true
         var macStr = String(mac).trim()
-        console.log("Pairing and connecting to device MAC:", macStr)
         
         // First pair, then connect
         // Step 1: Pair the device
-        console.log("Step 1: Pairing device...")
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['/usr/bin/bluetoothctl', 'pair', '" + macStr + "']; running: true }", appLauncherRoot)
         
         // Step 2: Wait a bit, then connect
-        Qt.createQmlObject("import QtQuick; Timer { interval: 3000; running: true; repeat: false; onTriggered: { console.log('Step 2: Connecting device...'); appLauncherRoot.connectAfterPair('" + macStr + "') } }", appLauncherRoot)
         
-        Qt.createQmlObject("import QtQuick; Timer { interval: 8000; running: true; repeat: false; onTriggered: { console.log('Resetting bluetoothConnecting flag'); appLauncherRoot.bluetoothConnecting = false } }", appLauncherRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 8500; running: true; repeat: false; onTriggered: { console.log('Refreshing device list'); appLauncherRoot.getBluetoothDevices() } }", appLauncherRoot)
     }
     
     function connectAfterPair(mac) {
-        console.log("Connecting to paired device:", mac)
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['/usr/bin/bluetoothctl', 'connect', '" + mac + "']; running: true }", appLauncherRoot)
     }
     
@@ -1060,7 +1000,6 @@ PanelWindow {
             return
         }
         
-        console.log("Searching for packages:", query)
         
         // Run search in background
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'pacman -Ss \"" + query.replace(/"/g, '\\"') + "\" 2>/dev/null | head -50 > /tmp/quickshell_pacman_search']; running: true }", appLauncherRoot)
@@ -1071,17 +1010,14 @@ PanelWindow {
     
     // Function to read pacman search results
     function readPacmanSearchResults() {
-        console.log("Reading pacman search results...")
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_pacman_search")
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 filteredPackages.clear()
                 var output = xhr.responseText.trim()
-                console.log("Search output length:", output.length)
                 
                 if (!output || output.length === 0) {
-                    console.log("No search results found")
                     return
                 }
                 
@@ -1113,7 +1049,6 @@ PanelWindow {
                                     version: parts[1],
                                     description: ""
                                 }
-                                console.log("Found package:", currentPackage.name, "from repo:", repoAndName[0])
                             }
                         }
                     } else if (currentPackage && (line.startsWith("    ") || line.startsWith("\t"))) {
@@ -1130,7 +1065,6 @@ PanelWindow {
                     filteredPackages.append(currentPackage)
                 }
                 
-                console.log("Total packages found:", filteredPackages.count)
                 
                 // Reset selectedIndex if out of range
                 if (selectedIndex >= filteredPackages.count) {
@@ -1151,7 +1085,6 @@ PanelWindow {
             return
         }
         
-        console.log("Searching AUR for packages:", query)
         
         // Check if yay or paru is available
         // Run search in background (use yay if available, otherwise paru)
@@ -1163,17 +1096,14 @@ PanelWindow {
     
     // Function to read AUR search results
     function readAurSearchResults() {
-        console.log("Reading AUR search results...")
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_aur_search")
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 filteredPackages.clear()
                 var output = xhr.responseText.trim()
-                console.log("AUR search output length:", output.length)
                 
                 if (!output || output.length === 0 || output.indexOf("AUR helper not found") >= 0) {
-                    console.log("No AUR search results found or helper not installed")
                     return
                 }
                 
@@ -1215,7 +1145,6 @@ PanelWindow {
                                 currentPackage.description = descMatch[1]
                             }
                             
-                            console.log("Found AUR package:", currentPackage.name)
                         }
                     } else if (currentPackage && (line.startsWith("    ") || line.startsWith("\t"))) {
                         // Linia z opisem (zaczyna się od spacji lub taba)
@@ -1231,7 +1160,6 @@ PanelWindow {
                     filteredPackages.append(currentPackage)
                 }
                 
-                console.log("Total AUR packages found:", filteredPackages.count)
                 
                 // Resetuj selectedIndex jeśli jest poza zakresem
                 if (selectedIndex >= filteredPackages.count) {
@@ -1247,7 +1175,6 @@ PanelWindow {
     
     // Function to install pacman package
     function installPacmanPackage(packageName) {
-        console.log("installPacmanPackage called with:", packageName)
         if (packageName) {
             // Escape package name
             var safeName = packageName.replace(/"/g, '\\"').replace(/'/g, "\\'").replace(/ /g, "\\ ")
@@ -1257,7 +1184,6 @@ PanelWindow {
             // Open kitty, set as floating, size 1200x700 and center
             var command = "hyprctl dispatch exec \"kitty --class=floating_kitty -e bash " + scriptPath + " " + safeName + "\"; sleep 0.3; hyprctl dispatch focuswindow \"class:floating_kitty\"; hyprctl dispatch togglefloating; hyprctl dispatch resizeactive exact 1200 700; hyprctl dispatch centerwindow"
             
-            console.log("Executing command:", command)
             
             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + command.replace(/'/g, "\\'") + "']; running: true }", appLauncherRoot)
             
@@ -1265,13 +1191,11 @@ PanelWindow {
                 sharedData.launcherVisible = false
             }
         } else {
-            console.log("Package name is empty or null")
         }
     }
     
     // Function to install AUR package
     function installAurPackage(packageName) {
-        console.log("installAurPackage called with:", packageName)
         if (packageName) {
             // Escape package name
             var safeName = packageName.replace(/"/g, '\\"').replace(/'/g, "\\'").replace(/ /g, "\\ ")
@@ -1281,7 +1205,6 @@ PanelWindow {
             // Open kitty, set as floating, size 1200x700 and center
             var command = "hyprctl dispatch exec \"kitty --class=floating_kitty -e bash " + scriptPath + " " + safeName + "\"; sleep 0.3; hyprctl dispatch focuswindow \"class:floating_kitty\"; hyprctl dispatch togglefloating; hyprctl dispatch resizeactive exact 1200 700; hyprctl dispatch centerwindow"
             
-            console.log("Executing command:", command)
             
             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + command.replace(/'/g, "\\'") + "']; running: true }", appLauncherRoot)
             
@@ -1289,7 +1212,6 @@ PanelWindow {
                 sharedData.launcherVisible = false
             }
         } else {
-            console.log("Package name is empty or null")
         }
     }
     
@@ -1298,7 +1220,6 @@ PanelWindow {
         installedPackages = []
         filteredInstalledPackages.clear()
         
-        console.log("Loading installed packages...")
         
         // Run pacman -Q and save to file
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'pacman -Q 2>/dev/null > /tmp/quickshell_installed_packages']; running: true }", appLauncherRoot)
@@ -1309,7 +1230,6 @@ PanelWindow {
     
     // Function to read installed packages
     function readInstalledPackages() {
-        console.log("Reading installed packages...")
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_installed_packages")
         xhr.onreadystatechange = function() {
@@ -1318,7 +1238,6 @@ PanelWindow {
                 var output = xhr.responseText.trim()
                 
                 if (!output || output.length === 0) {
-                    console.log("No installed packages found")
                     filterInstalledPackages()
                     return
                 }
@@ -1341,7 +1260,6 @@ PanelWindow {
                     }
                 }
                 
-                console.log("Loaded", installedPackages.length, "installed packages")
                 filterInstalledPackages()
             }
         }
@@ -1380,7 +1298,6 @@ PanelWindow {
     
     // Function to remove pacman package
     function removePacmanPackage(packageName) {
-        console.log("removePacmanPackage called with:", packageName)
         if (packageName) {
             // Escape package name
             var safeName = packageName.replace(/"/g, '\\"').replace(/'/g, "\\'").replace(/ /g, "\\ ")
@@ -1390,7 +1307,6 @@ PanelWindow {
             // Open kitty, set as floating, size 1200x700 and center
             var command = "hyprctl dispatch exec \"kitty --class=floating_kitty -e bash " + scriptPath + " " + safeName + "\"; sleep 0.3; hyprctl dispatch focuswindow \"class:floating_kitty\"; hyprctl dispatch togglefloating; hyprctl dispatch resizeactive exact 1200 700; hyprctl dispatch centerwindow"
             
-            console.log("Executing command:", command)
             
             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + command.replace(/'/g, "\\'") + "']; running: true }", appLauncherRoot)
             
@@ -1398,13 +1314,11 @@ PanelWindow {
                 sharedData.launcherVisible = false
             }
         } else {
-            console.log("Package name is empty or null")
         }
     }
     
     // Funkcja usuwania pakietu z AUR
     function removeAurPackage(packageName) {
-        console.log("removeAurPackage called with:", packageName)
         if (packageName) {
             // Escapuj nazwę pakietu
             var safeName = packageName.replace(/"/g, '\\"').replace(/'/g, "\\'").replace(/ /g, "\\ ")
@@ -1414,7 +1328,6 @@ PanelWindow {
             // Otwórz kitty, ustaw jako floating, rozmiar 1200x700 i wyśrodkuj
             var command = "hyprctl dispatch exec \"kitty --class=floating_kitty -e bash " + scriptPath + " " + safeName + "\"; sleep 0.3; hyprctl dispatch focuswindow \"class:floating_kitty\"; hyprctl dispatch togglefloating; hyprctl dispatch resizeactive exact 1200 700; hyprctl dispatch centerwindow"
             
-            console.log("Executing command:", command)
             
             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + command.replace(/'/g, "\\'") + "']; running: true }", appLauncherRoot)
             
@@ -1422,7 +1335,6 @@ PanelWindow {
                 sharedData.launcherVisible = false
             }
         } else {
-            console.log("Package name is empty or null")
         }
     }
     
@@ -1846,7 +1758,6 @@ PanelWindow {
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         if (notesMenuIndex === 0) {
                             // Nowa notatka
-                            console.log("Creating new note")
                             currentNotesMode = 0
                             notesEditText.text = ""
                             notesFileName = ""
@@ -1854,7 +1765,6 @@ PanelWindow {
                             // Wybierz istniejącą notatkę
                             var noteIndex = notesMenuIndex - 1
                             var noteItem = notesModel.get(noteIndex)
-                            console.log("Opening existing note:", noteItem.name, "file:", noteItem.file)
                             if (noteItem && noteItem.file !== "") {
                                 currentNotesMode = 1
                                 notesFileName = noteItem.file
@@ -2387,7 +2297,6 @@ PanelWindow {
                 }
                 
                 Component.onCompleted: {
-                    console.log("Packages list created, model count:", packagesModel.count)
                 }
                 
                 delegate: Rectangle {
@@ -2662,14 +2571,11 @@ PanelWindow {
                                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                     if (filteredPackages.count > 0 && selectedIndex >= 0 && selectedIndex < filteredPackages.count) {
                                         var pkg = filteredPackages.get(selectedIndex)
-                                        console.log("Installing package:", pkg, "name:", pkg ? pkg.name : "null")
                                         if (pkg && pkg.name) {
                                             installPacmanPackage(pkg.name)
                                         } else {
-                                            console.log("Package data invalid:", pkg)
                                         }
                                     } else {
-                                        console.log("No package selected or list empty. Count:", filteredPackages.count, "Selected:", selectedIndex)
                                     }
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Escape) {
@@ -2853,14 +2759,11 @@ PanelWindow {
                                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                     if (filteredPackages.count > 0 && selectedIndex >= 0 && selectedIndex < filteredPackages.count) {
                                         var pkg = filteredPackages.get(selectedIndex)
-                                        console.log("Installing AUR package:", pkg, "name:", pkg ? pkg.name : "null")
                                         if (pkg && pkg.name) {
                                             installAurPackage(pkg.name)
                                         } else {
-                                            console.log("Package data invalid:", pkg)
                                         }
                                     } else {
-                                        console.log("No package selected or list empty. Count:", filteredPackages.count, "Selected:", selectedIndex)
                                     }
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Escape) {
@@ -3178,7 +3081,6 @@ PanelWindow {
                                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                     if (filteredInstalledPackages.count > 0 && selectedIndex >= 0 && selectedIndex < filteredInstalledPackages.count) {
                                         var pkg = filteredInstalledPackages.get(selectedIndex)
-                                        console.log("Removing package:", pkg, "name:", pkg ? pkg.name : "null")
                                         if (pkg && pkg.name) {
                                             if (currentPackageMode === 4) {
                                             removePacmanPackage(pkg.name)
@@ -3186,10 +3088,8 @@ PanelWindow {
                                                 removeAurPackage(pkg.name)
                                             }
                                         } else {
-                                            console.log("Package data invalid:", pkg)
                                         }
                                     } else {
-                                        console.log("No package selected or list empty. Count:", filteredInstalledPackages.count, "Selected:", selectedIndex)
                                     }
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Escape) {
@@ -3373,14 +3273,11 @@ PanelWindow {
                                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                     if (filteredInstalledPackages.count > 0 && selectedIndex >= 0 && selectedIndex < filteredInstalledPackages.count) {
                                         var pkg = filteredInstalledPackages.get(selectedIndex)
-                                        console.log("Removing AUR package:", pkg, "name:", pkg ? pkg.name : "null")
                                         if (pkg && pkg.name) {
                                             removeAurPackage(pkg.name)
                                         } else {
-                                            console.log("Package data invalid:", pkg)
                                         }
                                     } else {
-                                        console.log("No package selected or list empty. Count:", filteredInstalledPackages.count, "Selected:", selectedIndex)
                                     }
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Escape) {
@@ -3572,7 +3469,6 @@ PanelWindow {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        console.log("Creating new note")
                                         currentNotesMode = 0
                                         notesEditText.text = ""
                                         notesFileName = ""
@@ -3639,12 +3535,10 @@ PanelWindow {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         onClicked: {
-                                            console.log("Note clicked:", model.name, "file:", model.file)
                                             if (model.file !== "") {
                                                 selectedIndex = index
                                                 currentNotesMode = 1
                                                 notesFileName = model.file
-                                                console.log("Loading note content for:", model.file)
                                                 loadNoteContent(model.file)
                                             }
                                         }

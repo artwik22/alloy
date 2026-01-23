@@ -56,12 +56,10 @@ ShellRoot {
                         if (checkXhr.readyState === XMLHttpRequest.DONE) {
                             if (checkXhr.status === 200 || checkXhr.status === 0) {
                                 colorConfigPath = alloyPath
-                                console.log("Color config path initialized (Alloy Global):", colorConfigPath)
                                 loadColors()
                             } else {
                                 // 2. Fallback to ~/.config/sharpshell/colors.json
                                 colorConfigPath = home + "/.config/sharpshell/colors.json"
-                                console.log("Color config path initialized (SharpShell):", colorConfigPath)
                                 loadColors()
                             }
                         }
@@ -88,7 +86,6 @@ ShellRoot {
                 } else {
                     colorConfigPath = "/tmp/sharpshell/colors.json"
                 }
-                console.log("Color config path (fallback):", colorConfigPath)
                 loadColors()
             }
         }
@@ -102,7 +99,6 @@ ShellRoot {
     
     function loadColors() {
         if (!colorConfigPath) {
-            console.log("Color config path not initialized yet")
             return
         }
         var xhr = new XMLHttpRequest()
@@ -121,7 +117,6 @@ ShellRoot {
                             sharedData.colorSecondary = preset.secondary
                             sharedData.colorText = preset.text
                             sharedData.colorAccent = preset.accent
-                            console.log("Loaded preset '" + json.colorPreset + "' from colors.json")
                         } else {
                             // Fall back to direct color values
                             if (json.background) sharedData.colorBackground = json.background
@@ -134,38 +129,31 @@ ShellRoot {
                         // Load last wallpaper if available
                         if (json.lastWallpaper && json.lastWallpaper.length > 0) {
                             root.currentWallpaperPath = json.lastWallpaper
-                            console.log("Loaded last wallpaper from colors.json:", json.lastWallpaper)
                         }
                         
                         // Load sidebar position if available
                         if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top")) {
                             sharedData.sidebarPosition = json.sidebarPosition
-                            console.log("Loaded sidebar position from colors.json:", json.sidebarPosition)
                         }
                         
                         // Load sidebar visibility if available
                         if (json.sidebarVisible !== undefined) {
                             var visible = json.sidebarVisible === true || json.sidebarVisible === "true"
                             sharedData.sidebarVisible = visible
-                            console.log("Loaded sidebar visibility from colors.json:", visible)
                         }
                         
                         // Load color preset if available (for reference, not applied automatically)
                         if (json.colorPreset && json.colorPreset.length > 0) {
-                            console.log("Loaded color preset from colors.json:", json.colorPreset)
                         }
                         
                         // Load notification settings if available
                         if (json.notificationsEnabled !== undefined) {
                             sharedData.notificationsEnabled = json.notificationsEnabled === true || json.notificationsEnabled === "true"
-                            console.log("Loaded notificationsEnabled from colors.json:", sharedData.notificationsEnabled)
                         }
                         if (json.notificationSoundsEnabled !== undefined) {
                             sharedData.notificationSoundsEnabled = json.notificationSoundsEnabled === true || json.notificationSoundsEnabled === "true"
-                            console.log("Loaded notificationSoundsEnabled from colors.json:", sharedData.notificationSoundsEnabled)
                         }
                     } catch (e) {
-                        console.log("Error parsing colors.json:", e)
                     }
                 }
             }
@@ -185,13 +173,10 @@ ShellRoot {
     
     // Funkcja otwierania clipboard managera
     function openClipboardManager() {
-        console.log("openClipboardManager called, sharedData:", sharedData)
         if (sharedData) {
             var oldState = sharedData.clipboardVisible
             sharedData.clipboardVisible = !oldState
-            console.log("Toggling clipboard manager from", oldState, "to", sharedData.clipboardVisible)
         } else {
-            console.log("sharedData is null!")
         }
     }
 
@@ -203,7 +188,6 @@ ShellRoot {
     
     // Screenshot Service - Take screenshot with area selection
     function takeScreenshot() {
-        console.log("takeScreenshot called")
         
         // Get script path - try environment variable first, then fallback to home directory
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'if [ -n \"$QUICKSHELL_PROJECT_PATH\" ]; then echo \"$QUICKSHELL_PROJECT_PATH/scripts/take-screenshot.sh\"; elif [ -n \"$HOME\" ]; then echo \"$HOME/.config/sharpshell/scripts/take-screenshot.sh\"; else echo \"/tmp/sharpshell/scripts/take-screenshot.sh\"; fi > /tmp/quickshell_screenshot_script_path']; running: true }", root)
@@ -217,7 +201,6 @@ ShellRoot {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var scriptPath = xhr.responseText.trim()
                 if (scriptPath && scriptPath.length > 0) {
-                    console.log("Running screenshot script:", scriptPath)
                     // Run screenshot script through hyprctl to ensure it has proper Wayland access
                     // This allows slurp to interact with the user properly
                     Qt.createQmlObject(
@@ -227,7 +210,6 @@ ShellRoot {
                         root
                     )
                 } else {
-                    console.log("Screenshot script path not found.")
                 }
             }
         }
@@ -291,7 +273,6 @@ ShellRoot {
                         var path = xhr.responseText.trim()
                         if (path && path.length > 0 && path !== root.currentWallpaperPath) {
                             root.currentWallpaperPath = path
-                            console.log("Wallpaper changed to:", path)
                             // Usuń plik po przetworzeniu
                             Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_wallpaper_path']; running: true }", root)
                         }
@@ -355,10 +336,8 @@ ShellRoot {
                                 // to avoid race condition with Dashboard save function
                                 
                                 if (changed) {
-                                    console.log("Colors or settings changed, reloaded from colors.json")
                                 }
                             } catch (e) {
-                                console.log("Error parsing colors.json:", e)
                             }
                         }
                     }
@@ -374,7 +353,6 @@ ShellRoot {
                     if (cmdXhr.status === 200 || cmdXhr.status === 0) {
                         var cmd = cmdXhr.responseText.trim()
                         if (cmd && cmd.length > 0) {
-                            console.log("Color change command received:", cmd)
                             // Przeładuj kolory
                             root.loadColors()
                             // Plik zostawiamy dla innych aplikacji

@@ -868,42 +868,67 @@ impl FileGridView {
                     }
                     
                     let dest_dir = current_path_clone.borrow().clone();
-                    
-                    for source_file in &files {
-                        if let Some(file_name) = source_file.file_name() {
-                            let mut dest_path = dest_dir.join(file_name);
-                            
-                            if source_file == &dest_path {
-                                continue;
-                            }
-                            
-                            let mut counter = 1;
-                            while dest_path.exists() {
-                                let stem = source_file.file_stem()
-                                    .map(|s| s.to_string_lossy().to_string())
-                                    .unwrap_or_default();
-                                let extension = source_file.extension()
-                                    .map(|e| format!(".{}", e.to_string_lossy()))
-                                    .unwrap_or_default();
-                                
-                                let new_name = format!("{} ({}){}", stem, counter, extension);
-                                dest_path = dest_dir.join(new_name);
-                                counter += 1;
-                            }
-                            
-                            if let Err(e) = FileOperations::copy_file(source_file, &dest_path) {
-                                eprintln!("Failed to copy: {}", e);
-                            }
-                        }
-                    }
-                    
                     let show_hidden_val = *show_hidden_clone.borrow();
-                    if let Ok(entries) = Scanner::scan_with_hidden(&dest_dir, show_hidden_val) {
-                        store_clone.remove_all();
-                        for entry in &entries {
-                            store_clone.append(&FileObject::new(entry));
+                    
+                    // Perform copy operation in background thread to avoid blocking UI
+                    let files_clone = files.clone();
+                    let store_clone_final = store_clone.clone();
+                    let dest_dir_clone = dest_dir.clone();
+                    
+                    // Create channel for communication
+                    let (tx, rx) = async_channel::unbounded::<()>();
+                    
+                    // Clone dest_dir for async closure
+                    let dest_dir_for_async = dest_dir_clone.clone();
+                    
+                    // Listen for completion on UI thread
+                    glib::spawn_future_local(async move {
+                        if rx.recv().await.is_ok() {
+                            // Defer rescan to let filesystem settle
+                            glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
+                                if let Ok(entries) = Scanner::scan_with_hidden(&dest_dir_for_async, show_hidden_val) {
+                                    store_clone_final.remove_all();
+                                    for entry in &entries {
+                                        store_clone_final.append(&FileObject::new(entry));
+                                    }
+                                }
+                                glib::ControlFlow::Break
+                            });
                         }
-                    }
+                    });
+                    
+                    std::thread::spawn(move || {
+                        for source_file in &files_clone {
+                            if let Some(file_name) = source_file.file_name() {
+                                let mut dest_path = dest_dir_clone.join(file_name);
+                                
+                                if source_file == &dest_path {
+                                    continue;
+                                }
+                                
+                                let mut counter = 1;
+                                while dest_path.exists() {
+                                    let stem = source_file.file_stem()
+                                        .map(|s| s.to_string_lossy().to_string())
+                                        .unwrap_or_default();
+                                    let extension = source_file.extension()
+                                        .map(|e| format!(".{}", e.to_string_lossy()))
+                                        .unwrap_or_default();
+                                    
+                                    let new_name = format!("{} ({}){}", stem, counter, extension);
+                                    dest_path = dest_dir_clone.join(new_name);
+                                    counter += 1;
+                                }
+                                
+                                if let Err(e) = FileOperations::copy_file(source_file, &dest_path) {
+                                    eprintln!("Failed to copy: {}", e);
+                                }
+                            }
+                        }
+                        
+                        // Signal completion
+                        let _ = tx.send_blocking(());
+                    });
                     
                     true
                 } else {
@@ -937,42 +962,67 @@ impl FileGridView {
                     }
                     
                     let dest_dir = current_path_clone.borrow().clone();
-                    
-                    for source_file in &files {
-                        if let Some(file_name) = source_file.file_name() {
-                            let mut dest_path = dest_dir.join(file_name);
-                            
-                            if source_file == &dest_path {
-                                continue;
-                            }
-                            
-                            let mut counter = 1;
-                            while dest_path.exists() {
-                                let stem = source_file.file_stem()
-                                    .map(|s| s.to_string_lossy().to_string())
-                                    .unwrap_or_default();
-                                let extension = source_file.extension()
-                                    .map(|e| format!(".{}", e.to_string_lossy()))
-                                    .unwrap_or_default();
-                                
-                                let new_name = format!("{} ({}){}", stem, counter, extension);
-                                dest_path = dest_dir.join(new_name);
-                                counter += 1;
-                            }
-                            
-                            if let Err(e) = FileOperations::copy_file(source_file, &dest_path) {
-                                eprintln!("Failed to copy: {}", e);
-                            }
-                        }
-                    }
-                    
                     let show_hidden_val = *show_hidden_clone.borrow();
-                    if let Ok(entries) = Scanner::scan_with_hidden(&dest_dir, show_hidden_val) {
-                        store_clone.remove_all();
-                        for entry in &entries {
-                            store_clone.append(&FileObject::new(entry));
+                    
+                    // Perform copy operation in background thread to avoid blocking UI
+                    let files_clone = files.clone();
+                    let store_clone_final = store_clone.clone();
+                    let dest_dir_clone = dest_dir.clone();
+                    
+                    // Create channel for communication
+                    let (tx, rx) = async_channel::unbounded::<()>();
+                    
+                    // Clone dest_dir for async closure
+                    let dest_dir_for_async = dest_dir_clone.clone();
+                    
+                    // Listen for completion on UI thread
+                    glib::spawn_future_local(async move {
+                        if rx.recv().await.is_ok() {
+                            // Defer rescan to let filesystem settle
+                            glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
+                                if let Ok(entries) = Scanner::scan_with_hidden(&dest_dir_for_async, show_hidden_val) {
+                                    store_clone_final.remove_all();
+                                    for entry in &entries {
+                                        store_clone_final.append(&FileObject::new(entry));
+                                    }
+                                }
+                                glib::ControlFlow::Break
+                            });
                         }
-                    }
+                    });
+                    
+                    std::thread::spawn(move || {
+                        for source_file in &files_clone {
+                            if let Some(file_name) = source_file.file_name() {
+                                let mut dest_path = dest_dir_clone.join(file_name);
+                                
+                                if source_file == &dest_path {
+                                    continue;
+                                }
+                                
+                                let mut counter = 1;
+                                while dest_path.exists() {
+                                    let stem = source_file.file_stem()
+                                        .map(|s| s.to_string_lossy().to_string())
+                                        .unwrap_or_default();
+                                    let extension = source_file.extension()
+                                        .map(|e| format!(".{}", e.to_string_lossy()))
+                                        .unwrap_or_default();
+                                    
+                                    let new_name = format!("{} ({}){}", stem, counter, extension);
+                                    dest_path = dest_dir_clone.join(new_name);
+                                    counter += 1;
+                                }
+                                
+                                if let Err(e) = FileOperations::copy_file(source_file, &dest_path) {
+                                    eprintln!("Failed to copy: {}", e);
+                                }
+                            }
+                        }
+                        
+                        // Signal completion
+                        let _ = tx.send_blocking(());
+                    });
                     
                     true
                 } else {

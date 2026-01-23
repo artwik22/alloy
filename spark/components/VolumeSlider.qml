@@ -63,7 +63,6 @@ PanelWindow {
             var newVolume = 100 - Math.round((relativeY / sliderHeight) * 100)
             if (newVolume < 0) newVolume = 0
             if (newVolume > 100) newVolume = 100
-            console.log("Setting volume:", newVolume, "from mouse.y:", mouse.y, "relativeY:", relativeY)
             setSystemVolume(newVolume)
         }
         
@@ -76,7 +75,6 @@ PanelWindow {
         
         // Also handle hover for the entire slider area
         onEntered: {
-            console.log("VolumeSlider: Mouse entered PanelWindow area")
             if (sharedData) {
                 sharedData.volumeVisible = true
                 hideDelayTimer.stop()
@@ -84,16 +82,13 @@ PanelWindow {
         }
         
         onExited: {
-            console.log("VolumeSlider: Mouse exited PanelWindow area")
             if (sharedData) {
                 // Don't start timer if mouse is still over edge detector
                 Qt.callLater(function() {
                     if (sharedData && !sharedData.volumeEdgeHovered) {
-                        console.log("Starting hideDelayTimer")
                         hideDelayTimer.stop()
                         hideDelayTimer.restart()
                     } else {
-                        console.log("Not starting timer - mouse still over edge detector")
                     }
                 })
             }
@@ -101,7 +96,6 @@ PanelWindow {
         
         // Kliknięcie - ustaw volume na podstawie pozycji Y myszki
         onClicked: function(mouse) {
-            console.log("VolumeSlider: Mouse clicked at", mouse.x, mouse.y, "volumeVisible:", sharedData ? sharedData.volumeVisible : false)
             if (sharedData && sharedData.volumeVisible) {
                 mouse.accepted = true
                 setVolumeFromMouse(mouse)
@@ -111,7 +105,6 @@ PanelWindow {
         // Przeciąganie - zmieniaj volume podczas przeciągania
         onPositionChanged: function(mouse) {
             if (pressed && sharedData && sharedData.volumeVisible) {
-                console.log("VolumeSlider: Mouse dragged to", mouse.x, mouse.y)
                 mouse.accepted = true
                 setVolumeFromMouse(mouse)
             }
@@ -119,7 +112,6 @@ PanelWindow {
         
         // Scroll - zmieniaj volume
         onWheel: function(wheel) {
-            console.log("VolumeSlider: Wheel event", wheel.angleDelta.y, "volumeVisible:", sharedData ? sharedData.volumeVisible : false)
             if (sharedData && sharedData.volumeVisible) {
                 var delta = wheel.angleDelta.y > 0 ? 5 : -5
                 adjustVolume(delta)
@@ -272,12 +264,8 @@ PanelWindow {
             Qt.callLater(function() {
                 var mouseOverSlider = sliderMouseArea.containsMouse
                 var mouseOverEdge = sharedData ? sharedData.volumeEdgeHovered : false
-                console.log("hideDelayTimer triggered, mouseOverSlider:", mouseOverSlider, "mouseOverEdge:", mouseOverEdge)
                 if (sharedData && !mouseOverSlider && !mouseOverEdge) {
-                    console.log("Hiding volume slider")
                     sharedData.volumeVisible = false
-                } else {
-                    console.log("Not hiding - mouse still over slider or edge")
                 }
             })
         }
@@ -287,7 +275,6 @@ PanelWindow {
     Connections {
         target: sharedData
         function onVolumeEdgeHoveredChanged() {
-            console.log("volumeEdgeHovered changed to:", sharedData ? sharedData.volumeEdgeHovered : "null", "sliderMouseArea.containsMouse:", sliderMouseArea.containsMouse)
             if (sharedData && sharedData.volumeEdgeHovered) {
                 // Myszka weszła na detektor - pokaż slider i zatrzymaj timer
                 sharedData.volumeVisible = true
@@ -296,11 +283,8 @@ PanelWindow {
                 // Myszka opuściła detektor - uruchom timer tylko jeśli myszka nie jest nad sliderem
                 Qt.callLater(function() {
                     if (!sliderMouseArea.containsMouse && sharedData && !sharedData.volumeEdgeHovered) {
-                        console.log("Starting hideDelayTimer after edge detector exit")
                         hideDelayTimer.stop()
                         hideDelayTimer.restart()
-                    } else {
-                        console.log("Not starting timer - mouse over slider")
                     }
                 })
             }
@@ -308,7 +292,7 @@ PanelWindow {
     }
 
     // --- Właściwości ---
-    property real volumeValue: 50
+    property real volumeValue: 35
 
     // --- Funkcje ---
     function setSystemVolume(value) {
@@ -320,7 +304,7 @@ PanelWindow {
     }
 
     function getSystemVolume() {
-        // Zapisz volume do pliku
+        // Zapisz volume do pliku - bezpośrednie wywołanie pactl
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk \\\"{print $5}\\\" | tr -d % > /tmp/quickshell_volume']; running: true }", volumeSliderRoot)
     }
 
@@ -329,10 +313,16 @@ PanelWindow {
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_volume")
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                var vol = parseInt(xhr.responseText.trim())
-                if (!isNaN(vol) && vol >= 0 && vol <= 100) {
-                    volumeValue = vol
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.responseText && xhr.responseText.trim() !== "") {
+                    var vol = parseInt(xhr.responseText.trim())
+                    if (!isNaN(vol) && vol >= 0 && vol <= 100) {
+                        volumeValue = vol
+                        // Volume synchronized
+                    }
+                } else {
+                    // Jeśli plik jest pusty, spróbuj ponownie
+                    Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: function() { volumeSliderRoot.getSystemVolume(); Qt.createQmlObject('import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemVolume() }', volumeSliderRoot) } }", volumeSliderRoot)
                 }
             }
         }
@@ -351,8 +341,8 @@ PanelWindow {
             Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemVolume() }", volumeSliderRoot)
         }
         Component.onCompleted: {
-            getSystemVolume()
-            Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemVolume() }", volumeSliderRoot)
+            // Przy starcie timera również zsynchronizuj głośność
+            syncVolumeOnStart()
         }
     }
 
@@ -369,7 +359,9 @@ PanelWindow {
     }
 
     Component.onCompleted: {
-        getSystemVolume()
+        // Ustaw głośność na 35% przy starcie quickshella
+        // Poczekaj chwilę na inicjalizację systemu audio
+        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: volumeSliderRoot.setSystemVolume(35) }", volumeSliderRoot)
     }
 }
 

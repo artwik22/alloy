@@ -202,7 +202,6 @@ fn create_preset_button(
         cfg.update_colors(&bg, &primary, &secondary, &text, &accent);
         cfg.set_preset(&name);
         if let Err(e) = cfg.save() {
-            eprintln!("Error saving colors: {}", e);
         } else {
             // Update the shared config - avoid full clone, update fields directly
             {
@@ -217,9 +216,7 @@ fn create_preset_button(
             std::thread::sleep(std::time::Duration::from_millis(200));
             // Notify quickshell about color change
             if let Err(e) = quickshell::notify_color_change() {
-                eprintln!("Error notifying quickshell: {}", e);
             }
-            println!("Color preset '{}' applied and saved", name);
         }
     });
 
@@ -275,7 +272,6 @@ fn create_custom_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             cfg.update_colors(&bg, &primary, &secondary, &text, &accent);
             cfg.set_preset(""); // Clear preset when using custom
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving custom colors: {}", e);
             } else {
                 // Update the shared config - avoid full clone, update fields directly
                 {
@@ -290,9 +286,7 @@ fn create_custom_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 // Notify quickshell about color change
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Custom colors applied and saved");
             }
         });
     }

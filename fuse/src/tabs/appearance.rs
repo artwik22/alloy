@@ -217,17 +217,13 @@ fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 cfg.update_colors(light_preset.2, light_preset.3, light_preset.4, light_preset.5, light_preset.6);
                 cfg.set_preset(light_preset.0);
                 if let Err(e) = cfg.save() {
-                    eprintln!("Error saving light theme: {}", e);
                 } else {
                     *config_clone.lock().unwrap() = cfg.clone();
                     std::thread::sleep(std::time::Duration::from_millis(300));
                     if let Err(e) = quickshell::notify_color_change() {
-                        eprintln!("Error notifying quickshell: {}", e);
                     }
-                    println!("Light theme applied: {}", light_preset.0);
                 }
             } else {
-                eprintln!("No light preset found!");
             }
         });
     }
@@ -255,17 +251,13 @@ fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 cfg.update_colors(dark_preset.2, dark_preset.3, dark_preset.4, dark_preset.5, dark_preset.6);
                 cfg.set_preset(dark_preset.0);
                 if let Err(e) = cfg.save() {
-                    eprintln!("Error saving dark theme: {}", e);
                 } else {
                     *config_clone.lock().unwrap() = cfg.clone();
                     std::thread::sleep(std::time::Duration::from_millis(300));
                     if let Err(e) = quickshell::notify_color_change() {
-                        eprintln!("Error notifying quickshell: {}", e);
                     }
-                    println!("Dark theme applied: {}", dark_preset.0);
                 }
             } else {
-                eprintln!("No dark preset found!");
             }
         });
     }
@@ -524,14 +516,11 @@ fn create_preset_card_with_variants(
         cfg.update_colors(&dark_bg, &dark_primary, &dark_secondary, &dark_text, &dark_accent);
         cfg.set_preset(&name);
         if let Err(e) = cfg.save() {
-            eprintln!("Error saving colors: {}", e);
         } else {
             *config.lock().unwrap() = cfg.clone();
             std::thread::sleep(std::time::Duration::from_millis(200));
             if let Err(e) = quickshell::notify_color_change() {
-                eprintln!("Error notifying quickshell: {}", e);
             }
-            println!("Color preset '{}' applied and saved", name);
         }
     });
 
@@ -611,14 +600,11 @@ fn create_preset_card_single(
         cfg.update_colors(&bg, &primary, &secondary, &text, &accent);
         cfg.set_preset(&name);
         if let Err(e) = cfg.save() {
-            eprintln!("Error saving colors: {}", e);
         } else {
             *config.lock().unwrap() = cfg.clone();
             std::thread::sleep(std::time::Duration::from_millis(200));
             if let Err(e) = quickshell::notify_color_change() {
-                eprintln!("Error notifying quickshell: {}", e);
             }
-            println!("Color preset '{}' ({}) applied and saved", name, theme);
         }
     });
 
@@ -786,14 +772,12 @@ fn create_wallpaper_tile(path: &PathBuf, is_selected: bool, config: Arc<Mutex<Co
     let path_str = path.to_string_lossy().to_string();
     button.connect_clicked(move |_| {
         if let Err(e) = quickshell::set_wallpaper(&path_str) {
-            eprintln!("Error setting wallpaper: {}", e);
         } else {
             // Update config
             let mut cfg = config.lock().unwrap();
             cfg.last_wallpaper = Some(path_str.clone());
             drop(cfg);
             // Note: Save would typically happen here
-            println!("Wallpaper set to: {}", path_str);
         }
     });
 
@@ -882,16 +866,13 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_rounding("rounded");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving rounding: {}", e);
             } else {
                 *config.lock().unwrap() = cfg.clone();
                 btn.add_css_class("suggested-action");
                 sharp_btn.remove_css_class("suggested-action");
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Rounding set to: rounded");
             }
         });
     }
@@ -904,16 +885,13 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_rounding("sharp");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving rounding: {}", e);
             } else {
                 *config.lock().unwrap() = cfg.clone();
                 btn.add_css_class("suggested-action");
                 rounded_btn.remove_css_class("suggested-action");
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
-                println!("Rounding set to: sharp");
             }
         });
     }

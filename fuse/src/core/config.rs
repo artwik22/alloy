@@ -94,13 +94,11 @@ impl ColorConfig {
                 match serde_json::from_str::<ColorConfig>(&content) {
                     Ok(config) => config,
                     Err(e) => {
-                        eprintln!("Error parsing colors.json: {}", e);
                         Self::default()
                     }
                 }
             }
             Err(e) => {
-                eprintln!("Error reading colors.json: {}", e);
                 Self::default()
             }
         }

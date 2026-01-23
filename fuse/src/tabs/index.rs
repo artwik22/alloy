@@ -86,13 +86,11 @@ fn create_file_manager_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_show_hidden_files(enabled);
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving show hidden files: {}", e);
                 // Revert the toggle state on error
                 hidden_files_toggle_clone.set_active(!enabled);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
-                println!("Show hidden files set to: {}", enabled);
             }
         });
     }
@@ -263,7 +261,6 @@ fn load_keybinds() -> HashMap<String, (String, Vec<String>)> {
 
 fn save_keybinds(keybinds: &HashMap<String, (String, Vec<String>)>) -> Result<(), std::io::Error> {
     let config_path = keybinds_config_path();
-    println!("Saving keybinds to: {:?}", config_path);
     
     if let Some(parent) = config_path.parent() {
         fs::create_dir_all(parent)?;
@@ -289,14 +286,11 @@ fn save_keybinds(keybinds: &HashMap<String, (String, Vec<String>)>) -> Result<()
                 format!(":{}", mods.join(","))
             };
             content.push_str(&format!("{}={}{}\n", action, key, mods_str));
-            println!("Writing keybind: {}={}{}", action, key, mods_str);
         } else {
-            println!("Warning: action '{}' not found in keybinds map", action);
         }
     }
     
     fs::write(&config_path, content)?;
-    println!("Keybinds file written successfully");
     Ok(())
 }
 
@@ -391,9 +385,7 @@ fn create_keybind_row(action: &str, keybinds: Arc<Mutex<HashMap<String, (String,
                 kb.insert(action_str.clone(), (key, vec![]));
             }
             if let Err(e) = save_keybinds(&kb) {
-                eprintln!("Error saving keybinds: {}", e);
             } else {
-                println!("Keybinds saved successfully");
             }
         });
     }
@@ -431,9 +423,7 @@ fn create_keybind_row(action: &str, keybinds: Arc<Mutex<HashMap<String, (String,
                 kb.insert(action_str.clone(), (key, new_mods));
                 
                 if let Err(e) = save_keybinds(&kb) {
-                    eprintln!("Error saving keybinds: {}", e);
                 } else {
-                    println!("Keybinds saved successfully");
                 }
             });
         }

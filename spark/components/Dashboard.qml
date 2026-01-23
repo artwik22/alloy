@@ -113,7 +113,7 @@ PanelWindow {
                         id: navRepeater
                         model: [
                             { icon: "󰕮", label: "Dashboard" },
-                            { icon: "󰕧", label: "Audio" },
+                            { icon: "󰓃", label: "Audio" },
                             { icon: "󰨸", label: "Clipboard" },
                             { icon: "󰂚", label: "Notifications" }
                         ]
@@ -1290,149 +1290,6 @@ PanelWindow {
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                         }
                         
-                        // Volume Control Section
-                        Rectangle {
-                            width: parent.width
-                            height: 200
-                            radius: 0
-                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                            
-                            // Material Design elevation shadow
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -2
-                                color: "transparent"
-                                border.color: Qt.rgba(0, 0, 0, 0.15)
-                                border.width: 2
-                                z: -1
-                            }
-                            
-                            Column {
-                                anchors.centerIn: parent
-                                spacing: 16
-                                width: parent.width - 32
-                                
-                                // Volume Icon
-                                Text {
-                                    id: audioVolumeIcon
-                                    text: {
-                                        if (audioMuted || audioVolumeValue === 0) return "󰝟"
-                                        else if (audioVolumeValue < 33) return "󰕿"
-                                        else if (audioVolumeValue < 66) return "󰖀"
-                                        else return "󰕾"
-                                    }
-                                    font.pixelSize: 32
-                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                }
-                                
-                                // Volume Slider
-                                Item {
-                                    width: parent.width
-                                    height: 80
-                                    
-                                    // Track
-                                    Rectangle {
-                                        id: audioVolumeTrack
-                                        anchors.centerIn: parent
-                                        width: parent.width
-                                        height: 6
-                                        color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
-                                        radius: 3
-                                    }
-                                    
-                                    // Fill
-                                    Rectangle {
-                                        anchors.left: audioVolumeTrack.left
-                                        anchors.verticalCenter: audioVolumeTrack.verticalCenter
-                                        height: audioVolumeTrack.height
-                                        width: audioVolumeTrack.width * (audioVolumeValue / 100)
-                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        radius: 3
-                                        
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: 150
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                    }
-                                    
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        
-                                        function setVolumeFromMouse(mouse) {
-                                            var newVolume = Math.round((mouse.x / parent.width) * 100)
-                                            if (newVolume < 0) newVolume = 0
-                                            if (newVolume > 100) newVolume = 100
-                                            setSystemVolume(newVolume)
-                                        }
-                                        
-                                        onClicked: function(mouse) {
-                                            setVolumeFromMouse(mouse)
-                                        }
-                                        
-                                        onPositionChanged: function(mouse) {
-                                            if (pressed) {
-                                                setVolumeFromMouse(mouse)
-                                            }
-                                        }
-                                        
-                                        onWheel: function(wheel) {
-                                            var delta = wheel.angleDelta.y > 0 ? 5 : -5
-                                            var newVolume = audioVolumeValue + delta
-                                            if (newVolume < 0) newVolume = 0
-                                            if (newVolume > 100) newVolume = 100
-                                            setSystemVolume(newVolume)
-                                            wheel.accepted = true
-                                        }
-                                    }
-                                }
-                                
-                                // Volume Value and Mute Button
-                                Row {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: 12
-                                    
-                                    Text {
-                                        text: Math.round(audioVolumeValue) + "%"
-                                        font.pixelSize: 14
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                    
-                                    Rectangle {
-                                        width: 32
-                                        height: 32
-                                        radius: 0
-                                        color: muteButtonMouseArea.containsMouse ?
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                                        
-                                        Text {
-                                            text: audioMuted ? "󰝟" : "󰕾"
-                                            font.pixelSize: 16
-                                            anchors.centerIn: parent
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        }
-                                        
-                                        MouseArea {
-                                            id: muteButtonMouseArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                toggleMute()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
                         // Music Player Section
                         Rectangle {
                             width: parent.width
@@ -1577,6 +1434,177 @@ PanelWindow {
                                     }
                                 }
                             }
+                        }
+                        
+                        // Application Mixer Section
+                        Rectangle {
+                            width: parent.width
+                            height: Math.min(400, audioApplicationsModel.count * 70 + 60)
+                            radius: 0
+                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
+                            // Material Design elevation shadow
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                color: "transparent"
+                                border.color: Qt.rgba(0, 0, 0, 0.15)
+                                border.width: 2
+                                z: -1
+                            }
+                            
+                            Column {
+                                anchors.fill: parent
+                                anchors.margins: 16
+                                spacing: 12
+                                
+                                // Mixer Header
+                                Text {
+                                    text: "󰓃 Mixer"
+                                    font.pixelSize: 16
+                                    font.family: "sans-serif"
+                                    font.weight: Font.Bold
+                                    color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                }
+                                
+                                // Applications List
+                                ListView {
+                                    id: applicationsListView
+                                    width: parent.width
+                                    height: parent.height - 40
+                                    model: audioApplicationsModel
+                                    spacing: 8
+                                    clip: true
+                                    
+                                    delegate: Rectangle {
+                                        width: applicationsListView.width
+                                        height: 60
+                                        radius: 0
+                                        color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
+                                        
+                                        Row {
+                                            anchors.fill: parent
+                                            anchors.margins: 12
+                                            spacing: 12
+                                            
+                                            // Application Name
+                                            Text {
+                                                text: appName || "Unknown"
+                                                font.pixelSize: 14
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: parent.width * 0.35
+                                                elide: Text.ElideRight
+                                            }
+                                            
+                                            // Volume Slider
+                                            Item {
+                                                width: parent.width * 0.50
+                                                height: parent.height
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                
+                                                // Track
+                                                Rectangle {
+                                                    id: appVolumeTrack
+                                                    anchors.centerIn: parent
+                                                    width: parent.width
+                                                    height: 4
+                                                    color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a"
+                                                    radius: 2
+                                                }
+                                                
+                                                // Fill
+                                                Rectangle {
+                                                    anchors.left: appVolumeTrack.left
+                                                    anchors.verticalCenter: appVolumeTrack.verticalCenter
+                                                    height: appVolumeTrack.height
+                                                    width: appVolumeTrack.width * (appVolume / 100)
+                                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                                    radius: 2
+                                                    
+                                                    Behavior on width {
+                                                        NumberAnimation {
+                                                            duration: 150
+                                                            easing.type: Easing.OutQuart
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    
+                                                    function setVolumeFromMouse(mouse) {
+                                                        var newVolume = Math.round((mouse.x / parent.width) * 100)
+                                                        if (newVolume < 0) newVolume = 0
+                                                        if (newVolume > 100) newVolume = 100
+                                                        setApplicationVolume(sinkInputIndex, newVolume)
+                                                    }
+                                                    
+                                                    onClicked: function(mouse) {
+                                                        setVolumeFromMouse(mouse)
+                                                    }
+                                                    
+                                                    onPositionChanged: function(mouse) {
+                                                        if (pressed) {
+                                                            setVolumeFromMouse(mouse)
+                                                        }
+                                                    }
+                                                    
+                                                    onWheel: function(wheel) {
+                                                        var delta = wheel.angleDelta.y > 0 ? 5 : -5
+                                                        var newVolume = appVolume + delta
+                                                        if (newVolume < 0) newVolume = 0
+                                                        if (newVolume > 100) newVolume = 100
+                                                        setApplicationVolume(sinkInputIndex, newVolume)
+                                                        wheel.accepted = true
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Volume Percentage
+                                            Text {
+                                                text: Math.round(appVolume) + "%"
+                                                font.pixelSize: 12
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: 40
+                                                horizontalAlignment: Text.AlignRight
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Empty state
+                                Text {
+                                    visible: audioApplicationsModel.count === 0
+                                    text: "Brak aktywnych aplikacji audio"
+                                    font.pixelSize: 12
+                                    font.family: "sans-serif"
+                                    color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Load applications when tab becomes visible
+                    Connections {
+                        target: dashboardRoot
+                        function onCurrentTabChanged() {
+                            if (currentTab === 1) {
+                                getAudioApplications()
+                            }
+                        }
+                    }
+                    
+                    Component.onCompleted: {
+                        if (currentTab === 1) {
+                            getAudioApplications()
                         }
                     }
                 }
@@ -2067,6 +2095,10 @@ PanelWindow {
     property string audioPlayerTitle: ""
     property string audioPlayerArtist: ""
     
+    // Audio mixer properties
+    property var audioApplications: []
+    property var audioApplicationsModel: ListModel { id: audioApplicationsModel }
+    
     // Calendar days model
     property var calendarDays: []
     
@@ -2442,6 +2474,61 @@ PanelWindow {
             }
         }
         xhr.send()
+    }
+    
+    // ============ AUDIO MIXER FUNCTIONS ============
+    function getAudioApplications() {
+        var scriptPath = projectPath ? (projectPath + "/spark/scripts/get-audio-applications.sh") : "/home/iartwik/.config/alloy/spark/scripts/get-audio-applications.sh"
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'bash \\\"" + scriptPath + "\\\" > /tmp/quickshell_audio_apps']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readAudioApplications() }", dashboardRoot)
+    }
+    
+    function readAudioApplications() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_audio_apps")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
+                var lines = xhr.responseText.trim().split('\n')
+                audioApplicationsModel.clear()
+                
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].trim()
+                    if (line === "") continue
+                    
+                    var parts = line.split('\t')
+                    if (parts.length >= 2) {
+                        var sinkInputIndex = parts[0]
+                        var appName = parts[1]
+                        var volume = parts.length >= 3 ? parseInt(parts[2]) : 50
+                        
+                        if (!isNaN(volume) && volume >= 0 && volume <= 100) {
+                            audioApplicationsModel.append({
+                                sinkInputIndex: sinkInputIndex,
+                                appName: appName,
+                                appVolume: volume
+                            })
+                        }
+                    }
+                }
+            }
+        }
+        xhr.send()
+    }
+    
+    function setApplicationVolume(sinkInputIndex, volume) {
+        var volumePercent = Math.round(volume)
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl', 'set-sink-input-volume', '" + sinkInputIndex + "', '" + volumePercent + "%']; running: true }", dashboardRoot)
+        
+        // Update the model immediately for responsive UI
+        for (var i = 0; i < audioApplicationsModel.count; i++) {
+            if (audioApplicationsModel.get(i).sinkInputIndex === sinkInputIndex) {
+                audioApplicationsModel.setProperty(i, "appVolume", volumePercent)
+                break
+            }
+        }
+        
+        // Refresh after a delay to sync with actual system state
+        Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.getAudioApplications() }", dashboardRoot)
     }
     
     function getAudioPlayerInfo() {
@@ -2853,14 +2940,12 @@ PanelWindow {
                         return
                     }
                     if (!scriptPath || scriptPath.length === 0 || scriptPath === "/scripts/start-cava.sh") {
-                        console.log("Invalid script path for cava:", scriptPath)
                         return
                     }
                     var absScriptPath = scriptPath
                     Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["bash", "' + absScriptPath + '"]; running: true }', dashboardRoot)
                     
                     cavaRunning = true
-                    console.log("Cava started with script...")
                     Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readCavaData() }", dashboardRoot)
                 }
             }
@@ -2895,7 +2980,6 @@ PanelWindow {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status !== 200 && xhr.status !== 0) {
                     if (cavaRunning) {
-                        console.log("Cava file not accessible, status:", xhr.status)
                         cavaRunning = false
                         startCava()
                     }
@@ -2949,7 +3033,6 @@ PanelWindow {
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         if (xhr.status !== 200 && xhr.status !== 0) {
-                            console.log("Cava file not accessible, restarting...")
                             cavaRunning = false
                             startCava()
                         }
@@ -2963,6 +3046,22 @@ PanelWindow {
     }
 
     // Audio tab timers
+    Timer {
+        id: audioApplicationsTimer
+        interval: 2000  // Refresh every 2 seconds
+        repeat: true
+        running: currentTab === 1  // Only run when audio tab is active
+        onTriggered: {
+            getAudioApplications()
+        }
+        Component.onCompleted: {
+            // Initial sync when timer starts
+            if (currentTab === 1) {
+                getAudioApplications()
+            }
+        }
+    }
+    
     Timer {
         id: audioVolumeTimer
         interval: 1000
@@ -2992,6 +3091,9 @@ PanelWindow {
     }
     
     Component.onCompleted: {
+        // Synchronize audio applications on startup
+        getAudioApplications()
+        
         // Initialize weatherCity from sharedData if available
         if (sharedData && sharedData.weatherCity !== undefined) {
             weatherCity = sharedData.weatherCity
@@ -3022,22 +3124,18 @@ PanelWindow {
     
     // ============ POWER MENU FUNCTIONS ============
     function suspendSystem() {
-        console.log("Suspending system...")
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'suspend']; running: true }", dashboardRoot)
     }
     
     function rebootSystem() {
-        console.log("Rebooting system...")
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'reboot']; running: true }", dashboardRoot)
     }
     
     function shutdownSystem() {
-        console.log("Shutting down system...")
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'poweroff']; running: true }", dashboardRoot)
     }
     
     function logoutSystem() {
-        console.log("Logging out...")
         // Try loginctl first, fallback to pkill
         Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'loginctl terminate-session $(loginctl list-sessions | grep $(whoami) | awk \"{print $1}\" | head -1) 2>/dev/null || pkill -KILL -u $(whoami)']; running: true }", dashboardRoot)
     }

@@ -47,12 +47,10 @@ impl BarTab {
             let toggle_switch_clone = toggle_switch.clone();
             toggle_switch.connect_active_notify(move |toggle| {
                 let enabled = toggle.is_active();
-                println!("Toggle Bar clicked! New state: {}", enabled);
                 // Reload config from disk to preserve existing settings
                 let mut cfg = ColorConfig::load();
                 cfg.set_sidebar_visible(enabled);
                 if let Err(e) = cfg.save() {
-                    eprintln!("Error saving sidebar visibility: {}", e);
                     // Revert the toggle state on error
                     toggle_switch_clone.set_active(!enabled);
                 } else {
@@ -63,9 +61,7 @@ impl BarTab {
                     gtk4::glib::timeout_add_local(std::time::Duration::from_millis(100), move || {
                         // Notify quickshell about change
                         if let Err(e) = quickshell::notify_color_change() {
-                            eprintln!("Error notifying quickshell: {}", e);
                         }
-                        println!("Sidebar visibility set to: {}", enabled);
                         gtk4::glib::ControlFlow::Break
                     });
                 }
@@ -227,14 +223,12 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("left");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar position: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
             }
         });
@@ -252,14 +246,12 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("top");
             if let Err(e) = cfg.save() {
-                eprintln!("Error saving sidebar position: {}", e);
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
                 // Wait a bit for file to be written and synced to disk
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 if let Err(e) = quickshell::notify_color_change() {
-                    eprintln!("Error notifying quickshell: {}", e);
                 }
             }
         });
