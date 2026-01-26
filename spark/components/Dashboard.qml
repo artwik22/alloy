@@ -14,8 +14,8 @@ PanelWindow {
         top: true
         bottom: true
     }
-    implicitWidth: 500  // Węższy panel boczny
-    implicitHeight: (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].height : 1080  // Pełna wysokość ekranu
+    implicitWidth: 449  // 80% (562 × 0.8)
+    implicitHeight: (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].height : 1440  // Pełna wysokość ekranu
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsdashboard"
@@ -100,7 +100,7 @@ PanelWindow {
             Rectangle {
                 id: navBar
                 width: parent.width
-                height: 45
+                height: 37
                 color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                 
                 RowLayout {
@@ -147,11 +147,11 @@ PanelWindow {
                             
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 10
+                                spacing: 8
                                 
                                 Text {
                                     text: modelData.icon
-                                    font.pixelSize: 18
+                                    font.pixelSize: 10
                                     color: tabRect.isActive ? 
                                         ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
                                         (tabRect.isHovered ? 
@@ -177,7 +177,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: modelData.label
-                                    font.pixelSize: 14
+                                    font.pixelSize: 8
                                     font.family: "sans-serif"
                                     font.weight: tabRect.isActive ? Font.Bold : Font.Normal
                                     color: tabRect.isActive ? 
@@ -209,7 +209,7 @@ PanelWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: parent.width * 0.6
-                                height: 3
+                                height: 2
                                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 opacity: tabRect.isActive ? 1.0 : 0.0
                                 
@@ -281,15 +281,15 @@ PanelWindow {
                     Column {
                         anchors.fill: parent
                         anchors.margins: 12
-                        spacing: 12
+                        spacing: 5
                         
-                        // Row with Network Stats and Quick Actions side by side
+                        // Row with Battery % and Quick Actions side by side
                         Row {
                             width: parent.width
-                            height: 100
-                            spacing: 12
+                            height: 80
+                            spacing: 5
                             
-                            // Material Design Network Stats Card (left)
+                            // Battery % Card (left)
                         Rectangle {
                                 width: (parent.width - 12) / 2
                                 height: parent.height
@@ -308,22 +308,22 @@ PanelWindow {
                             
                             Column {
                                 anchors.centerIn: parent
-                                    spacing: 6
+                                spacing: 5
                                 
                                 Row {
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 6
+                                    spacing: 5
                                     Text {
-                                        text: "󰤨"
-                                            font.pixelSize: 18
+                                        text: batteryPercent >= 90 ? "󰁹" : (batteryPercent >= 70 ? "󰂂" : (batteryPercent >= 50 ? "󰂀" : (batteryPercent >= 30 ? "󰁾" : (batteryPercent >= 10 ? "󰁼" : "󰂃"))))
+                                        font.pixelSize: 10
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     
                                     Text {
-                                        text: "Network"
-                                            font.pixelSize: 14
+                                        text: "Battery"
+                                        font.pixelSize: 8
                                         font.weight: Font.Bold
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -331,45 +331,13 @@ PanelWindow {
                                     }
                                 }
                                 
-                                Column {
+                                Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 4
-                                    
-                                    Row {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                            spacing: 6
-                                        Text {
-                                            text: "↓"
-                                                font.pixelSize: 12
-                                            font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        }
-                                        
-                                        Text {
-                                            text: networkDownloadSpeed
-                                                font.pixelSize: 11
-                                            font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        }
-                                    }
-                                    
-                                    Row {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                            spacing: 6
-                                        Text {
-                                            text: "↑"
-                                                font.pixelSize: 12
-                                            font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        }
-                                        
-                                        Text {
-                                            text: networkUploadSpeed
-                                                font.pixelSize: 11
-                                            font.family: "sans-serif"
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        }
-                                    }
+                                    text: batteryPercent >= 0 ? (batteryPercent + "%") : "—"
+                                    font.pixelSize: 19
+                                    font.family: "sans-serif"
+                                    font.weight: Font.Bold
+                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 }
                             }
                         }
@@ -394,19 +362,19 @@ PanelWindow {
                                 Column {
                                     anchors.fill: parent
                                     anchors.margins: 8
-                                    spacing: 4
+                                    spacing: 5
                                     
                                     Grid {
                                         id: quickActionsGrid
                                     columns: 2
-                                    spacing: 4
+                                    spacing: 5
                                     width: parent.width
-                                        height: parent.height - 20  // Pozostaw miejsce na nagłówek
+                                        height: parent.height - 16
                                     
                                     // Toggle Sidebar button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 42
+                                        height: 33
                                         radius: 0
                                         clip: true
                                         color: toggleSidebarQuickMouseArea.containsMouse ? 
@@ -422,12 +390,12 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
-                                            width: Math.min(parent.width - 8, implicitWidth)
+                                            spacing: 5
+                                            width: Math.min(parent.width - 7, implicitWidth)
                                             
                                             Text {
                                                 text: "󰍜"
-                                                font.pixelSize: 12
+                                                font.pixelSize: 9
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -435,13 +403,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Toggle Sidebar"
-                                                font.pixelSize: 10
+                                                font.pixelSize: 8
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 20)
+                                                width: Math.max(0, parent.width - 16)
                                             }
                                         }
                                         
@@ -461,7 +429,7 @@ PanelWindow {
                                     // Do Not Disturb button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 42
+                                        height: 33
                                         radius: 0
                                         clip: true
                                         color: dndQuickMouseArea.containsMouse ? 
@@ -479,12 +447,12 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
-                                            width: Math.min(parent.width - 8, implicitWidth)
+                                            spacing: 5
+                                            width: Math.min(parent.width - 7, implicitWidth)
                                             
                                             Text {
                                                 text: "󰂛"
-                                                font.pixelSize: 12
+                                                font.pixelSize: 9
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 opacity: (sharedData && sharedData.notificationsEnabled === false) ? 1.0 : 0.6
@@ -493,13 +461,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Do Not Disturb"
-                                                font.pixelSize: 10
+                                                font.pixelSize: 8
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 20)
+                                                width: Math.max(0, parent.width - 16)
                                             }
                                         }
                                         
@@ -519,7 +487,7 @@ PanelWindow {
                                     // Lock button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 42
+                                        height: 33
                                         radius: 0
                                         clip: true
                                         color: lockQuickMouseArea.containsMouse ? 
@@ -535,12 +503,12 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
-                                            width: Math.min(parent.width - 8, implicitWidth)
+                                            spacing: 5
+                                            width: Math.min(parent.width - 7, implicitWidth)
                                             
                                             Text {
                                                 text: "󰌾"
-                                                font.pixelSize: 12
+                                                font.pixelSize: 9
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -548,13 +516,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Lock"
-                                                font.pixelSize: 10
+                                                font.pixelSize: 8
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 20)
+                                                width: Math.max(0, parent.width - 16)
                                             }
                                         }
                                         
@@ -577,7 +545,7 @@ PanelWindow {
                                     // Poweroff button
                                     Rectangle {
                                         width: (quickActionsGrid.width - 4) / 2
-                                        height: 42
+                                        height: 33
                                         radius: 0
                                         clip: true
                                         color: poweroffQuickMouseArea.containsMouse ? 
@@ -593,12 +561,12 @@ PanelWindow {
                                         
                                         Row {
                                             anchors.centerIn: parent
-                                            spacing: 4
-                                            width: Math.min(parent.width - 8, implicitWidth)
+                                            spacing: 5
+                                            width: Math.min(parent.width - 7, implicitWidth)
                                             
                                             Text {
                                                 text: "󰐥"
-                                                font.pixelSize: 12
+                                                font.pixelSize: 9
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -606,13 +574,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Poweroff"
-                                                font.pixelSize: 10
+                                                font.pixelSize: 8
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 20)
+                                                width: Math.max(0, parent.width - 16)
                                             }
                                         }
                                         
@@ -638,25 +606,25 @@ PanelWindow {
                         // Date/Calendar Card
                         Rectangle {
                             width: parent.width
-                            height: 240
+                            height: 192
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.margins: 16
-                                spacing: 16
+                                spacing: 13
                                 
                                 // Clock Display (left side)
                                 Column {
-                                    Layout.preferredWidth: 140
+                                    Layout.preferredWidth: 112
                                     Layout.alignment: Qt.AlignVCenter
                                     spacing: -10
                                     
                                     Text {
                                         id: calendarHoursDisplay
                                         text: "00"
-                                        font.pixelSize: 56
+                                        font.pixelSize: 45
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -666,7 +634,7 @@ PanelWindow {
                                     Text {
                                         id: calendarMinutesDisplay
                                         text: "00"
-                                        font.pixelSize: 56
+                                        font.pixelSize: 45
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -678,21 +646,21 @@ PanelWindow {
                                 Column {
                                     Layout.fillWidth: true
                                     Layout.alignment: Qt.AlignVCenter
-                                    spacing: 8
+                                    spacing: 5
                                     
                                     // Day headers
                                     Row {
-                                        spacing: 6
+                                        spacing: 5
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         
                                         Repeater {
                                             model: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
                                             Text {
                                                 text: modelData
-                                                font.pixelSize: 11
+                                                font.pixelSize: 9
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.3) : "#aaaaaa"
-                                                width: 26
+                                                width: 21
                                                 horizontalAlignment: Text.AlignHCenter
                                             }
                                         }
@@ -708,8 +676,8 @@ PanelWindow {
                                             model: calendarDays
                                             
                                             Rectangle {
-                                                width: 26
-                                                height: 26
+                                                width: 21
+                                                height: 21
                                                 radius: 0
                                                 color: modelData.isToday ? 
                                                     ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -717,7 +685,7 @@ PanelWindow {
                                                 
                                                 Text {
                                                     text: modelData.day
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: 9
                                                     font.family: "sans-serif"
                                                     color: modelData.isToday ? 
                                                         ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -736,27 +704,27 @@ PanelWindow {
                         // CPU Usage Card
                         Rectangle {
                             width: parent.width
-                            height: 205
+                            height: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                                     
                                     Column {
                                 anchors.fill: parent
                                 anchors.margins: 12
-                                        spacing: 8
+                                        spacing: 5
                                         
                                 Row {
-                                    spacing: 8
+                                    spacing: 5
                                         Text {
                                         text: "󰻠"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 10
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                         }
                                         
                                         Text {
                                         text: "CPU"
-                                        font.pixelSize: 14
+                                        font.pixelSize: 8
                                             font.family: "sans-serif"
                                         font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -765,7 +733,7 @@ PanelWindow {
                                         
                                         Text {
                                         text: cpuUsageValue + "%"
-                                        font.pixelSize: 14
+                                        font.pixelSize: 8
                                             font.family: "sans-serif"
                                             font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -777,7 +745,7 @@ PanelWindow {
                                 Canvas {
                                     id: cpuChart
                                     width: parent.width
-                                    height: 160
+                                    height: 128
                                     
                                     onPaint: {
                                         var ctx = getContext("2d")
@@ -862,27 +830,27 @@ PanelWindow {
                         // RAM Usage Card
                         Rectangle {
                             width: parent.width
-                            height: 205
+                            height: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             Column {
                                 anchors.fill: parent
                                 anchors.margins: 12
-                                spacing: 8
+                                spacing: 5
                                 
                                 Row {
-                                    spacing: 8
+                                    spacing: 5
                                     Text {
                                         text: "󰍛"
-                                        font.pixelSize: 18
+                                        font.pixelSize: 10
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                 }
                                     
                                     Text {
                                         text: "RAM"
-                                        font.pixelSize: 14
+                                        font.pixelSize: 8
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -891,7 +859,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: ramUsageValue + "%"
-                                        font.pixelSize: 14
+                                        font.pixelSize: 8
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -903,7 +871,7 @@ PanelWindow {
                                 Canvas {
                                     id: ramChart
                                     width: parent.width
-                                    height: 160
+                                    height: 128
                                     
                                     onPaint: {
                                         var ctx = getContext("2d")
@@ -988,18 +956,18 @@ PanelWindow {
                         // Media Player Card
                         Rectangle {
                             width: parent.width
-                            height: 205
+                            height: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.margins: 16
-                                spacing: 16
+                                spacing: 13
                                 
                                 // Album Art - wyśrodkowane wertykalnie
                                 Rectangle {
-                                    Layout.preferredWidth: 110
+                                    Layout.preferredWidth: 88
                                     Layout.preferredHeight: 110
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: 0
@@ -1025,7 +993,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: "󰎆"
-                                        font.pixelSize: 45
+                                        font.pixelSize: 37
                                         anchors.centerIn: parent
                                         visible: !mpArt
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1037,7 +1005,7 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     Layout.alignment: Qt.AlignVCenter
-                                    spacing: 10
+                                    spacing: 8
                                     
                                     // Track Info - wyśrodkowane
                                     Column {
@@ -1047,7 +1015,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: mpTitle ? mpTitle : "Nothing playing"
-                                            font.pixelSize: 15
+                                            font.pixelSize: 9
                                             font.family: "sans-serif"
                                             font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1058,7 +1026,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: mpArtist ? mpArtist : "—"
-                                            font.pixelSize: 12
+                                            font.pixelSize: 9
                                             font.family: "sans-serif"
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                             elide: Text.ElideRight
@@ -1070,11 +1038,11 @@ PanelWindow {
                                     // Controls - wyśrodkowane
                                     Row {
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 8
+                                        spacing: 5
                                         
                                         Rectangle {
-                                            width: 36
-                                            height: 36
+                                            width: 29
+                                            height: 29
                                             radius: 0
                                             color: prevAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1100,7 +1068,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰒮"
-                                                font.pixelSize: 20
+                                                font.pixelSize: 8
                                                 anchors.centerIn: parent
                                                 color: prevAreaCard.containsMouse ? 
                                                     ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -1126,8 +1094,8 @@ PanelWindow {
                                         }
                                         
                                         Rectangle {
-                                            width: 44
-                                            height: 36
+                                width: 35
+                                height: 29
                                             radius: 0
                                             color: playAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1153,7 +1121,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: mpPlaying ? "󰏤" : "󰐊"
-                                                font.pixelSize: 22
+                                                font.pixelSize: 9
                                                 anchors.centerIn: parent
                                                 color: playAreaCard.containsMouse ? 
                                                     ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -1188,8 +1156,8 @@ PanelWindow {
                                         }
                                         
                                         Rectangle {
-                                            width: 36
-                                            height: 36
+                                            width: 29
+                                            height: 29
                                             radius: 0
                                             color: nextAreaCard.containsMouse ? 
                                                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1215,7 +1183,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰒭"
-                                                font.pixelSize: 20
+                                                font.pixelSize: 8
                                                 anchors.centerIn: parent
                                                 color: nextAreaCard.containsMouse ? 
                                                     ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -1279,12 +1247,12 @@ PanelWindow {
                     Column {
                         anchors.fill: parent
                         anchors.margins: 16
-                        spacing: 16
+                        spacing: 13
                         
                         // Header
                         Text {
                             text: "󰕧 Audio"
-                            font.pixelSize: 18
+                            font.pixelSize: 10
                             font.family: "sans-serif"
                             font.weight: Font.Bold
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1293,7 +1261,7 @@ PanelWindow {
                         // Music Player Section
                         Rectangle {
                             width: parent.width
-                            height: 180
+                            height: 144
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             visible: audioPlayerStatus !== "stopped"
@@ -1310,17 +1278,17 @@ PanelWindow {
                             
                             Column {
                                 anchors.centerIn: parent
-                                spacing: 12
+                                spacing: 5
                                 width: parent.width - 32
                                 
                                 // Track Info
                                 Column {
                                     width: parent.width
-                                    spacing: 4
+                                    spacing: 5
                                     
                                     Text {
                                         text: audioPlayerTitle || "No track"
-                                        font.pixelSize: 16
+                                        font.pixelSize: 9
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1332,7 +1300,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: audioPlayerArtist || ""
-                                        font.pixelSize: 12
+                                        font.pixelSize: 9
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                                         anchors.horizontalCenter: parent.horizontalCenter
@@ -1345,12 +1313,12 @@ PanelWindow {
                                 // Player Controls
                                 Row {
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: 12
+                                    spacing: 5
                                     
                                     // Previous
                                     Rectangle {
-                                        width: 40
-                                        height: 40
+                                        width: 32
+                                        height: 32
                                         radius: 0
                                         color: prevButtonMouseArea.containsMouse ?
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
@@ -1358,7 +1326,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: "󰒮"
-                                            font.pixelSize: 18
+                                            font.pixelSize: 10
                                             anchors.centerIn: parent
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         }
@@ -1377,8 +1345,8 @@ PanelWindow {
                                     
                                     // Play/Pause
                                     Rectangle {
-                                        width: 50
-                                        height: 50
+                                        width: 35
+                                        height: 25
                                         radius: 0
                                         color: playPauseButtonMouseArea.containsMouse ?
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
@@ -1386,7 +1354,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: audioPlayerStatus === "playing" ? "󰏤" : "󰐊"
-                                            font.pixelSize: 24
+                                            font.pixelSize: 19
                                             anchors.centerIn: parent
                                             color: playPauseButtonMouseArea.containsMouse ?
                                                 ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") :
@@ -1407,8 +1375,8 @@ PanelWindow {
                                     
                                     // Next
                                     Rectangle {
-                                        width: 40
-                                        height: 40
+                                        width: 32
+                                        height: 32
                                         radius: 0
                                         color: nextButtonMouseArea.containsMouse ?
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
@@ -1416,7 +1384,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: "󰒭"
-                                            font.pixelSize: 18
+                                            font.pixelSize: 10
                                             anchors.centerIn: parent
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         }
@@ -1439,7 +1407,7 @@ PanelWindow {
                         // Application Mixer Section
                         Rectangle {
                             width: parent.width
-                            height: Math.min(400, audioApplicationsModel.count * 70 + 60)
+                            height: Math.min(320, audioApplicationsModel.count * 56 + 48)
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
@@ -1456,12 +1424,12 @@ PanelWindow {
                             Column {
                                 anchors.fill: parent
                                 anchors.margins: 16
-                                spacing: 12
+                                spacing: 5
                                 
                                 // Mixer Header
                                 Text {
                                     text: "󰓃 Mixer"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 9
                                     font.family: "sans-serif"
                                     font.weight: Font.Bold
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1471,26 +1439,26 @@ PanelWindow {
                                 ListView {
                                     id: applicationsListView
                                     width: parent.width
-                                    height: parent.height - 40
+                                    height: parent.height - 32
                                     model: audioApplicationsModel
-                                    spacing: 8
+                                    spacing: 5
                                     clip: true
                                     
                                     delegate: Rectangle {
                                         width: applicationsListView.width
-                                        height: 60
+                                        height: 48
                                         radius: 0
                                         color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
                                         
                                         Row {
                                             anchors.fill: parent
                                             anchors.margins: 12
-                                            spacing: 12
+                                            spacing: 5
                                             
                                             // Application Name
                                             Text {
                                                 text: appName || "Unknown"
-                                                font.pixelSize: 14
+                                                font.pixelSize: 8
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -1567,11 +1535,11 @@ PanelWindow {
                                             // Volume Percentage
                                             Text {
                                                 text: Math.round(appVolume) + "%"
-                                                font.pixelSize: 12
+                                                font.pixelSize: 9
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                                                 anchors.verticalCenter: parent.verticalCenter
-                                                width: 40
+                                                width: 32
                                                 horizontalAlignment: Text.AlignRight
                                             }
                                         }
@@ -1582,7 +1550,7 @@ PanelWindow {
                                 Text {
                                     visible: audioApplicationsModel.count === 0
                                     text: "Brak aktywnych aplikacji audio"
-                                    font.pixelSize: 12
+                                    font.pixelSize: 9
                                     font.family: "sans-serif"
                                     color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                                     anchors.horizontalCenter: parent.horizontalCenter
@@ -1642,26 +1610,26 @@ PanelWindow {
                     Column {
                         anchors.fill: parent
                         anchors.margins: 16
-                        spacing: 12
+                        spacing: 5
                         
                         // Header
                         Row {
                             width: parent.width
-                            spacing: 12
+                            spacing: 5
                             
                             Text {
                                 text: "󰨸 Clipboard"
-                                font.pixelSize: 18
+                                font.pixelSize: 10
                                 font.family: "sans-serif"
                                 font.weight: Font.Bold
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                             }
                             
-                            Item { width: parent.width - 200; height: 1 }
+                            Item { width: parent.width - 160; height: 1 }
                             
                             Rectangle {
-                                width: 32
-                                height: 32
+                                width: 25
+                                height: 25
                                 radius: 0
                                 color: clearClipboardButtonMouseArea.containsMouse ? 
                                     ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -1687,7 +1655,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: "󰆐"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 9
                                     anchors.centerIn: parent
                                     color: clearClipboardButtonMouseArea.containsMouse ? 
                                         ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -1716,16 +1684,16 @@ PanelWindow {
                         // History list
                         ScrollView {
                             width: parent.width
-                            height: parent.height - 60
+                            height: parent.height - 48
                             
                             ListView {
                                 id: clipboardListView
                                 model: dashboardClipboardHistoryModel
-                                spacing: 8
+                                spacing: 5
                                 
                                 delegate: Rectangle {
                                     width: clipboardListView.width
-                                    height: Math.max(40, contentTextClipboard.implicitHeight + 16)
+                                    height: Math.max(32, contentTextClipboard.implicitHeight + 13)
                                     radius: 0
                                     // Material Design card color
                                     color: itemClipboardMouseArea.containsMouse ? 
@@ -1769,7 +1737,7 @@ PanelWindow {
                                             var txt = model.text || ""
                                             return txt.length > 100 ? txt.substring(0, 100) + "..." : txt
                                         }
-                                        font.pixelSize: 13
+                                        font.pixelSize: 10
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         wrapMode: Text.Wrap
@@ -1825,7 +1793,7 @@ PanelWindow {
                     Column {
                         anchors.fill: parent
                         anchors.margins: 24
-                        spacing: 16
+                        spacing: 13
                         
                         // Header with title and clear button
                         RowLayout {
@@ -1833,7 +1801,7 @@ PanelWindow {
                             
                             Text {
                                 text: "󰂚 Notification Center"
-                                font.pixelSize: 24
+                                font.pixelSize: 19
                                 font.family: "sans-serif"
                                 font.weight: Font.Bold
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1842,8 +1810,8 @@ PanelWindow {
                             
                             // Clear all button
                             Rectangle {
-                                Layout.preferredWidth: 100
-                                Layout.preferredHeight: 32
+                                Layout.preferredWidth: 80
+                                Layout.preferredHeight: 25
                                 radius: 0
                                 color: clearAllMouseArea.containsMouse ? 
                                     ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#252525") : 
@@ -1856,7 +1824,7 @@ PanelWindow {
                                 Text {
                                     anchors.centerIn: parent
                                     text: "󰎟 Clear All"
-                                    font.pixelSize: 12
+                                    font.pixelSize: 9
                                     font.family: "sans-serif"
                                     color: "#ffffff"
                                 }
@@ -1876,7 +1844,7 @@ PanelWindow {
                         // Notification count
                         Text {
                             text: ((sharedData && sharedData.notificationHistory) ? sharedData.notificationHistory.length : 0) + " notifications"
-                            font.pixelSize: 12
+                            font.pixelSize: 9
                             font.family: "sans-serif"
                             color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                         }
@@ -1885,16 +1853,16 @@ PanelWindow {
                         ListView {
                             id: notificationHistoryList
                             width: parent.width
-                            height: parent.height - 100
+                            height: parent.height - 80
                             clip: true
-                            spacing: 8
+                            spacing: 5
                             model: (sharedData && sharedData.notificationHistory) ? sharedData.notificationHistory : []
                             
                             // Empty state
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰂛 No notifications"
-                                font.pixelSize: 16
+                                font.pixelSize: 9
                                 font.family: "sans-serif"
                                 color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                                 visible: !sharedData || !sharedData.notificationHistory || sharedData.notificationHistory.length === 0
@@ -1902,7 +1870,7 @@ PanelWindow {
                             
                             delegate: Rectangle {
                                 width: notificationHistoryList.width
-                                height: notifContent.height + 24
+                                height: notifContent.height + 19
                                 radius: 0
                                 // Material Design card color
                                 color: notifItemMouseArea.containsMouse ? 
@@ -1945,7 +1913,7 @@ PanelWindow {
                                     anchors.top: parent.top
                                     anchors.margins: 12
                                     anchors.rightMargin: 8
-                                    spacing: 4
+                                    spacing: 5
                                     
                                     // App name and time
                                     RowLayout {
@@ -1953,7 +1921,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: modelData.appName || "Unknown"
-                                            font.pixelSize: 11
+                                            font.pixelSize: 9
                                             font.family: "sans-serif"
                                             font.weight: Font.Medium
                                             color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -1963,7 +1931,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: modelData.time || ""
-                                            font.pixelSize: 10
+                                            font.pixelSize: 8
                                             font.family: "sans-serif"
                                             color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                                         }
@@ -1972,7 +1940,7 @@ PanelWindow {
                                     // Title
                                     Text {
                                         text: modelData.title || ""
-                                        font.pixelSize: 13
+                                        font.pixelSize: 10
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1983,7 +1951,7 @@ PanelWindow {
                                     // Body
                                     Text {
                                         text: modelData.body || ""
-                                        font.pixelSize: 12
+                                        font.pixelSize: 9
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
                                         width: parent.width
@@ -1999,13 +1967,13 @@ PanelWindow {
                                     anchors.right: parent.right
                                     anchors.top: parent.top
                                     anchors.margins: 8
-                                    spacing: 4
+                                    spacing: 5
                                     visible: notifItemMouseArea.containsMouse
                                     
                                     // Copy button
                                     Rectangle {
-                                        width: 28
-                                        height: 28
+                                        width: 32
+                                        height: 32
                                         radius: 0
                                         color: copyBtnMouseArea.containsMouse ? 
                                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -2014,7 +1982,7 @@ PanelWindow {
                                         Text {
                                             anchors.centerIn: parent
                                             text: "󰆏"
-                                            font.pixelSize: 14
+                                            font.pixelSize: 8
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         }
                                         
@@ -2032,15 +2000,15 @@ PanelWindow {
                                     
                                     // Delete button
                                     Rectangle {
-                                        width: 28
-                                        height: 28
+                                        width: 32
+                                        height: 32
                                         radius: 0
                                         color: deleteBtnMouseArea.containsMouse ? "#ff4444" : "transparent"
                                         
                                         Text {
                                             anchors.centerIn: parent
                                             text: "󰆴"
-                                            font.pixelSize: 14
+                                            font.pixelSize: 8
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         }
                                         
@@ -2102,13 +2070,8 @@ PanelWindow {
     // Calendar days model
     property var calendarDays: []
     
-    // Network properties
-    property string networkDownloadSpeed: "0 KB/s"
-    property string networkUploadSpeed: "0 KB/s"
-    property int networkDownloadBytes: 0
-    property int networkUploadBytes: 0
-    property int networkDownloadBytesPrev: 0
-    property int networkUploadBytesPrev: 0
+    // Battery
+    property int batteryPercent: -1
     
     
     // Performance tab models
@@ -2183,60 +2146,22 @@ PanelWindow {
         xhr.send()
     }
     
-    function readNetworkStats() {
+    function updateBattery() {
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1 > /tmp/quickshell_battery || echo -1 > /tmp/quickshell_battery']; running: true }", dashboardRoot)
+        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readBattery() }", dashboardRoot)
+    }
+    
+    function readBattery() {
         var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///proc/net/dev")
+        xhr.open("GET", "file:///tmp/quickshell_battery")
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                var lines = xhr.responseText.split("\n")
-                var totalRx = 0
-                var totalTx = 0
-                
-                // Parse /proc/net/dev - sum all interfaces except lo
-                for (var i = 0; i < lines.length; i++) {
-                    var line = lines[i].trim()
-                    if (line && line.indexOf(":") > 0 && !line.startsWith("lo:")) {
-                        // Format: interface: rx_bytes rx_packets ... tx_bytes tx_packets ...
-                        var parts = line.split(/\s+/)
-                        if (parts.length >= 10) {
-                            // parts[0] is "interface:", parts[1] is rx_bytes, parts[9] is tx_bytes
-                            var rxBytes = Number(parts[1]) || 0
-                            var txBytes = Number(parts[9]) || 0
-                            totalRx += rxBytes
-                            totalTx += txBytes
-                        }
-                    }
-                }
-                
-                // Check if we have previous values to calculate speed
-                if (networkDownloadBytesPrev > 0 || networkUploadBytesPrev > 0) {
-                    // Calculate speed: difference / 2 seconds (timer interval)
-                    var rxDiff = Math.max(0, totalRx - networkDownloadBytesPrev)
-                    var txDiff = Math.max(0, totalTx - networkUploadBytesPrev)
-                    networkDownloadSpeed = formatSpeed(rxDiff / 2) // Per second
-                    networkUploadSpeed = formatSpeed(txDiff / 2) // Per second
-                } else {
-                    // First measurement, just store values (will show 0 until next measurement)
-                    networkDownloadSpeed = "0 KB/s"
-                    networkUploadSpeed = "0 KB/s"
-                }
-                
-                // Update previous values for next calculation
-                networkDownloadBytesPrev = networkDownloadBytes
-                networkUploadBytesPrev = networkUploadBytes
-                // Update current values
-                networkDownloadBytes = totalRx
-                networkUploadBytes = totalTx
+                var s = xhr.responseText.trim()
+                var p = parseInt(s, 10)
+                batteryPercent = (!isNaN(p) && p >= 0 && p <= 100) ? p : -1
             }
         }
         xhr.send()
-    }
-    
-    function formatSpeed(bytes) {
-        if (bytes < 1024) return bytes + " B/s"
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB/s"
-        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB/s"
-        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB/s"
     }
     
     
@@ -2763,12 +2688,12 @@ PanelWindow {
     }
 
     Timer {
-        id: networkTimer
-        interval: 2000 // Update every 2 seconds
+        id: batteryTimer
+        interval: 10000  // co 10 s
         repeat: true
         running: true
-        onTriggered: readNetworkStats()
-        Component.onCompleted: readNetworkStats()
+        onTriggered: updateBattery()
+        Component.onCompleted: updateBattery()
     }
     
     

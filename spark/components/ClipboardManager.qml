@@ -16,8 +16,8 @@ PanelWindow {
     anchors.right: (sharedData && sharedData.sidebarPosition === "top") ? true : false
     anchors.top: true
     anchors.bottom: true
-    implicitWidth: 320
-    implicitHeight: 500
+    implicitWidth: 288
+    implicitHeight: 533
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsclipboard"
@@ -29,18 +29,15 @@ PanelWindow {
     visible: true
     color: "transparent"
     
-    // Właściwość do animacji margins - różne dla lewej i prawej strony
-    // Sidebar ma szerokość 36px, więc dodajemy margines 40px aby nie nachodził
-    // Dla prawej strony mniejszy margines, aby było bliżej krawędzi
-    property int slideOffsetLeft: (sharedData && sharedData.clipboardVisible) ? 40 : -implicitWidth
-    property int slideOffsetRight: (sharedData && sharedData.clipboardVisible) ? 20 : -implicitWidth
+    // Marginesy dopasowane do sidebar 37px (80%)
+    property int slideOffsetLeft: (sharedData && sharedData.clipboardVisible) ? 41 : -implicitWidth
+    property int slideOffsetRight: (sharedData && sharedData.clipboardVisible) ? 21 : -implicitWidth
     
-    // Top margin - gdy sidebar jest na górze, dodajemy 36px + 8px marginesu
-    property int topMargin: (sharedData && sharedData.sidebarPosition === "top" && sharedData.sidebarVisible) ? 44 : 8
+    property int topMargin: (sharedData && sharedData.sidebarPosition === "top" && sharedData.sidebarVisible) ? 43 : 7
     
     margins {
         top: topMargin
-        bottom: 8
+        bottom: 7
         left: (sharedData && sharedData.sidebarPosition === "left") ? slideOffsetLeft : 0
         right: (sharedData && sharedData.sidebarPosition === "top") ? slideOffsetRight : 0
     }
@@ -122,28 +119,28 @@ PanelWindow {
             
             Column {
                 anchors.fill: parent
-                anchors.margins: 16
-                spacing: 12
+                anchors.margins: 13
+                spacing: 7
                 
                 // Header
                 Row {
                     width: parent.width
-                    spacing: 12
+                    spacing: 9
                     
                     Text {
                         text: "󰨸 Clipboard"
-                        font.pixelSize: 18
+                        font.pixelSize: 15
                         font.family: "sans-serif"
                         font.weight: Font.Bold
                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                     }
                     
-                    Item { width: parent.width - 200; height: 1 }
+                    Item { width: parent.width - 160; height: 1 }
                     
                     // Material Design button with elevation
                     Rectangle {
-                        width: 32
-                        height: 32
+                        width: 25
+                        height: 25
                         radius: 0
                         // Material Design button color
                         color: clearButtonMouseArea.containsMouse ? 
@@ -188,7 +185,7 @@ PanelWindow {
                         
                         Text {
                             text: "󰆐"
-                            font.pixelSize: 16
+                            font.pixelSize: 13
                             anchors.centerIn: parent
                             color: clearButtonMouseArea.containsMouse ? 
                                 ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -217,16 +214,16 @@ PanelWindow {
                 // History list
                 ScrollView {
                     width: parent.width
-                    height: parent.height - 60
+                    height: parent.height - 42
                     
                     ListView {
                         id: clipboardListView
                         model: clipboardHistoryModel
-                        spacing: 8
+                        spacing: 6
                         
                         delegate: Rectangle {
                             width: clipboardListView.width
-                            height: Math.max(40, contentText.implicitHeight + 16)
+                            height: Math.max(32, contentText.implicitHeight + 13)
                             radius: 0
                             // Material Design card color
                             color: itemMouseArea.containsMouse ? 
@@ -270,7 +267,7 @@ PanelWindow {
                                     var txt = model.text || ""
                                     return txt.length > 100 ? txt.substring(0, 100) + "..." : txt
                                 }
-                                font.pixelSize: 13
+                                font.pixelSize: 10
                                 font.family: "sans-serif"
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                 wrapMode: Text.Wrap

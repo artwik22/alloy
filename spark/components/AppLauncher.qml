@@ -389,15 +389,15 @@ PanelWindow {
         bottom: true
     }
     
-    // Base size
-    property int baseWidth: 540
-    property int baseHeight: 315  // 70% of 450 (30% shorter)
+    // Base size – zbalansowane proporcje
+    property int baseWidth: 500
+    property int baseHeight: 320
     
 
     // Size when in notes mode (50% larger)
     property bool isNotesMode: (currentMode === 3)
-    property int notesWidth: Math.floor(baseWidth * 1.5)  // 50% wider
-    property int notesHeight: Math.floor(baseHeight * 1.5)  // 50% taller
+    property int notesWidth: Math.floor(baseWidth * 1.5)
+    property int notesHeight: Math.floor(baseHeight * 1.5)
     
     implicitWidth: isNotesMode ? notesWidth : baseWidth
     implicitHeight: isNotesMode ? notesHeight : baseHeight
@@ -432,7 +432,7 @@ PanelWindow {
     color: "transparent"  // Transparent, background will be in container with gradient
     
     // Slide up animation from bottom - negative value moves down (off screen)
-    property int slideOffset: (sharedData && sharedData.launcherVisible) ? 0 : -600
+    property int slideOffset: (sharedData && sharedData.launcherVisible) ? 0 : -400
     
     margins.bottom: slideOffset
     
@@ -1780,7 +1780,7 @@ PanelWindow {
             }
         }
         
-        // Lista trybów (gdy currentMode === -1)
+        // Lista trybów (gdy currentMode === -1) - NOWY DESIGN
         ListView {
             id: modesList
             anchors.fill: parent
@@ -1813,95 +1813,82 @@ PanelWindow {
             delegate: Rectangle {
                 id: modeItem
                 width: modesList.width
-                height: 72
-                radius: 0
-                // Material Design card color
+                height: 50
+                radius: 4
                 color: (selectedIndex === index || modeItemMouseArea.containsMouse) ?
                     ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                     "transparent"
-                scale: (selectedIndex === index || modeItemMouseArea.containsMouse) ? 1.02 : 1.0
-                
-                property real cardElevation: (selectedIndex === index || modeItemMouseArea.containsMouse) ? 2 : 0
-
-                // Material Design elevation shadow
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: -cardElevation
-                    color: "transparent"
-                    border.color: cardElevation > 0 ? Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05) : "transparent"
-                    border.width: cardElevation
-                    z: -1
-                    
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: 200
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-                }
-
-                // Bottom accent line for selected items (Material Design ripple effect)
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                    height: 3
-                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                    radius: 0
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: 300
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                }
                 
                 Behavior on color {
-                        ColorAnimation { 
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
+                    ColorAnimation { 
+                        duration: 150
+                        easing.type: Easing.OutCubic
                     }
+                }
+                
+                // Left accent bar for selected items
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: selectedIndex === index ? 3 : 0
+                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                     
-                    Behavior on scale {
+                    Behavior on width {
                         NumberAnimation {
                             duration: 200
                             easing.type: Easing.OutCubic
                         }
+                    }
                 }
                 
-                Row {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 20
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 16
+                // Content container
+                Item {
+                    anchors.fill: parent
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
                     
-                    Text {
-                        text: model.icon || ""
-                        font.pixelSize: 22
-                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                    Row {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                    }
-                    
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
+                        spacing: 12
                         
+                        // Icon
                         Text {
-                            text: model.name
-                            font.pixelSize: 15
-                            font.family: "sans-serif"
-                            font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                            color: selectedIndex === index ? colorText : (modeItemMouseArea.containsMouse ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"))
+                            text: model.icon || ""
+                            font.pixelSize: 20
+                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 24
+                            horizontalAlignment: Text.AlignLeft
                         }
                         
-                        Text {
-                            text: model.description
-                            font.pixelSize: 12
-                            font.family: "sans-serif"
-                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                            opacity: selectedIndex === index ? 0.85 : (modeItemMouseArea.containsMouse ? 0.75 : 0.6)
+                        // Text content
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+                            width: parent.width - 36  // Total width minus icon (24) and spacing (12)
+                            
+                            Text {
+                                text: model.name
+                                font.pixelSize: 15
+                                font.family: "sans-serif"
+                                font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                width: parent.width
+                                elide: Text.ElideRight
+                            }
+                            
+                            Text {
+                                text: model.description
+                                font.pixelSize: 12
+                                font.family: "sans-serif"
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                opacity: 0.7
+                                width: parent.width
+                                elide: Text.ElideRight
+                            }
                         }
                     }
                 }
@@ -1913,7 +1900,7 @@ PanelWindow {
                     
                     onEntered: {
                         if (modesList.currentIndex !== index) {
-                        selectedIndex = index
+                            selectedIndex = index
                             modesList.currentIndex = index
                         }
                     }
@@ -1942,7 +1929,7 @@ PanelWindow {
         Item {
             id: modeContent
             anchors.fill: parent
-            anchors.margins: 20
+            anchors.margins: 12
             visible: currentMode !== -1
         
             // Tryb 0: Launcher
@@ -1954,13 +1941,13 @@ PanelWindow {
                 Column {
                     id: launchAppColumn
                     anchors.fill: parent
-                    spacing: 12
+                    spacing: 9
                             
                             // Pole wyszukiwania
                             Rectangle {
                                 id: searchBox
                                 width: parent.width
-                                height: 48
+                                height: 36
                                 color: searchInput.activeFocus ? colorPrimary : colorSecondary
                                 radius: 0
                                 
@@ -1974,8 +1961,8 @@ PanelWindow {
                                 TextInput {
                                     id: searchInput
                                     anchors.fill: parent
-                                    anchors.margins: 20
-                                    font.pixelSize: 15
+                                    anchors.margins: 14
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     font.weight: Font.Medium
                                     font.letterSpacing: 0.2
@@ -2062,7 +2049,7 @@ PanelWindow {
                                     anchors.fill: searchInput
                                     anchors.margins: 0
                                     text: "Search applications..."
-                                    font.pixelSize: 15
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     font.weight: Font.Medium
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
@@ -2078,7 +2065,7 @@ PanelWindow {
                                 width: parent.width
                                 height: parent.height - searchBox.height - parent.spacing
                                 clip: true
-                                spacing: 4
+                                spacing: 6
                                 
                                 model: filteredApps
                                 currentIndex: selectedIndex
@@ -2135,7 +2122,7 @@ PanelWindow {
                                 delegate: Rectangle {
                                     id: appItem
                                     width: appsList.width
-                                    height: 72
+                                    height: 36
                                     radius: 0
                                     // Material Design card color
                                     color: (selectedIndex === index || appItemMouseArea.containsMouse) ?
@@ -2182,7 +2169,7 @@ PanelWindow {
                                     anchors.bottom: parent.bottom
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                    height: 3
+                                    height: 2
                                     color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                     radius: 0
 
@@ -2205,11 +2192,11 @@ PanelWindow {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 20
                                     anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 4
+                                    spacing: 6
                                     
                                     Text {
                                         text: appItem.appName
-                                        font.pixelSize: 15
+                                        font.pixelSize: 16
                                         font.family: "sans-serif"
                                         font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                                         font.letterSpacing: 0.1
@@ -2218,7 +2205,7 @@ PanelWindow {
 
                                     Text {
                                         text: appItem.appComment
-                                        font.pixelSize: 12
+                                        font.pixelSize: 16
                                         font.family: "sans-serif"
                                         font.weight: Font.Normal
                                         font.letterSpacing: 0.1
@@ -2277,7 +2264,7 @@ PanelWindow {
             ListView {
                 id: packagesOptionsList
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === -1
                 clip: true
                 z: 1
@@ -2302,7 +2289,7 @@ PanelWindow {
                 delegate: Rectangle {
                     id: packageOptionItem
                     width: packagesOptionsList.width
-                    height: 72
+                    height: 36
                     color: "transparent"
                     radius: 0
                     scale: (selectedIndex === index || packageOptionItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -2312,7 +2299,7 @@ PanelWindow {
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                        height: 3
+                        height: 2
                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                         radius: 1.5
 
@@ -2328,22 +2315,22 @@ PanelWindow {
                         anchors.left: parent.left
                         anchors.leftMargin: 20
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 16
+                        spacing: 9
                         
                         Text {
                             text: model.icon || ""
-                            font.pixelSize: 22
+                            font.pixelSize: 16
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         
                         Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
+                        spacing: 6
                         
                         Text {
                             text: model.name || "Unknown"
-                                font.pixelSize: 15
+                                font.pixelSize: 16
                             font.family: "sans-serif"
                             font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                             color: selectedIndex === index ? colorText : (packageOptionItemMouseArea.containsMouse ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"))
@@ -2351,7 +2338,7 @@ PanelWindow {
                         
                         Text {
                             text: model.description || ""
-                                font.pixelSize: 12
+                                font.pixelSize: 16
                             font.family: "sans-serif"
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                             opacity: selectedIndex === index ? 0.85 : (packageOptionItemMouseArea.containsMouse ? 0.75 : 0.6)
@@ -2397,7 +2384,7 @@ PanelWindow {
             ListView {
                 id: installSourceList
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === 0
                 clip: true
                 z: 1
@@ -2410,7 +2397,7 @@ PanelWindow {
                 delegate: Rectangle {
                     id: installSourceItem
                     width: installSourceList.width
-                    height: 72
+                    height: 36
                     color: "transparent"
                     radius: 0
                     scale: (selectedIndex === index || installSourceItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -2420,7 +2407,7 @@ PanelWindow {
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                        height: 3
+                        height: 2
                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                         radius: 1.5
 
@@ -2436,22 +2423,22 @@ PanelWindow {
                         anchors.left: parent.left
                         anchors.leftMargin: 20
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 16
+                        spacing: 9
                         
                         Text {
                             text: model.icon || ""
-                            font.pixelSize: 22
+                            font.pixelSize: 16
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
+                            spacing: 6
                             
                             Text {
                                 text: model.name || "Unknown"
-                                font.pixelSize: 15
+                                font.pixelSize: 16
                                 font.family: "sans-serif"
                                 font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                                 color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -2459,7 +2446,7 @@ PanelWindow {
                             
                             Text {
                                 text: model.description || ""
-                                font.pixelSize: 12
+                                font.pixelSize: 16
                                 font.family: "sans-serif"
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                                 opacity: selectedIndex === index ? 0.85 : (installSourceItemMouseArea.containsMouse ? 0.75 : 0.6)
@@ -2512,19 +2499,19 @@ PanelWindow {
             Item {
                 id: pacmanSearchMode
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === 1
                 
                 Column {
                     id: pacmanSearchColumn
                     anchors.fill: parent
-                    spacing: 11
+                    spacing: 8
                     
                     // Pole wyszukiwania
                     Rectangle {
                         id: pacmanSearchBox
                         width: parent.width
-                        height: 48
+                        height: 30
                         color: pacmanSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
@@ -2535,8 +2522,8 @@ PanelWindow {
                         TextInput {
                             id: pacmanSearchInput
                             anchors.fill: parent
-                            anchors.margins: 20
-                            font.pixelSize: 14
+                            anchors.margins: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: colorText
                             verticalAlignment: TextInput.AlignVCenter
@@ -2594,7 +2581,7 @@ PanelWindow {
                             anchors.fill: pacmanSearchInput
                             anchors.margins: 0
                             text: "Search packages (pacman)..."
-                            font.pixelSize: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#666666"
                             verticalAlignment: Text.AlignVCenter
@@ -2615,7 +2602,7 @@ PanelWindow {
                         delegate: Rectangle {
                             id: packageItem
                             width: pacmanPackagesList.width
-                            height: 72
+                            height: 36
                             color: "transparent"
                             radius: 0
                             scale: (selectedIndex === index || packageItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -2625,7 +2612,7 @@ PanelWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 3
+                                height: 2
                                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 radius: 1.5
 
@@ -2651,11 +2638,11 @@ PanelWindow {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 20
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 4
+                                spacing: 6
                                 
                                 Text {
                                     text: packageItem.packageName
-                                    font.pixelSize: 15
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                                     color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -2663,7 +2650,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: packageItem.packageDescription
-                                    font.pixelSize: 12
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                                     opacity: selectedIndex === index ? 0.85 : (packageItemMouseArea.containsMouse ? 0.75 : 0.6)
@@ -2700,19 +2687,19 @@ PanelWindow {
             Item {
                 id: aurSearchMode
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === 2
                 
                 Column {
                     id: aurSearchColumn
                     anchors.fill: parent
-                    spacing: 11
+                    spacing: 8
                     
                     // Pole wyszukiwania
                     Rectangle {
                         id: aurSearchBox
                         width: parent.width
-                        height: 48
+                        height: 30
                         color: aurSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
@@ -2723,8 +2710,8 @@ PanelWindow {
                         TextInput {
                             id: aurSearchInput
                             anchors.fill: parent
-                            anchors.margins: 20
-                            font.pixelSize: 14
+                            anchors.margins: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: colorText
                             verticalAlignment: TextInput.AlignVCenter
@@ -2782,7 +2769,7 @@ PanelWindow {
                             anchors.fill: aurSearchInput
                             anchors.margins: 0
                             text: "Search packages (AUR)..."
-                            font.pixelSize: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#666666"
                             verticalAlignment: Text.AlignVCenter
@@ -2803,7 +2790,7 @@ PanelWindow {
                         delegate: Rectangle {
                             id: aurPackageItem
                             width: aurPackagesList.width
-                            height: 72
+                            height: 36
                             color: "transparent"
                             radius: 0
                             scale: (selectedIndex === index || aurPackageItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -2813,7 +2800,7 @@ PanelWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 3
+                                height: 2
                                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 radius: 1.5
 
@@ -2846,11 +2833,11 @@ PanelWindow {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 20
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 4
+                                spacing: 6
                                 
                                 Text {
                                     text: aurPackageItem.packageName
-                                    font.pixelSize: 15
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                                     color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -2858,7 +2845,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: aurPackageItem.packageDescription
-                                    font.pixelSize: 12
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                                     opacity: selectedIndex === index ? 0.85 : (aurPackageItemMouseArea.containsMouse ? 0.75 : 0.6)
@@ -2895,7 +2882,7 @@ PanelWindow {
             ListView {
                 id: removeSourceList
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === 3
                 clip: true
                 z: 1
@@ -2908,7 +2895,7 @@ PanelWindow {
                 delegate: Rectangle {
                     id: removeSourceItem
                     width: removeSourceList.width
-                    height: 72
+                    height: 36
                     color: "transparent"
                     radius: 0
                     scale: (selectedIndex === index || removeSourceItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -2918,7 +2905,7 @@ PanelWindow {
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                        height: 3
+                        height: 2
                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                         radius: 1.5
 
@@ -2948,22 +2935,22 @@ PanelWindow {
                         anchors.left: parent.left
                         anchors.leftMargin: 20
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 16
+                        spacing: 9
                         
                         Text {
                             text: model.icon || ""
-                            font.pixelSize: 22
+                            font.pixelSize: 16
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
+                            spacing: 6
                             
                             Text {
                                 text: model.name || "Unknown"
-                                font.pixelSize: 15
+                                font.pixelSize: 16
                                 font.family: "sans-serif"
                                 font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                                 color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -2971,7 +2958,7 @@ PanelWindow {
                             
                             Text {
                                 text: model.description || ""
-                                font.pixelSize: 12
+                                font.pixelSize: 16
                                 font.family: "sans-serif"
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                                 opacity: selectedIndex === index ? 0.85 : (removeSourceItemMouseArea.containsMouse ? 0.75 : 0.6)
@@ -3026,19 +3013,19 @@ PanelWindow {
             Item {
                 id: removeSearchMode
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === 4
                 
                 Column {
                     id: removeSearchColumn
                     anchors.fill: parent
-                    spacing: 11
+                    spacing: 8
                     
                     // Pole wyszukiwania
                     Rectangle {
                         id: removeSearchBox
                         width: parent.width
-                        height: 48
+                        height: 30
                         color: removeSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
@@ -3049,8 +3036,8 @@ PanelWindow {
                         TextInput {
                             id: removeSearchInput
                             anchors.fill: parent
-                            anchors.margins: 20
-                            font.pixelSize: 14
+                            anchors.margins: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: colorText
                             verticalAlignment: TextInput.AlignVCenter
@@ -3108,7 +3095,7 @@ PanelWindow {
                             anchors.fill: removeSearchInput
                             anchors.margins: 0
                             text: "Search installed packages..."
-                            font.pixelSize: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#666666"
                             verticalAlignment: Text.AlignVCenter
@@ -3129,7 +3116,7 @@ PanelWindow {
                         delegate: Rectangle {
                             id: installedPackageItem
                             width: removePackagesList.width
-                            height: 72
+                            height: 36
                             color: "transparent"
                             radius: 0
                             scale: (selectedIndex === index || installedPackageItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -3139,7 +3126,7 @@ PanelWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 3
+                                height: 2
                                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 radius: 1.5
 
@@ -3165,11 +3152,11 @@ PanelWindow {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 20
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 4
+                                spacing: 6
                                 
                                 Text {
                                     text: installedPackageItem.packageName
-                                    font.pixelSize: 15
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     font.weight: selectedIndex === index ? Font.Bold : Font.Medium
                                     color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
@@ -3177,7 +3164,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: installedPackageItem.packageVersion
-                                    font.pixelSize: 12
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                                     opacity: selectedIndex === index ? 0.85 : (installedPackageItemMouseArea.containsMouse ? 0.75 : 0.6)
@@ -3218,19 +3205,19 @@ PanelWindow {
             Item {
                 id: removeAurSearchMode
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 16
                 visible: currentMode === 1 && currentPackageMode === 5
                 
                 Column {
                     id: removeAurSearchColumn
                     anchors.fill: parent
-                    spacing: 11
+                    spacing: 8
                     
                     // Pole wyszukiwania
                     Rectangle {
                         id: removeAurSearchBox
                         width: parent.width
-                        height: 48
+                        height: 30
                         color: removeAurSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
@@ -3241,8 +3228,8 @@ PanelWindow {
                         TextInput {
                             id: removeAurSearchInput
                             anchors.fill: parent
-                            anchors.margins: 20
-                            font.pixelSize: 14
+                            anchors.margins: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: colorText
                             verticalAlignment: TextInput.AlignVCenter
@@ -3296,7 +3283,7 @@ PanelWindow {
                             anchors.fill: removeAurSearchInput
                             anchors.margins: 0
                             text: "Search installed AUR packages..."
-                            font.pixelSize: 14
+                            font.pixelSize: 18
                             font.family: "sans-serif"
                             color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#666666"
                             verticalAlignment: Text.AlignVCenter
@@ -3317,7 +3304,7 @@ PanelWindow {
                         delegate: Rectangle {
                             id: installedAurPackageItem
                             width: removeAurPackagesList.width
-                            height: 72
+                            height: 36
                             color: "transparent"
                             radius: 0
                             scale: (selectedIndex === index || installedAurPackageItemMouseArea.containsMouse) ? 1.02 : 1.0
@@ -3327,7 +3314,7 @@ PanelWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 3
+                                height: 2
                                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 radius: 1.5
 
@@ -3360,11 +3347,11 @@ PanelWindow {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 20
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 4
+                                spacing: 6
                                 
                                 Text {
                                     text: installedAurPackageItem.packageName
-                                    font.pixelSize: 14
+                                    font.pixelSize: 18
                                     font.family: "sans-serif"
                                     font.weight: Font.Medium
                                     color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.3) : "#cccccc")
@@ -3372,7 +3359,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: installedAurPackageItem.packageVersion
-                                    font.pixelSize: 11
+                                    font.pixelSize: 16
                                     font.family: "sans-serif"
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
                                     visible: installedAurPackageItem.packageVersion && installedAurPackageItem.packageVersion.length > 0
@@ -3420,19 +3407,19 @@ PanelWindow {
 
                     Flickable {
                         anchors.fill: parent
-                        anchors.margins: 20
+                        anchors.margins: 16
                         contentHeight: notesMenuColumn.height
                         clip: true
 
                         Column {
                             id: notesMenuColumn
                             width: parent.width
-                            spacing: 16
+                            spacing: 8
 
                             // Title
                             Text {
                                 text: "Notes Manager"
-                                font.pixelSize: 18
+                                font.pixelSize: 22
                                 font.family: "sans-serif"
                                 font.weight: Font.Bold
                                 color: colorText
@@ -3442,7 +3429,7 @@ PanelWindow {
                             Rectangle {
                                 id: newNoteButton
                                 width: parent.width
-                                height: 60
+                                height: 48
                                 color: "transparent"
                                 radius: 0
                                 scale: (notesMenuIndex === 0 || newNoteButtonMouseArea.containsMouse) ? 1.02 : 1.0
@@ -3480,7 +3467,7 @@ PanelWindow {
                                     anchors.bottom: parent.bottom
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: notesMenuIndex === 0 ? parent.width * 0.8 : 0
-                                    height: 3
+                                    height: 2
                                     color: colorAccent
                                     radius: 1.5
 
@@ -3496,7 +3483,7 @@ PanelWindow {
                             // Saved notes title
                             Text {
                                 text: "Zapisane notatki:"
-                                font.pixelSize: 14
+                                font.pixelSize: 18
                                 font.family: "sans-serif"
                                 font.weight: Font.Bold
                                 color: colorText
@@ -3507,21 +3494,21 @@ PanelWindow {
                             ListView {
                                 id: notesList
                                 width: parent.width
-                                height: 300
+                                height: 340
                                 model: ListModel { id: notesModel }
-                                spacing: 8
+                                spacing: 9
                                 clip: true
 
                                 delegate: Rectangle {
                                     id: noteItem
                                     width: notesList.width
-                                    height: 50
+                                    height: 36
                                     color: (notesMenuIndex === index + 1) ? colorAccent : (notesItemMouseArea.containsMouse ? colorPrimary : "transparent")
                                     radius: 0
 
                                     Text {
                                         text: model.name
-                                        font.pixelSize: 14
+                                        font.pixelSize: 18
                                         font.family: "sans-serif"
                                         color: colorText
                                         anchors.verticalCenter: parent.verticalCenter
@@ -3549,7 +3536,7 @@ PanelWindow {
                                         anchors.bottom: parent.bottom
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         width: selectedIndex === index ? notesList.width * 0.8 : 0
-                                        height: 3
+                                        height: 2
                                         color: colorAccent
                                         radius: 1.5
                                         Behavior on width {
@@ -3577,19 +3564,19 @@ PanelWindow {
 
                     Flickable {
                         anchors.fill: parent
-                        anchors.margins: 20
+                        anchors.margins: 16
                         contentHeight: notesEditorColumn.height
                         clip: true
 
                         Column {
                             id: notesEditorColumn
                             width: parent.width
-                            spacing: 16
+                            spacing: 8
 
                             // Title
                             Text {
                                 text: currentNotesMode === 0 ? "Nowa notatka" : "Edytuj notatkę"
-                                font.pixelSize: 18
+                                font.pixelSize: 22
                                 font.family: "sans-serif"
                                 font.weight: Font.Bold
                                 color: colorText
@@ -3601,7 +3588,7 @@ PanelWindow {
                                 text: currentNotesMode === 0 ?
                                     "Wpisz tytuł notatki w pierwszej linii, potem treść.\nNazwa pliku zostanie utworzona automatycznie." :
                                     "Edytuj notatkę. Pierwsza linia to tytuł."
-                                font.pixelSize: 12
+                                font.pixelSize: 16
                                 font.family: "sans-serif"
                                 color: "#888888"
                                 wrapMode: Text.Wrap
@@ -3611,7 +3598,7 @@ PanelWindow {
                             // Notes edit area
                             Rectangle {
                                 width: parent.width
-                                height: 350
+                                height: 250
                                 color: colorPrimary
                                 border.width: 2
                                 border.color: colorSecondary
@@ -3620,8 +3607,8 @@ PanelWindow {
                                 TextEdit {
                                     id: notesEditText
                                     anchors.fill: parent
-                                    anchors.margins: 12
-                                    font.pixelSize: 14
+                                    anchors.margins: 14
+                                    font.pixelSize: 18
                                     font.family: "sans-serif"
                                     color: colorText
                                     wrapMode: TextEdit.Wrap
@@ -3631,12 +3618,12 @@ PanelWindow {
 
                                     Text {
                                         text: "Wpisz swoją notatkę tutaj..."
-                                        font.pixelSize: 14
+                                        font.pixelSize: 18
                                         font.family: "sans-serif"
                                         color: Qt.lighter(colorText, 1.5)
                                         visible: parent.text.length === 0
                                         anchors.fill: parent
-                                        anchors.margins: 12
+                                        anchors.margins: 14
                                         verticalAlignment: Text.AlignTop
                                     }
                                 }
@@ -3644,19 +3631,19 @@ PanelWindow {
 
                             // Buttons row
                             Row {
-                                spacing: 12
+                                spacing: 9
                                 width: parent.width
 
                                 // Save button
                                 Rectangle {
                                     width: (parent.width - parent.spacing) / 2
-                                    height: 45
+                                    height: 36
                                     color: saveNoteButtonMouseArea.containsMouse ? colorAccent : colorSecondary
                                     radius: 0
 
                                     Text {
                                         text: "💾 Zapisz"
-                                        font.pixelSize: 14
+                                        font.pixelSize: 18
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: colorText
@@ -3677,7 +3664,7 @@ PanelWindow {
                                 // Cancel button
                                 Rectangle {
                                     width: (parent.width - parent.spacing) / 2
-                                    height: 45
+                                    height: 36
                                     color: cancelNoteButtonMouseArea.containsMouse ? colorPrimary : "transparent"
                                     border.width: 1
                                     border.color: colorSecondary
@@ -3685,7 +3672,7 @@ PanelWindow {
 
                                     Text {
                                         text: "❌ Anuluj"
-                                        font.pixelSize: 14
+                                        font.pixelSize: 18
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: colorText

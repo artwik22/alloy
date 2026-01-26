@@ -100,7 +100,7 @@ Rectangle {
     // Progress bar width property - will be animated from full to zero
     property real progressBarWidth: 0
     
-    width: 380
+    width: 304
     height: notificationContent.height + 32
     radius: 0
     color: getBackgroundColor()
@@ -180,7 +180,7 @@ Rectangle {
                     Text {
                         id: appNameText
                         text: "Notification"  // Default, will be updated in onNotificationChanged
-                        font.pixelSize: 12
+                        font.pixelSize: 9
                         font.family: "sans-serif"
                         font.weight: Font.Bold
                         color: sharedData && sharedData.colorAccent ? Qt.lighter(sharedData.colorAccent, 1.2) : "#9aa0a6"
@@ -193,7 +193,7 @@ Rectangle {
                     Text {
                         id: summaryText
                         text: ""  // Will be updated in onNotificationChanged
-                        font.pixelSize: 15
+                        font.pixelSize: 13
                         font.family: "sans-serif"
                         font.weight: Font.DemiBold
                         color: "#ffffff"
@@ -206,8 +206,8 @@ Rectangle {
                 // Close button with enhanced styling
                 Item {
                     id: closeButton
-                    width: 32
-                    height: 32
+                    width: 25
+                    height: 25
                     anchors.verticalCenter: iconRect.visible ? iconRect.verticalCenter : textColumn.verticalCenter
                     
                     Rectangle {
@@ -253,7 +253,7 @@ Rectangle {
                     
                     Text {
                         text: "󰅖"
-                        font.pixelSize: 16
+                        font.pixelSize: 13
                         anchors.centerIn: parent
                         color: closeButtonMouseArea.containsMouse ? 
                             "#ffffff" : 
@@ -302,7 +302,7 @@ Rectangle {
             Text {
                 id: bodyText
                 text: ""  // Will be updated in onNotificationChanged
-                font.pixelSize: 13
+                font.pixelSize: 10
                 font.family: "sans-serif"
                 font.weight: Font.Normal
                 color: "#b0b0b0"
@@ -340,7 +340,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 3  // Increased height for better visibility
+        height: 2
         color: "transparent"  // Background is transparent, only the fill is visible
         visible: true  // Always visible when notification exists
         z: 100  // Ensure it's above other elements

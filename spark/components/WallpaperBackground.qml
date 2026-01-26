@@ -17,8 +17,8 @@ PanelWindow {
         bottom: true
     }
     
-    implicitWidth: screen ? screen.width : 1920
-    implicitHeight: screen ? screen.height : 1080
+    implicitWidth: screen ? screen.width : 2160
+    implicitHeight: screen ? screen.height : 1440
     
     WlrLayershell.layer: WlrLayer.Background
     WlrLayershell.namespace: "qswallpaper"

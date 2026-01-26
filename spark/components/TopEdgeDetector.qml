@@ -12,7 +12,7 @@ PanelWindow {
     
     anchors { top: true }
     margins { top: 0 }
-    implicitWidth: screen ? screen.width : 1920
+    implicitWidth: screen ? screen.width : 2160
     implicitHeight: 5  // Bardzo cienki pasek do wykrywania
     
     WlrLayershell.layer: WlrLayer.Overlay

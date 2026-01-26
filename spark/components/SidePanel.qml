@@ -19,9 +19,9 @@ PanelWindow {
     anchors.top: true
     anchors.bottom: panelPosition === "left" ? true : false
     
-    // Dimensions based on panel position
-    implicitWidth: panelPosition === "left" ? 36 : (panelPosition === "top" ? (screen ? screen.width : 1920) : 0)
-    implicitHeight: panelPosition === "top" ? 36 : (panelPosition === "left" ? (screen ? screen.height : 1080) : 0)
+    // Dimensions based on panel position (33px – 70% scale)
+    implicitWidth: panelPosition === "left" ? 33 : (panelPosition === "top" ? (screen ? screen.width : 2160) : 0)
+    implicitHeight: panelPosition === "top" ? 33 : (panelPosition === "left" ? (screen ? screen.height : 1440) : 0)
     color: "transparent"
 
     // Detect if any workspace on this screen has a fullscreen window
@@ -67,7 +67,7 @@ PanelWindow {
     }
     
     // Background Rectangle - separate from buttons to avoid blocking clicks
-    // Material Design background with elevation shadow
+    // Material Design background with elevation shadow - NOWY DESIGN
     Rectangle {
         id: sidePanelRect
         anchors.fill: parent
@@ -76,12 +76,12 @@ PanelWindow {
         enabled: false  // Don't capture mouse events - allows clicks to pass through
         z: -1  // Put background behind everything to ensure buttons are clickable
         
-        // Material Design elevation shadow (simulated with border)
+        // Material Design elevation shadow (simulated with border) - bardziej subtelny
         Rectangle {
             anchors.fill: parent
-            anchors.margins: -2
+            anchors.margins: -1
             color: "transparent"
-            border.color: Qt.rgba(0, 0, 0, 0.2)  // Material shadow
+            border.color: Qt.rgba(0, 0, 0, 0.3)  // Material shadow - bardziej widoczny
             border.width: 1
             z: -2
         }
@@ -109,7 +109,7 @@ PanelWindow {
         Column {
             id: sidePanelClockColumn
             anchors.top: parent.top
-            anchors.topMargin: 14
+            anchors.topMargin: 6
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 4
             visible: panelPosition === "left"
@@ -162,7 +162,7 @@ PanelWindow {
         Row {
             id: sidePanelClockRow
             anchors.left: parent.left
-            anchors.leftMargin: 14
+            anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
             visible: panelPosition === "top"
@@ -252,7 +252,7 @@ PanelWindow {
         // Workspace switcher - pionowy dla pozycji left
         Item {
             id: sidePanelWorkspaceColumnContainer
-            width: 8
+            width: parent.width
             height: parent.height
             visible: panelPosition === "left"
             anchors.horizontalCenter: parent.horizontalCenter
@@ -261,7 +261,7 @@ PanelWindow {
             
             Column {
                 id: sidePanelWorkspaceColumn
-                spacing: 9
+                spacing: 12
                 width: parent.width
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
@@ -269,9 +269,9 @@ PanelWindow {
                 Repeater {
                     model: 4  // Workspaces 1-4
                 
-                Item {
+                    Item {
                     id: workspaceItem
-                    width: 8  // Większa szerokość tylko dla MouseArea
+                    width: parent.width
                     height: workspaceLine.height
                     anchors.horizontalCenter: parent.horizontalCenter
                     
@@ -292,19 +292,19 @@ PanelWindow {
                     
                     Component.onCompleted: wasActive = isActive
                     
-                    // Pionowa linia z lepszymi wskaźnikami
+                    // Pionowa linia z lepszymi wskaźnikami - NOWY DESIGN
                     Rectangle {
                         id: workspaceLine
                         anchors.centerIn: parent
-                        width: workspaceItem.isActive ? 3 : (workspaceItem.hasWindows ? 3 : 2.5)
-                        height: workspaceItem.isActive ? 45 : (workspaceItem.hasWindows ? 42 : 38)
+                        width: workspaceItem.isActive ? 4 : (workspaceItem.hasWindows ? 3 : 2.5)
+                        height: workspaceItem.isActive ? 70 : (workspaceItem.hasWindows ? 65 : 60)
                         color: workspaceItem.isActive ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                             workspaceItem.hasWindows ? 
                             ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                        radius: 0
-                        opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 1.0 : 0.85)
+                        radius: 2
+                        opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 0.9 : 0.7)
                         
                         Behavior on width {
                             NumberAnimation { 
@@ -374,8 +374,8 @@ PanelWindow {
                     
                     MouseArea {
                         id: workspaceMouseArea
-                        anchors.fill: workspaceLine  // Tylko w obszarze workspace line, nie całego item
-                        anchors.margins: -2  // Mały margines tylko dla łatwiejszego klikania
+                        anchors.fill: workspaceLine
+                        anchors.margins: -5
                         hoverEnabled: true
                         propagateComposedEvents: true  // Pozwól na propagację zdarzeń poza workspace
                         z: 1  // Very low z to ensure buttons (z: 10000) are on top
@@ -383,15 +383,15 @@ PanelWindow {
                         
                         onEntered: {
                             if (!workspaceItem.isActive) {
-                                workspaceLine.scale = 1.2
-                                workspaceLine.opacity = Math.min(workspaceLine.opacity + 0.2, 1.0)
+                                workspaceLine.scale = 1.15
+                                workspaceLine.opacity = Math.min(workspaceLine.opacity + 0.15, 1.0)
                             }
                         }
                         
                         onExited: {
                             if (!workspaceItem.isActive) {
                                 workspaceLine.scale = 1.0
-                                workspaceLine.opacity = workspaceItem.hasWindows ? 1.0 : 0.85
+                                workspaceLine.opacity = workspaceItem.hasWindows ? 0.9 : 0.7
                             }
                         }
                         
@@ -428,7 +428,7 @@ PanelWindow {
         Item {
             id: sidePanelWorkspaceRowContainer
             width: parent.width
-            height: 8
+            height: parent.height
             visible: panelPosition === "top"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
@@ -436,7 +436,7 @@ PanelWindow {
             
             Row {
                 id: sidePanelWorkspaceRow
-                spacing: 9
+                spacing: 12
                 height: parent.height
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
@@ -446,7 +446,7 @@ PanelWindow {
                 
                     Item {
                         id: workspaceItemTop
-                        height: 8  // Większa wysokość tylko dla MouseArea
+                        height: parent.height
                         width: workspaceLineTop.width
                         anchors.verticalCenter: parent.verticalCenter
                     
@@ -467,19 +467,19 @@ PanelWindow {
                     
                     Component.onCompleted: wasActive = isActive
                     
-                    // Pozioma linia z lepszymi wskaźnikami
+                    // Pozioma linia z lepszymi wskaźnikami - NOWY DESIGN
                     Rectangle {
                         id: workspaceLineTop
                         anchors.centerIn: parent
-                        height: workspaceItemTop.isActive ? 3 : (workspaceItemTop.hasWindows ? 3 : 2.5)
-                        width: workspaceItemTop.isActive ? 45 : (workspaceItemTop.hasWindows ? 42 : 38)
+                        height: workspaceItemTop.isActive ? 4 : (workspaceItemTop.hasWindows ? 3 : 2.5)
+                        width: workspaceItemTop.isActive ? 70 : (workspaceItemTop.hasWindows ? 65 : 60)
                         color: workspaceItemTop.isActive ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                             workspaceItemTop.hasWindows ? 
                             ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                        radius: 0
-                        opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 1.0 : 0.85)
+                        radius: 2
+                        opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 0.9 : 0.7)
                         
                         Behavior on width {
                             NumberAnimation { 
@@ -549,8 +549,8 @@ PanelWindow {
                     
                     MouseArea {
                         id: workspaceMouseAreaTop
-                        anchors.fill: workspaceLineTop  // Tylko w obszarze workspace line, nie całego item
-                        anchors.margins: -2  // Mały margines tylko dla łatwiejszego klikania
+                        anchors.fill: workspaceLineTop
+                        anchors.margins: -5
                         hoverEnabled: true
                         propagateComposedEvents: true  // Pozwól na propagację zdarzeń poza workspace
                         z: 1  // Very low z to ensure buttons (z: 10000) are on top
@@ -558,15 +558,15 @@ PanelWindow {
                         
                         onEntered: {
                             if (!workspaceItemTop.isActive) {
-                                workspaceLineTop.scale = 1.2
-                                workspaceLineTop.opacity = Math.min(workspaceLineTop.opacity + 0.2, 1.0)
+                                workspaceLineTop.scale = 1.15
+                                workspaceLineTop.opacity = Math.min(workspaceLineTop.opacity + 0.15, 1.0)
                             }
                         }
                         
                         onExited: {
                             if (!workspaceItemTop.isActive) {
                                 workspaceLineTop.scale = 1.0
-                                workspaceLineTop.opacity = workspaceItemTop.hasWindows ? 1.0 : 0.85
+                                workspaceLineTop.opacity = workspaceItemTop.hasWindows ? 0.9 : 0.7
                             }
                         }
                         
@@ -599,18 +599,18 @@ PanelWindow {
             }
         }
         
-        // Music Visualizer - PIONOWY dla pozycji left
+        // Music Visualizer - PIONOWY dla pozycji left (mniejszy)
         Item {
             id: musicVisualizerColumnContainer
-            width: 24
-            height: parent.height - 50  // Height minus space for screenshot button
+            width: parent.width
+            height: parent.height - 70
             visible: panelPosition === "left"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 50  // Above screenshot button (32px + 10px margin + ~8px spacing)
+            anchors.bottomMargin: 52
             z: 0  // Lower z-order to ensure buttons are clickable
             
-            Column {
+                Column {
                 id: musicVisualizerColumn
                 spacing: 2
                 width: parent.width
@@ -627,18 +627,18 @@ PanelWindow {
                 
                 Repeater {
                     id: visualizerBarsRepeater
-                    model: 36  // 36 pasków pionowo - 3x dłuższy visualizer
+                    model: 24  // 24 paski pionowo
                 
                     Rectangle {
                         id: visualizerBar
-                        height: 3  // Grubość paska
-                        width: Math.max(3, visualizerBarValue)  // Szerokość zależy od audio
+                        height: 3
+                        width: Math.max(3, visualizerBarValue)
                         x: (parent.width - width) / 2  // Wyśrodkuj bez anchors
                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                        radius: 0
+                        radius: 1.5
                         visible: true
                         
-                        property real visualizerBarValue: 5  // Start z widoczną szerokością
+                        property real visualizerBarValue: 3
                         
                         Behavior on width {
                             NumberAnimation {
@@ -657,15 +657,15 @@ PanelWindow {
             }
         }
         
-        // Music Visualizer - POZIOMY dla pozycji top
+        // Music Visualizer - POZIOMY dla pozycji top (mniejszy)
         Item {
             id: musicVisualizerRowContainer
             width: parent.width
-            height: 24
+            height: 22
             visible: panelPosition === "top"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
-            anchors.rightMargin: 100  // Space for buttons on right (moved above buttons)
+            anchors.rightMargin: 40
             z: 1
 
             Row {
@@ -686,18 +686,18 @@ PanelWindow {
                 
                 Repeater {
                     id: visualizerBarsRepeaterTop
-                    model: 36  // 36 pasków poziomo
+                    model: 24  // 24 paski poziomo
                     
                     Rectangle {
                         id: visualizerBarTop
-                        width: 3  // Grubość paska
-                        height: Math.max(3, visualizerBarValueTop)  // Wysokość zależy od audio
+                        width: 3
+                        height: Math.max(3, visualizerBarValueTop)
                         y: (parent.height - height) / 2  // Wyśrodkuj bez anchors
                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                        radius: 0
+                        radius: 1.5
                         visible: true
                         
-                        property real visualizerBarValueTop: 5  // Start z widoczną wysokością
+                        property real visualizerBarValueTop: 3
                         
                         Behavior on height {
                             NumberAnimation {
@@ -721,14 +721,14 @@ PanelWindow {
     // Screenshot Button - OUTSIDE sidePanelRect and sidePanelContent to ensure it's clickable
     Item {
         id: screenshotButtonContainer
-        width: 32
-        height: 32
+        width: 30
+        height: 30
 
         anchors.horizontalCenter: panelPosition === "left" ? parent.horizontalCenter : undefined
         anchors.right: panelPosition === "top" ? parent.right : undefined
-        anchors.rightMargin: panelPosition === "top" ? 48 : 0
+        anchors.rightMargin: panelPosition === "top" ? 7 : 0
         anchors.bottom: panelPosition === "left" ? parent.bottom : undefined
-        anchors.bottomMargin: panelPosition === "left" ? 10 : 0
+        anchors.bottomMargin: panelPosition === "left" ? 7 : 0
         z: 100000  // Very high z to ensure it's on top of everything (increased from 10000)
         visible: true
         enabled: true
@@ -751,13 +751,13 @@ PanelWindow {
             }
         }
         
-        // Material Design button with elevation
+        // Material Design button with elevation - NOWY DESIGN
         Rectangle {
             id: screenshotButton
-            width: 24
-            height: 24
+            width: 28
+            height: 28
             anchors.centerIn: parent
-            radius: 0
+            radius: 4
             // Material Design button color
             color: screenshotButtonMouseArea.containsMouse ?
                 ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
@@ -916,13 +916,13 @@ PanelWindow {
                         var colorPrimary = (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a"
                         var colorSecondary = (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
                         
-                        for (var i = 0; i < 36; i++) {
+                        for (var i = 0; i < 24; i++) {
                             var val = 0
                             if (i < values.length && values[i]) {
                                 val = parseInt(values[i]) || 0
                             }
-                            var normalizedWidth = Math.max(3, (val / 100) * 24)
-                            var normalizedHeight = Math.max(3, (val / 100) * 24)
+                            var normalizedWidth = Math.max(3, (val / 100) * 20)
+                            var normalizedHeight = Math.max(3, (val / 100) * 20)
                             var intensity = val / 100
                             
                             // Update vertical visualizer (for left position)
@@ -1010,9 +1010,9 @@ PanelWindow {
         running: false
         repeat: false
         onTriggered: {
-            // Ustaw minimalne wartości dla pasków, żeby były widoczne od razu
-            for (var i = 0; i < 36; i++) {
-                var value = 5 + (i % 3) * 3  // Różne wartości dla testu
+            // Ustaw minimalne wartości dla pasków (24 bary)
+            for (var i = 0; i < 24; i++) {
+                var value = 3 + (i % 2) * 2
                 if (visualizerBarsRepeater.itemAt(i)) {
                     visualizerBarsRepeater.itemAt(i).visualizerBarValue = value
                 }

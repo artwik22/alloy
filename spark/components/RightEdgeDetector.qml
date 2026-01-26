@@ -16,10 +16,10 @@ PanelWindow {
     }
     margins { 
         right: 0
-        top: (screen && screen.height) ? (screen.height - 270) / 2 : 0
+        top: (screen && screen.height) ? (screen.height - 288) / 2 : 0
     }
     implicitWidth: 1  // Minimalna szerokość tylko do wykrywania hover
-    implicitHeight: 270  // Tylko wysokość volume slidera (wyśrodkowany)
+    implicitHeight: 288  // 80%, dopasowane do VolumeSlider
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsrightedgedetector"
@@ -33,8 +33,8 @@ PanelWindow {
         id: edgeMouseArea
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        width: 10  // Tylko 10px przy prawej krawędzi
-        height: 270  // Tylko wysokość volume slidera
+        width: 8
+        height: 288
         hoverEnabled: true
         acceptedButtons: Qt.NoButton  // Nie przechwytuj kliknięć
         propagateComposedEvents: true  // Pozwól na propagację zdarzeń myszy

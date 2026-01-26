@@ -12,8 +12,8 @@ PanelWindow {
         right: true
     }
     
-    implicitWidth: notifications.length > 0 ? 380 : 0
-    implicitHeight: notifications.length > 0 ? 600 : 0
+    implicitWidth: notifications.length > 0 ? 343 : 0
+    implicitHeight: notifications.length > 0 ? 640 : 0
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsnotifications"
@@ -135,7 +135,7 @@ PanelWindow {
         anchors.right: parent.right
         anchors.rightMargin: 0
         width: parent.width
-        spacing: 8
+        spacing: 7
 
         // Premium smooth animation for notification repositioning
         move: Transition {
