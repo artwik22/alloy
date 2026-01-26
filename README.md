@@ -1,8 +1,8 @@
-# Alloy Desktop Environment
+# Alloy
 
-Modern desktop applications for Linux built with Rust and GTK4/libadwaita.
+A collection of modern desktop applications for Linux built with Rust and GTK4/libadwaita.
 
-## 📦 Projects
+## 📦 Components
 
 ### 🎛️ **Fuse** - Settings Manager
 System settings application with tabs for:
@@ -18,7 +18,7 @@ System settings application with tabs for:
 Lightweight file manager with minimalist design.
 
 ### 📊 **Vitals** - System Monitor
-System resource monitor with comprehensive tracking.
+System resource monitor with comprehensive performance tracking.
 
 ### ⚡ **Spark** - Shell/Launcher
 Quickshell-based launcher and shell system for Wayland.
@@ -27,7 +27,8 @@ Quickshell-based launcher and shell system for Wayland.
 
 ### Requirements
 
-- Rust 1.70+
+**Basic:**
+- Rust (edition 2021)
 - GTK4 and libadwaita development libraries
 
 **For Spark:**
@@ -56,24 +57,53 @@ sudo dnf install rust gtk4-devel libadwaita-devel
 Each project has its own `install.sh` script:
 
 ```bash
+# Fuse
 cd fuse && ./install.sh
+
+# Index
 cd index && ./install.sh
+
+# Vitals
 cd Vitals && ./install.sh
+
+# Spark
 cd spark && ./install.sh
 ```
 
+Installation scripts automatically:
+- Check and configure Rust toolchain
+- Build the project in release mode
+- Install binaries to `/usr/local/bin` (requires sudo) or `~/.local/bin`
+
 ### Running
+
+After installation, you can run applications directly from the terminal:
 
 ```bash
 # Fuse
-cd fuse && ./run_fuse.sh
-# or if installed: fuse
+fuse
 
 # Index
-cd index && ./index
+index
 
 # Vitals
-cd Vitals && ./run.sh
+vitals
+
+# Spark
+cd spark && ./run.sh
+```
+
+Or directly from project directories:
+
+```bash
+# Fuse
+cd fuse && ./target/release/fuse
+
+# Index
+cd index && ./target/release/index
+
+# Vitals
+cd Vitals && ./target/release/vitals
 
 # Spark
 cd spark && ./run.sh
@@ -85,13 +115,27 @@ cd spark && ./run.sh
 - `~/.config/alloy/colors.json` - Colors, wallpapers, theme settings
 - Fallback: `~/.config/sharpshell/colors.json`
 
-Settings are synchronized automatically between applications.
+Settings are automatically synchronized between applications.
+
+## 🏗️ Architecture
+
+The project consists of several independent applications:
+
+- **Fuse** - System settings application
+- **Index** - File manager
+- **Vitals** - System monitor (uses the `core` library from the main directory)
+- **Spark** - Quickshell-based launcher (QML)
+
+Each component can be built and installed independently.
 
 ## 🔧 Troubleshooting
 
 **Build issues:**
 ```bash
+# Check target directory permissions
 sudo chown -R $USER:$USER ~/.config/alloy/*/target/
+
+# Clean and rebuild
 cd <project> && cargo clean && ./install.sh
 ```
 
@@ -99,7 +143,16 @@ cd <project> && cargo clean && ./install.sh
 - Check Quickshell installation
 - Verify keyboard shortcuts in compositor
 - Run `cd spark && ./run.sh` to test
+- Spark requires a Wayland compositor
+
+**Dependency issues:**
+- Make sure you have all required development libraries installed
+- On Arch Linux, Quickshell may require installation from AUR (use `yay` or `paru`)
 
 ## 📄 License
 
 MIT License
+
+## 👥 Authors
+
+Alloy Team

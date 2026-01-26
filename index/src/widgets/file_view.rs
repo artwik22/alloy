@@ -359,10 +359,15 @@ impl FileGridView {
         {
             let selection_clone = selection.clone();
             let on_delete_clone = on_delete.clone();
+            let on_copy_clone = on_copy.clone();
+            let on_cut_clone = on_cut.clone();
+            let on_paste_clone = on_paste.clone();
+            let on_rename_clone = on_rename.clone();
             let key_controller = EventControllerKey::new();
             
-            key_controller.connect_key_pressed(move |_, key, _keycode, _state| {
-                if key == gtk4::gdk::Key::Delete {
+            key_controller.connect_key_pressed(move |_, key, _keycode, state| {
+                // Helper to get selected paths
+                let get_selected_paths = || {
                     let mut selected_paths = Vec::new();
                     let n_items = selection_clone.n_items();
                     for i in 0..n_items {
@@ -374,7 +379,12 @@ impl FileGridView {
                             }
                         }
                     }
-                    
+                    selected_paths
+                };
+                
+                // Delete key
+                if key == gtk4::gdk::Key::Delete {
+                    let selected_paths = get_selected_paths();
                     if !selected_paths.is_empty() {
                         if let Some(ref callback) = *on_delete_clone.borrow() {
                             callback(selected_paths);
@@ -382,6 +392,48 @@ impl FileGridView {
                         }
                     }
                 }
+                
+                // F2 - Rename
+                if key == gtk4::gdk::Key::F2 {
+                    let selected_paths = get_selected_paths();
+                    if selected_paths.len() == 1 {
+                        if let Some(ref callback) = *on_rename_clone.borrow() {
+                            callback(selected_paths[0].clone());
+                            return glib::Propagation::Stop;
+                        }
+                    }
+                }
+                
+                // Ctrl+C - Copy
+                if key == gtk4::gdk::Key::c && state.contains(gtk4::gdk::ModifierType::CONTROL_MASK) {
+                    let selected_paths = get_selected_paths();
+                    if !selected_paths.is_empty() {
+                        if let Some(ref callback) = *on_copy_clone.borrow() {
+                            callback(selected_paths);
+                            return glib::Propagation::Stop;
+                        }
+                    }
+                }
+                
+                // Ctrl+X - Cut
+                if key == gtk4::gdk::Key::x && state.contains(gtk4::gdk::ModifierType::CONTROL_MASK) {
+                    let selected_paths = get_selected_paths();
+                    if !selected_paths.is_empty() {
+                        if let Some(ref callback) = *on_cut_clone.borrow() {
+                            callback(selected_paths);
+                            return glib::Propagation::Stop;
+                        }
+                    }
+                }
+                
+                // Ctrl+V - Paste
+                if key == gtk4::gdk::Key::v && state.contains(gtk4::gdk::ModifierType::CONTROL_MASK) {
+                    if let Some(ref callback) = *on_paste_clone.borrow() {
+                        callback();
+                        return glib::Propagation::Stop;
+                    }
+                }
+                
                 glib::Propagation::Proceed
             });
             

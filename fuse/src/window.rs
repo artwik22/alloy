@@ -1,9 +1,10 @@
 use libadwaita::prelude::*;
 use libadwaita::ApplicationWindow;
 use gtk4::{
-    Box as GtkBox, Orientation, Label, Stack, ListBox, ListBoxRow, Separator,
+    Box as GtkBox, Orientation, Label, Stack, ListBox, ListBoxRow, Separator, ScrolledWindow,
 };
 use std::sync::{Arc, Mutex};
+use glib;
 
 use crate::core::config::ColorConfig;
 use crate::tabs::{appearance::AppearanceTab,
@@ -30,13 +31,13 @@ impl FuseWindow {
         
         // Set minimum size after building - allow smaller sizes for responsiveness
         window.set_default_size(1100, 750);
-        // Set minimum size constraints - very flexible for responsiveness
-        window.set_size_request(600, 400);
+        // Set minimum size constraints - very flexible for responsiveness (reduced for better small window support)
+        window.set_size_request(500, 350);
 
         // Content area with stack
         let stack = Stack::new();
         stack.set_transition_type(gtk4::StackTransitionType::Crossfade);
-        stack.set_transition_duration(250);
+        stack.set_transition_duration(150); // Reduced for better performance
         
         // Store stack reference for sidebar
         let stack_clone = stack.clone();
@@ -116,6 +117,16 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     sidebar.set_margin_top(12);
     sidebar.set_margin_bottom(0);
 
+    // Create ScrolledWindow for sidebar to enable scrolling in small windows
+    let scrolled = ScrolledWindow::new();
+    scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+    scrolled.set_hexpand(true);
+    scrolled.set_vexpand(true);
+    scrolled.set_min_content_width(-1);
+    scrolled.set_min_content_height(-1);
+    scrolled.set_propagate_natural_width(true);
+    scrolled.set_propagate_natural_height(true);
+    
     // Create ListBox for custom sidebar
     let list_box = ListBox::new();
     list_box.add_css_class("sidebar-listbox");
@@ -236,7 +247,11 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
         }
     });
     
-    sidebar.append(&list_box);
+    // Add ListBox to ScrolledWindow
+    scrolled.set_child(Some(&list_box));
+    
+    // Add ScrolledWindow to sidebar
+    sidebar.append(&scrolled);
     
     sidebar
 }

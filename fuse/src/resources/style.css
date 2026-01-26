@@ -22,6 +22,7 @@
     }
     to {
         opacity: 1;
+        transform: none; /* Reset transform to prevent layout issues */
     }
 }
 
@@ -63,6 +64,7 @@ window {
     animation: fadeIn 200ms ease-out;
     min-width: 0;
     min-height: 0;
+    overflow: visible !important;
 }
 
 window.background {
@@ -70,6 +72,7 @@ window.background {
     animation: fadeIn 200ms ease-out;
     min-width: 0;
     min-height: 0;
+    overflow: visible !important;
 }
 
 /* ===== Navigation Sidebar ===== */
@@ -212,6 +215,13 @@ separator {
 .sidebar-listbox {
     background-color: transparent;
     padding: 4px;
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+.sidebar-listbox row {
+    min-width: 0 !important;
+    overflow: visible !important;
 }
 
 .sidebar-listbox row {
@@ -618,19 +628,42 @@ window titlebar {
 window {
     min-width: 0;
     min-height: 0;
+    overflow: visible !important;
 }
 
 window > box {
     min-width: 0;
     min-height: 0;
+    overflow: visible !important;
+}
+
+/* Ensure main container is always visible */
+applicationwindow {
+    overflow: visible !important;
+}
+
+applicationwindow > box {
+    overflow: visible !important;
 }
 
 /* Make sidebar responsive */
 .sidebar {
-    min-width: 210px !important;
+    min-width: 140px !important;
     max-width: 320px !important;
     flex: 0 0 auto !important;
     width: auto !important;
+    overflow: visible !important;
+}
+
+/* Ensure sidebar content is visible */
+.sidebar scrolledwindow {
+    overflow: visible !important;
+    min-width: 0 !important;
+}
+
+.sidebar listbox {
+    min-width: 0 !important;
+    overflow: visible !important;
 }
 
 /* Make stack responsive */
@@ -639,6 +672,14 @@ stack {
     min-height: 0 !important;
     flex: 1 1 auto !important;
     width: auto !important;
+    overflow: visible !important;
+}
+
+/* Ensure stack children are visible */
+stack > child {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
 }
 
 /* Make main container responsive */
@@ -653,6 +694,38 @@ window > box {
 box {
     min-width: 0 !important;
     min-height: 0 !important;
+    overflow: visible !important;
+}
+
+/* Ensure horizontal boxes don't clip content */
+box[orient="horizontal"] {
+    overflow: visible !important;
+}
+
+/* Ensure vertical boxes don't clip content */
+box[orient="vertical"] {
+    overflow: visible !important;
+}
+
+/* Ensure buttons are always visible and responsive */
+button {
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: visible !important;
+}
+
+/* Ensure labels wrap text on small screens */
+label {
+    overflow: visible !important;
+    text-overflow: ellipsis;
+    min-width: 0 !important;
+}
+
+/* Ensure all widgets are visible */
+widget {
+    overflow: visible !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
 }
 
 /* Make ScrolledWindow responsive */
@@ -661,17 +734,44 @@ scrolledwindow {
     min-height: 0 !important;
     width: auto !important;
     height: auto !important;
+    overflow: visible !important;
+}
+
+/* Ensure ScrolledWindow content is visible */
+scrolledwindow > child {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
 }
 
 /* Force responsive behavior */
 applicationwindow > box {
     min-width: 0 !important;
     min-height: 0 !important;
+    overflow: visible !important;
 }
 
 applicationwindow > box > box {
     min-width: 0 !important;
     min-height: 0 !important;
+    overflow: visible !important;
+}
+
+/* Ensure main horizontal container is responsive */
+box[orient="horizontal"] {
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+/* Ensure all listboxes are responsive */
+listbox {
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+listbox row {
+    min-width: 0 !important;
+    overflow: visible !important;
 }
 
 /* Headerbar buttons */
@@ -1090,8 +1190,12 @@ entry {
     min-height: 40px;
     font-size: 11.5pt;
     color: @window_fg_color;
-    transition: all 200ms ease;
+    transition: background-color 200ms ease,
+                box-shadow 200ms ease,
+                transform 200ms ease;
+    /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 4px alpha(black, 0.1);
+    overflow: visible !important;
 }
 
 entry:focus {
@@ -1121,7 +1225,9 @@ checkbutton {
     margin: 0;
     padding: 4px;
     border-radius: 6px;
-    transition: all 150ms ease;
+    transition: background-color 150ms ease;
+    /* Don't transition 'all' as it can break layout */
+    overflow: visible !important;
 }
 
 checkbutton:hover {
@@ -1139,7 +1245,10 @@ checkbutton check {
     min-width: 18px;
     min-height: 18px;
     margin: 0;
-    transition: all 200ms ease;
+    transition: background-color 200ms ease,
+                border-color 200ms ease;
+    /* Don't transition 'all' as it can break layout */
+    overflow: visible !important;
 }
 
 checkbutton check:checked {
@@ -1169,8 +1278,12 @@ checkbutton label {
     border-radius: 10px;
     background-color: @card_bg_color;
     border: none;
-    transition: all 200ms ease;
+    transition: background-color 200ms ease,
+                box-shadow 200ms ease,
+                transform 200ms ease;
+    /* Don't transition 'all' as it can break layout */
     box-shadow: 0 1px 3px alpha(black, 0.08);
+    overflow: visible !important;
 }
 
 .keybind-row:hover {
@@ -1225,19 +1338,72 @@ checkbutton label {
     transition: background-color 200ms ease, 
                 border-color 200ms ease, 
                 color 200ms ease,
-                transform 150ms ease,
                 box-shadow 200ms ease,
                 opacity 200ms ease;
+    /* Removed transform from global transition to prevent layout issues */
+    /* Transform transitions only on specific elements that need them */
+}
+
+/* Transform transitions only for hover effects, not layout */
+button:hover,
+.sidebar-listbox row:hover:not(:selected) {
+    transition: background-color 200ms ease,
+                transform 150ms ease;
+}
+
+/* Disable expensive transitions during resize for better performance */
+window.resizing *,
+window.resizing box,
+window.resizing stack,
+window.resizing scrolledwindow,
+window.resizing button,
+window.resizing entry,
+window.resizing label,
+.resizing *,
+.resizing box,
+.resizing stack,
+.resizing scrolledwindow,
+.resizing button,
+.resizing entry,
+.resizing label {
+    transition: background-color 0ms ease, 
+                border-color 0ms ease, 
+                color 0ms ease,
+                transform 0ms ease,
+                box-shadow 0ms ease,
+                opacity 0ms ease !important;
+    animation: none !important;
+}
+
+/* Disable hover effects during resize */
+window.resizing button:hover,
+window.resizing entry:hover,
+.resizing button:hover,
+.resizing entry:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* ===== Stack Animation Enhancement ===== */
 stack {
-    transition: all 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: opacity 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    /* Don't transition 'all' as it can break layout */
+}
+
+/* Disable stack transitions during resize */
+window.resizing stack,
+.resizing stack {
+    transition: none !important;
 }
 
 /* ===== Appearance Tab Animations ===== */
 .settings-section {
-    animation: fadeInSlide 300ms ease-out;
+    animation: fadeInSlide 300ms ease-out forwards;
+    /* Ensure sections don't break layout after animation */
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    flex: 1 1 auto;
 }
 
 @keyframes fadeInSlide {
@@ -1247,7 +1413,7 @@ stack {
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0); /* Reset to prevent layout issues */
     }
 }
 
@@ -1256,8 +1422,11 @@ stack {
     min-width: 0;
     min-height: 140px;
     border-radius: 12px;
-    transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: box-shadow 250ms cubic-bezier(0.4, 0.0, 0.2, 1),
+                transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    /* Don't transition 'all' as it can break layout */
     flex: 1 1 auto;
+    overflow: visible !important;
 }
 
 .theme-card:hover {
@@ -1277,8 +1446,12 @@ stack {
     min-width: 0;
     padding: 12px 24px;
     border-radius: 8px;
-    transition: all 200ms ease;
+    transition: background-color 200ms ease,
+                box-shadow 200ms ease,
+                transform 200ms ease;
+    /* Don't transition 'all' as it can break layout */
     flex: 1 1 auto;
+    overflow: visible !important;
 }
 
 .rounding-button:hover {
@@ -1290,11 +1463,7 @@ stack {
     flex-wrap: wrap;
 }
 
-/* Settings sections - responsive */
-.settings-section {
-    min-width: 0;
-    flex: 1 1 auto;
-}
+/* Settings sections - responsive (merged with animation definition above) */
 
 /* Make theme cards and buttons flexible */
 .responsive-row .theme-card,
@@ -1474,8 +1643,12 @@ scale slider:hover {
     padding: 0;
     min-width: 0;
     min-height: 200px;
-    transition: all 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: background-color 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
+                box-shadow 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
+                transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 8px alpha(black, 0.08);
+    overflow: visible !important;
 }
 
 .preset-button:hover {
@@ -1537,8 +1710,11 @@ scale slider:hover {
     padding: 0;
     min-width: 180px;
     min-height: 160px;
-    transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: box-shadow 250ms cubic-bezier(0.4, 0.0, 0.2, 1),
+                transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 6px alpha(black, 0.08);
+    overflow: visible !important;
 }
 
 .theme-card:hover {
@@ -1664,7 +1840,12 @@ stack {
 }
 
 stack > child {
-    animation: fadeIn 250ms ease-out;
+    animation: fadeIn 250ms ease-out forwards;
+    /* Ensure children don't break layout */
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    /* Reset transform after animation to prevent layout issues */
 }
 
 /* Scrollbars - very thin line */

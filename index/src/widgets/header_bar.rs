@@ -1,6 +1,5 @@
 use gtk4::prelude::*;
 use gtk4::{Box as GtkBox, Button, Entry, Orientation, Popover, SearchEntry, ToggleButton};
-use gtk4::gio;
 use libadwaita as adw;
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
