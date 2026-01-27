@@ -56,7 +56,7 @@ impl WallpapersTab {
         content.append(&flowbox);
 
         // Only vertical scrolling, no horizontal scrolling
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false);
         scrolled.set_child(Some(&content));
 

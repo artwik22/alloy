@@ -10,8 +10,6 @@ PanelWindow {
     required property var screen
     required property var sharedData
 
-    screen: lockScreenRoot.screen
-
     anchors {
         left: true
         top: true
@@ -22,7 +20,7 @@ PanelWindow {
     implicitHeight: screen ? screen.height : 1080
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "qslockscreen"
+    WlrLayershell.namespace: "qslockscreen-" + (screen && screen.name ? screen.name : "0")
     WlrLayershell.keyboardFocus: (sharedData && sharedData.lockScreenVisible) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     exclusiveZone: -1
 

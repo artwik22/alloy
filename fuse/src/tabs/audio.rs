@@ -13,15 +13,23 @@ pub struct AudioTab {
 impl AudioTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        let content = GtkBox::new(Orientation::Vertical, 30);
-        content.set_margin_start(20);
-        content.set_margin_end(20);
-        content.set_margin_top(20);
-        content.set_margin_bottom(20);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
+        scrolled.set_overlay_scrolling(false);
+        scrolled.set_hexpand(true);
+        scrolled.set_vexpand(true);
+
+        let content = GtkBox::new(Orientation::Vertical, 24);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
+        content.set_hexpand(true);
+        content.set_vexpand(true);
 
         let title = Label::new(Some("Audio Settings"));
         title.add_css_class("title");
         title.set_xalign(0.0);
+        title.set_halign(gtk4::Align::Start);
         content.append(&title);
 
         // Default Output Device
@@ -56,8 +64,6 @@ impl AudioTab {
         let all_inputs_section = create_all_devices_section("All Input Devices", "󰍬", false);
         content.append(&all_inputs_section);
 
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
-        scrolled.set_overlay_scrolling(false);
         scrolled.set_child(Some(&content));
 
         Self {

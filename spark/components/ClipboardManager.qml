@@ -139,6 +139,7 @@ PanelWindow {
                     
                     // Material Design button with elevation
                     Rectangle {
+                        id: clearButtonRect
                         width: 25
                         height: 25
                         radius: 0
@@ -153,10 +154,10 @@ PanelWindow {
                         // Material Design elevation shadow
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: -buttonElevation
+                            anchors.margins: -clearButtonRect.buttonElevation
                             color: "transparent"
-                            border.color: Qt.rgba(0, 0, 0, 0.15 + buttonElevation * 0.05)
-                            border.width: buttonElevation
+                            border.color: Qt.rgba(0, 0, 0, 0.15 + clearButtonRect.buttonElevation * 0.05)
+                            border.width: clearButtonRect.buttonElevation
                             z: -1
                             
                             Behavior on border.color {
@@ -307,11 +308,7 @@ PanelWindow {
     property string lastClipboardContent: ""
     
     function checkClipboard() {
-        // Use wl-paste to read clipboard content (Wayland)
-        // Write clipboard content to temp file
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'wl-paste > /tmp/quickshell_clipboard_content 2>/dev/null || echo \"\" > /tmp/quickshell_clipboard_content']; running: true }", clipboardManagerRoot)
-        // Wait a moment and read the result
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: clipboardManagerRoot.readClipboardContent() }", clipboardManagerRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'wl-paste > /tmp/quickshell_clipboard_content 2>/dev/null || echo "" > /tmp/quickshell_clipboard_content'], readClipboardContent)
     }
     
     function readClipboardContent() {
@@ -356,17 +353,13 @@ PanelWindow {
     }
     
     function copyToClipboard(text) {
-        // Write text to temp file first, then copy from file to clipboard
-        // This avoids shell escaping issues
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo -n \"' + text.replace(/\\\"/g, '\\\\\"').replace(/\$/g, '\\\\$').replace(/`/g, '\\\\`') + '\" > /tmp/quickshell_clipboard_copy']; running: true }", clipboardManagerRoot)
-        // Wait a moment and copy to clipboard
-        Qt.createQmlObject("import QtQuick; Timer { interval: 50; running: true; repeat: false; onTriggered: clipboardManagerRoot.copyFromFile() }", clipboardManagerRoot)
+        var esc = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$").replace(/`/g, "\\`")
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'echo -n "' + esc + '" > /tmp/quickshell_clipboard_copy'], copyFromFile)
         lastClipboardContent = text
     }
     
     function copyFromFile() {
-        // Copy from file to clipboard using wl-copy (Wayland)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'cat /tmp/quickshell_clipboard_copy | wl-copy']; running: true }", clipboardManagerRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'cat /tmp/quickshell_clipboard_copy | wl-copy'])
     }
     
     Component.onCompleted: {

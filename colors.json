@@ -1,13 +1,15 @@
 {
-  "background": "#030303",
-  "primary": "#0a0a0a",
-  "secondary": "#060606",
-  "text": "#ffffff",
-  "accent": "#c0c0c0",
+  "background": "#0a0a0a",
+  "primary": "#1a1a1a",
+  "secondary": "#151515",
+  "text": "#e8e8e8",
+  "accent": "#a0a0a0",
   "lastWallpaper": "/home/iartwik/Pictures/Wallpapers/wallhaven-qdz995.jpg",
-  "colorPreset": "Pure Black",
+  "colorPreset": "Monochrome",
   "sidebarPosition": "left",
   "sidebarVisible": true,
   "rounding": "rounded",
-  "showHiddenFiles": true
+  "showHiddenFiles": true,
+  "uiScale": 100,
+  "dashboardTileLeft": "network"
 }

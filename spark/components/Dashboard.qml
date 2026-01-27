@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQml
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -17,50 +18,36 @@ PanelWindow {
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsdashboard"
-    WlrLayershell.keyboardFocus: (sharedData && sharedData.menuVisible) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: (showProgress > 0.5) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     exclusiveZone: 0
 
     property int currentTab: 0
     property var sharedData: null
-    
-    // Visibility control - always visible, controlled by slideOffset
+
+    // --- Animacja wejścia/wyjścia (bez glitchy) ---
+    // showProgress 0..1, start zawsze 0; Binding ustawia cel, Behavior animuje
+    property real showProgress: 0
+    Binding on showProgress {
+        value: (sharedData && sharedData.menuVisible) ? 1.0 : 0.0
+    }
+    Behavior on showProgress {
+        NumberAnimation { duration: 380; easing.type: Easing.OutCubic }
+    }
     visible: true
     color: "transparent"
-    
-    // Slide in animation from right - negative value moves right (off screen)
-    property int slideOffset: (sharedData && sharedData.menuVisible) ? 0 : -implicitWidth
-    
     margins {
         top: 0
         bottom: 0
-        right: slideOffset
+        right: -implicitWidth * (1.0 - showProgress)
         left: 0
-    }
-    
-    Behavior on slideOffset {
-        NumberAnimation {
-            duration: 500
-            easing.type: Easing.OutExpo
-        }
     }
 
     Item {
         id: dashboardContainer
         anchors.fill: parent
-        
-        property bool isShowing: dashboardRoot.visible
-        
-        opacity: (sharedData && sharedData.menuVisible) ? 1.0 : 0.0
-        
-        Behavior on opacity {
-            NumberAnimation { 
-                duration: 350
-                easing.type: Easing.OutQuart
-            }
-        }
-        
-        enabled: isShowing && opacity > 0.1
-        focus: (sharedData && sharedData.menuVisible)
+        opacity: showProgress
+        enabled: showProgress > 0.02
+        focus: showProgress > 0.02
         
         Keys.onPressed: function(event) {
             if (event.key === Qt.Key_Escape) {
@@ -282,66 +269,120 @@ PanelWindow {
                         anchors.margins: 12
                         spacing: 5
                         
-                        // Row with Battery % and Quick Actions side by side
+                        // Row with left tile (Battery or Network) and Quick Actions side by side
                         Row {
                             Layout.fillWidth: true
                             Layout.fillHeight: false
                             Layout.preferredHeight: 90
                             spacing: 5
                             
-                            // Battery % Card (left)
-                        Rectangle {
+                            // Left tile container: Battery or Network (Pobieranie i wysyłanie)
+                            Item {
                                 width: (parent.width - 12) / 2
                                 height: parent.height
-                            radius: 0
-                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                            
-                            // Material Design elevation shadow
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -2
-                                color: "transparent"
-                                border.color: Qt.rgba(0, 0, 0, 0.2)
-                                border.width: 1
-                                z: -1
-                            }
-                            
-                            Column {
-                                anchors.centerIn: parent
-                                spacing: 5
                                 
-                                Row {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: 5
-                                    Text {
-                                        text: batteryPercent >= 90 ? "󰁹" : (batteryPercent >= 70 ? "󰂂" : (batteryPercent >= 50 ? "󰂀" : (batteryPercent >= 30 ? "󰁾" : (batteryPercent >= 10 ? "󰁼" : "󰂃"))))
-                                        font.pixelSize: 12
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        anchors.verticalCenter: parent.verticalCenter
+                                // Battery % Card
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: !(sharedData && sharedData.dashboardTileLeft === "network")
+                                    radius: 0
+                                    color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        anchors.margins: -2
+                                        color: "transparent"
+                                        border.color: Qt.rgba(0, 0, 0, 0.2)
+                                        border.width: 1
+                                        z: -1
                                     }
-                                    
-                                    Text {
-                                        text: "Battery"
-                                        font.pixelSize: 11
-                                        font.weight: Font.Bold
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        anchors.verticalCenter: parent.verticalCenter
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 5
+                                        Row {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            spacing: 5
+                                            Text {
+                                                text: batteryPercent >= 90 ? "󰁹" : (batteryPercent >= 70 ? "󰂂" : (batteryPercent >= 50 ? "󰂀" : (batteryPercent >= 30 ? "󰁾" : (batteryPercent >= 10 ? "󰁼" : "󰂃"))))
+                                                font.pixelSize: 12
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                            Text {
+                                                text: "Battery"
+                                                font.pixelSize: 11
+                                                font.weight: Font.Bold
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: batteryPercent >= 0 ? (batteryPercent + "%") : "—"
+                                            font.pixelSize: 22
+                                            font.family: "sans-serif"
+                                            font.weight: Font.Bold
+                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        }
                                     }
                                 }
-                                
-                                Text {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: batteryPercent >= 0 ? (batteryPercent + "%") : "—"
-                                    font.pixelSize: 22
-                                    font.family: "sans-serif"
-                                    font.weight: Font.Bold
-                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                // Network (Pobieranie i wysyłanie) Card
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: (sharedData && sharedData.dashboardTileLeft === "network")
+                                    radius: 0
+                                    color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        anchors.margins: -2
+                                        color: "transparent"
+                                        border.color: Qt.rgba(0, 0, 0, 0.2)
+                                        border.width: 1
+                                        z: -1
+                                    }
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 4
+                                        Row {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            spacing: 5
+                                            Text {
+                                                text: "󰇚"
+                                                font.pixelSize: 12
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                            Text {
+                                                text: "Pobieranie / Wysyłanie"
+                                                font.pixelSize: 10
+                                                font.weight: Font.Bold
+                                                font.family: "sans-serif"
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: "↓ " + (networkRxMBs < 0.01 ? "0" : networkRxMBs.toFixed(2)) + " MB/s"
+                                            font.pixelSize: 14
+                                            font.family: "sans-serif"
+                                            font.weight: Font.Bold
+                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: "↑ " + (networkTxMBs < 0.01 ? "0" : networkTxMBs.toFixed(2)) + " MB/s"
+                                            font.pixelSize: 14
+                                            font.family: "sans-serif"
+                                            font.weight: Font.Bold
+                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        }
+                                    }
                                 }
                             }
-                        }
-                        
+                            
                             // Material Design Quick Actions Card (right)
                         Rectangle {
                                 width: (parent.width - 12) / 2
@@ -589,7 +630,7 @@ PanelWindow {
                                             cursorShape: Qt.PointingHandCursor
                                             hoverEnabled: true
                                             onClicked: {
-                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'poweroff']; running: true }", dashboardRoot)
+                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['systemctl', 'poweroff'])
                                                 // Close dashboard after poweroff
                                                 if (sharedData) {
                                                     sharedData.menuVisible = false
@@ -1347,8 +1388,7 @@ PanelWindow {
                                             cursorShape: Qt.PointingHandCursor
                                             hoverEnabled: true
                                             onClicked: {
-                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['playerctl', 'previous']; running: true }", dashboardRoot)
-                                                getAudioPlayerInfo()
+                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['playerctl', 'previous'], getAudioPlayerInfo)
                                             }
                                         }
                                     }
@@ -1377,7 +1417,7 @@ PanelWindow {
                                             cursorShape: Qt.PointingHandCursor
                                             hoverEnabled: true
                                             onClicked: {
-                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['playerctl', 'play-pause']; running: true }", dashboardRoot)
+                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['playerctl', 'play-pause'])
                                                 getAudioPlayerInfo()
                                             }
                                         }
@@ -1405,7 +1445,7 @@ PanelWindow {
                                             cursorShape: Qt.PointingHandCursor
                                             hoverEnabled: true
                                             onClicked: {
-                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['playerctl', 'next']; running: true }", dashboardRoot)
+                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['playerctl', 'next'])
                                                 getAudioPlayerInfo()
                                             }
                                         }
@@ -1461,8 +1501,10 @@ PanelWindow {
                                         color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
                                         
                                         Row {
-                                            anchors.fill: parent
-                                            anchors.margins: 12
+                                            x: 12
+                                            y: 12
+                                            width: parent.width - 24
+                                            height: parent.height - 24
                                             spacing: 5
                                             
                                             // Application Name
@@ -1868,9 +1910,12 @@ PanelWindow {
                             spacing: 5
                             model: (sharedData && sharedData.notificationHistory) ? sharedData.notificationHistory : []
                             
-                            // Empty state
+                            // Empty state (no anchors – ListView is child of Column)
                             Text {
-                                anchors.centerIn: parent
+                                width: parent.width - 24
+                                height: implicitHeight
+                                x: (parent.width - width) / 2
+                                y: (parent.height - height) / 2
                                 text: "󰂛 No notifications"
                                 font.pixelSize: 9
                                 font.family: "sans-serif"
@@ -2080,9 +2125,15 @@ PanelWindow {
     // Calendar days model
     property var calendarDays: []
     
+    // Uptime (display string, set by updateUptime())
+    property string uptimeDisplayText: "󰥔: --"
+    
     // Battery
     property int batteryPercent: -1
     
+    // Network (download/upload MB/s for dashboard tile)
+    property real networkRxMBs: 0
+    property real networkTxMBs: 0
     
     // Performance tab models
     property var diskUsageModel: []
@@ -2092,7 +2143,8 @@ PanelWindow {
     property var cavaValues: []
     property bool cavaRunning: false
     property string projectPath: ""
-    
+    onProjectPathChanged: { if (projectPath && projectPath.length > 0 && !cavaRunning) startCava() }
+
     // Clipboard properties
     property string lastClipboardContent: ""
     
@@ -2101,11 +2153,11 @@ PanelWindow {
         id: dashboardClipboardHistoryModel
     }
     
-    // Monitor clipboard changes
+    // Monitor clipboard changes – only when dashboard is open and Clipboard tab is active
     Timer {
         id: dashboardClipboardMonitorTimer
-        interval: 500  // Check every 500ms
-        running: true
+        interval: 500
+        running: (sharedData && sharedData.menuVisible) && (currentTab === 2)
         repeat: true
         onTriggered: dashboardRoot.checkClipboard()
     }
@@ -2115,8 +2167,7 @@ PanelWindow {
         // Simple weather update - can be extended with API integration
         // For now, uses a simple approach that can be customized
         // Example: curl -s "wttr.in?format=%t+%C" or use a weather service
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','curl -s \"wttr.in?format=%t+%C\" 2>/dev/null | head -1 > /tmp/quickshell_weather || echo \"15°C Clear\" > /tmp/quickshell_weather']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readWeather() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','curl -s "wttr.in?format=%t+%C" 2>/dev/null | head -1 > /tmp/quickshell_weather || echo "15°C Clear" > /tmp/quickshell_weather'], readWeather)
     }
     
     function readWeather() {
@@ -2136,8 +2187,7 @@ PanelWindow {
     }
     
     function updateDistro() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','(grep \"^PRETTY_NAME=\" /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d \\\"\\\" || grep \"^NAME=\" /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d \\\"\\\" || echo \"Linux\") > /tmp/quickshell_distro']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: dashboardRoot.readDistro() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','(grep "^PRETTY_NAME=" /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d \'"\'"\' || grep "^NAME=" /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d \'"\'"\' || echo "Linux") > /tmp/quickshell_distro'], readDistro)
     }
     
     function readDistro() {
@@ -2157,8 +2207,7 @@ PanelWindow {
     }
     
     function updateBattery() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1 > /tmp/quickshell_battery || echo -1 > /tmp/quickshell_battery']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readBattery() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1 > /tmp/quickshell_battery || echo -1 > /tmp/quickshell_battery'], readBattery)
     }
     
     function readBattery() {
@@ -2174,10 +2223,32 @@ PanelWindow {
         xhr.send()
     }
     
+    function updateNetwork() {
+        if (sharedData && sharedData.runCommand) {
+            var script = "(A=$(tail -n +3 /proc/net/dev 2>/dev/null | awk '{r+=$2;t+=$10} END {print r+0,t+0}'); sleep 1; B=$(tail -n +3 /proc/net/dev 2>/dev/null | awk '{r+=$2;t+=$10} END {print r+0,t+0}'); echo \"$A $B\") > /tmp/quickshell_net_speed"
+            sharedData.runCommand(['sh','-c', script], readNetwork)
+        }
+    }
+    function readNetwork() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_net_speed")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                var s = (xhr.responseText || "").trim()
+                var parts = s.split(/\s+/)
+                if (parts.length >= 4) {
+                    var rx0 = parseFloat(parts[0]) || 0, tx0 = parseFloat(parts[1]) || 0
+                    var rx1 = parseFloat(parts[2]) || 0, tx1 = parseFloat(parts[3]) || 0
+                    networkRxMBs = Math.max(0, (rx1 - rx0) / 1048576)
+                    networkTxMBs = Math.max(0, (tx1 - tx0) / 1048576)
+                }
+            }
+        }
+        xhr.send()
+    }
     
     function updateWindowManager() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','(echo $XDG_CURRENT_DESKTOP 2>/dev/null | cut -d: -f1 || echo $DESKTOP_SESSION 2>/dev/null || ps -e | grep -E \"(hyprland|sway|i3|kwin|mutter|xfwm4|openbox|dwm)\" | head -1 | awk \"{print \\$4}\" | tr -d \\\"\\\" || echo \"Unknown\") > /tmp/quickshell_wm']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: dashboardRoot.readWindowManager() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','(echo $XDG_CURRENT_DESKTOP 2>/dev/null | cut -d: -f1 || echo $DESKTOP_SESSION 2>/dev/null || ps -e | grep -E "(hyprland|sway|i3|kwin|mutter|xfwm4|openbox|dwm)" | head -1 | awk "{print \$4}" | tr -d \'"\'"\' || echo "Unknown") > /tmp/quickshell_wm'], readWindowManager)
     }
     
     function readWindowManager() {
@@ -2235,11 +2306,8 @@ PanelWindow {
     }
     
     function updateDate() {
-        var now = new Date()
-        dayNumber.text = now.getDate().toString()
-        monthNumber.text = (now.getMonth() + 1 < 10 ? "0" : "") + (now.getMonth() + 1).toString()
-        
-        // dayName was removed, so we don't update it
+        // Calendar grid and clock are updated by updateCalendar() and calendarClockTimer.
+        // dayNumber/monthNumber elements were removed; no separate date display to update.
     }
     
     function updateUptime() {
@@ -2262,7 +2330,7 @@ PanelWindow {
                     if (!uptimeStr) {
                         uptimeStr = "0m"
                     }
-                    uptimeText.text = "󰥔: " + uptimeStr
+                    uptimeDisplayText = "󰥔: " + uptimeStr
                 }
             }
         }
@@ -2283,8 +2351,7 @@ PanelWindow {
     }
 
     function updatePlayerMetadata() {
-        Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["sh", "-c", "playerctl metadata --format \'{{artist}}\\n{{title}}\\n{{album}}\\n{{mpris:artUrl}}\\n{{mpris:length}}\\n{{status}}\' > /tmp/quickshell_player_info 2>/tmp/quickshell_player_err || echo > /tmp/quickshell_player_info"]; running: true }', dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readPlayerMetadata() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(["sh", "-c", "playerctl metadata --format '{{artist}}\\n{{title}}\\n{{album}}\\n{{mpris:artUrl}}\\n{{mpris:length}}\\n{{status}}' > /tmp/quickshell_player_info 2>/tmp/quickshell_player_err || echo > /tmp/quickshell_player_info"], readPlayerMetadata)
     }
     
     function readPlayerMetadata() {
@@ -2326,8 +2393,7 @@ PanelWindow {
     }
 
     function updatePlayerPosition() {
-        Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["sh", "-c", "playerctl position > /tmp/quickshell_player_pos 2>/dev/null || echo 0 > /tmp/quickshell_player_pos"]; running: true }', dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: dashboardRoot.readPlayerPosition() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(["sh", "-c", "playerctl position > /tmp/quickshell_player_pos 2>/dev/null || echo 0 > /tmp/quickshell_player_pos"], readPlayerPosition)
     }
     
     function readPlayerPosition() {
@@ -2349,25 +2415,22 @@ PanelWindow {
     }
 
     function playerPlayPause() {
-        Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["playerctl", "play-pause"]; running: true }', dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 250; running: true; repeat: false; onTriggered: dashboardRoot.updatePlayerMetadata() }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 400; running: true; repeat: false; onTriggered: dashboardRoot.updatePlayerPosition() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) {
+            sharedData.runCommand(["playerctl", "play-pause"], function(){ updatePlayerMetadata(); updatePlayerPosition() })
+        }
     }
 
     function playerNext() {
-        Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["playerctl", "next"]; running: true }', dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: dashboardRoot.updatePlayerMetadata() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(["playerctl", "next"], updatePlayerMetadata)
     }
 
     function playerPrev() {
-        Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["playerctl", "previous"]; running: true }', dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: dashboardRoot.updatePlayerMetadata() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(["playerctl", "previous"], updatePlayerMetadata)
     }
     
     // ============ AUDIO TAB FUNCTIONS ============
     function getSystemVolume() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk \\\"{print $5}\\\" | tr -d % > /tmp/quickshell_volume']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: dashboardRoot.readSystemVolume() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk "{print $5}" | tr -d % > /tmp/quickshell_volume'], readSystemVolume)
     }
     
     function readSystemVolume() {
@@ -2386,18 +2449,15 @@ PanelWindow {
     
     function setSystemVolume(value) {
         audioVolumeValue = Math.round(value)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl','set-sink-volume','@DEFAULT_SINK@','" + Math.round(value) + "%']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.getSystemVolume() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl','set-sink-volume','@DEFAULT_SINK@',Math.round(value) + '%'], getSystemVolume)
     }
     
     function toggleMute() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl','set-sink-mute','@DEFAULT_SINK@','toggle']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.checkMuteStatus() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl','set-sink-mute','@DEFAULT_SINK@','toggle'], checkMuteStatus)
     }
     
     function checkMuteStatus() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','pactl get-sink-mute @DEFAULT_SINK@ | grep -q yes && echo 1 > /tmp/quickshell_audio_muted || echo 0 > /tmp/quickshell_audio_muted']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: dashboardRoot.readMuteStatus() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','pactl get-sink-mute @DEFAULT_SINK@ | grep -q yes && echo 1 > /tmp/quickshell_audio_muted || echo 0 > /tmp/quickshell_audio_muted'], readMuteStatus)
     }
     
     function readMuteStatus() {
@@ -2413,9 +2473,8 @@ PanelWindow {
     
     // ============ AUDIO MIXER FUNCTIONS ============
     function getAudioApplications() {
-        var scriptPath = projectPath ? (projectPath + "/spark/scripts/get-audio-applications.sh") : "/home/iartwik/.config/alloy/spark/scripts/get-audio-applications.sh"
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'bash \\\"" + scriptPath + "\\\" > /tmp/quickshell_audio_apps']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readAudioApplications() }", dashboardRoot)
+        var scriptPath = projectPath ? (projectPath + "/scripts/get-audio-applications.sh") : ("/home/iartwik/.config/alloy/spark/scripts/get-audio-applications.sh")
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'bash "' + scriptPath + '" > /tmp/quickshell_audio_apps'], readAudioApplications)
     }
     
     function readAudioApplications() {
@@ -2452,7 +2511,7 @@ PanelWindow {
     
     function setApplicationVolume(sinkInputIndex, volume) {
         var volumePercent = Math.round(volume)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl', 'set-sink-input-volume', '" + sinkInputIndex + "', '" + volumePercent + "%']; running: true }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl', 'set-sink-input-volume', sinkInputIndex, volumePercent + '%'])
         
         // Update the model immediately for responsive UI
         for (var i = 0; i < audioApplicationsModel.count; i++) {
@@ -2463,21 +2522,18 @@ PanelWindow {
         }
         
         // Refresh after a delay to sync with actual system state
-        Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.getAudioApplications() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'sleep 0.5'], getAudioApplications)
     }
     
     function getAudioPlayerInfo() {
         // Get player status
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','playerctl status 2>/dev/null | head -1 > /tmp/quickshell_player_status || echo stopped > /tmp/quickshell_player_status']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readAudioPlayerStatus() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','playerctl status 2>/dev/null | head -1 > /tmp/quickshell_player_status || echo stopped > /tmp/quickshell_player_status'], readAudioPlayerStatus)
         
         // Get track title
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','playerctl metadata title 2>/dev/null | head -1 > /tmp/quickshell_player_title || echo > /tmp/quickshell_player_title']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readAudioPlayerTitle() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','playerctl metadata title 2>/dev/null | head -1 > /tmp/quickshell_player_title || echo > /tmp/quickshell_player_title'], readAudioPlayerTitle)
         
         // Get artist
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','playerctl metadata artist 2>/dev/null | head -1 > /tmp/quickshell_player_artist || echo > /tmp/quickshell_player_artist']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readAudioPlayerArtist() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','playerctl metadata artist 2>/dev/null | head -1 > /tmp/quickshell_player_artist || echo > /tmp/quickshell_player_artist'], readAudioPlayerArtist)
     }
     
     function readAudioPlayerStatus() {
@@ -2523,7 +2579,7 @@ PanelWindow {
         id: calendarClockTimer
         interval: 1000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: {
             var now = new Date()
             var h = now.getHours()
@@ -2548,52 +2604,52 @@ PanelWindow {
         id: dateTimer
         interval: 1000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateDate()
-        Component.onCompleted: updateDate()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateDate()
     }
     
     Timer {
         id: calendarTimer
         interval: 60000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateCalendar()
-        Component.onCompleted: updateCalendar()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateCalendar()
     }
     
     Timer {
         id: uptimeTimer
         interval: 60000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateUptime()
-        Component.onCompleted: updateUptime()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateUptime()
     }
     
     Timer {
         id: playerMetadataTimer
         interval: 3000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible) && (currentTab === 1)
         onTriggered: updatePlayerMetadata()
-        Component.onCompleted: updatePlayerMetadata()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updatePlayerMetadata()
     }
 
     Timer {
         id: playerPositionTimer
         interval: 500
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible) && (currentTab === 1)
         onTriggered: updatePlayerPosition()
-        Component.onCompleted: updatePlayerPosition()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updatePlayerPosition()
     }
 
     Timer {
         id: ramTimer
         interval: 2000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         function readRam() {
             var xhr = new XMLHttpRequest()
             xhr.open("GET", "file:///proc/meminfo")
@@ -2622,7 +2678,7 @@ PanelWindow {
         id: cpuTimer
         interval: 2000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
 
         property int lastIdle: 0
         property int lastTotal: 0
@@ -2661,14 +2717,13 @@ PanelWindow {
         id: gpuTimer
         interval: 2000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: readGpu()
     }
     
     function readGpu() {
         // Read GPU usage using nvidia-smi (primary) or radeontop (fallback)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d \" \" > /tmp/quickshell_gpu_usage || (timeout 1 radeontop -l 1 -d - 2>/dev/null | tail -1 | awk \"{print int(\\$2)}\" > /tmp/quickshell_gpu_usage) || echo 0 > /tmp/quickshell_gpu_usage']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 800; running: true; repeat: false; onTriggered: dashboardRoot.readGpuData() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d " " > /tmp/quickshell_gpu_usage || (timeout 1 radeontop -l 1 -d - 2>/dev/null | tail -1 | awk "{print int($2)}" > /tmp/quickshell_gpu_usage) || echo 0 > /tmp/quickshell_gpu_usage'], readGpuData)
     }
     
     function readGpuData() {
@@ -2699,18 +2754,34 @@ PanelWindow {
 
     Timer {
         id: batteryTimer
-        interval: 10000  // co 10 s
+        interval: 10000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateBattery()
-        Component.onCompleted: updateBattery()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateBattery()
+    }
+    // Odśwież % baterii od razu po otwarciu menu (nie czekaj do pierwszego ticku timera)
+    Connections {
+        target: sharedData
+        enabled: !!sharedData
+        function onMenuVisibleChanged() {
+            if (sharedData && sharedData.menuVisible) updateBattery()
+        }
+    }
+    
+    Timer {
+        id: networkTimer
+        interval: 3000
+        repeat: true
+        running: (sharedData && sharedData.menuVisible) && (sharedData && sharedData.dashboardTileLeft === "network")
+        onTriggered: updateNetwork()
+        Component.onCompleted: if ((sharedData && sharedData.menuVisible) && (sharedData && sharedData.dashboardTileLeft === "network")) updateNetwork()
     }
     
     
     // ============ PERFORMANCE TAB FUNCTIONS ============
     function updateDiskUsage() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','df -h | grep -E \"^/dev\" | awk \"{print \\$6 \\\"|\\\" \\$2 \\\"|\\\" \\$3 \\\"|\\\" \\$5}\" | head -5 > /tmp/quickshell_disk_usage 2>/dev/null || echo > /tmp/quickshell_disk_usage']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readDiskUsage() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','df -h | grep -E "^/dev" | awk "{print $6 \"|\" $2 \"|\" $3 \"|\" $5}" | head -5 > /tmp/quickshell_disk_usage 2>/dev/null || echo > /tmp/quickshell_disk_usage'], readDiskUsage)
     }
     
     function readDiskUsage() {
@@ -2742,8 +2813,7 @@ PanelWindow {
     }
     
     function updateTopProcesses() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','ps aux --sort=-%cpu 2>/dev/null | tail -n +2 | head -8 | awk \"{print \\$11 \\\"|\\\" \\$3 \\\"|\\\" \\$4}\" > /tmp/quickshell_top_processes 2>/dev/null || echo > /tmp/quickshell_top_processes']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 600; running: true; repeat: false; onTriggered: dashboardRoot.readTopProcesses() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','ps aux --sort=-%cpu 2>/dev/null | tail -n +2 | head -8 | awk "{print $11 \"|\" $3 \"|\" $4}" > /tmp/quickshell_top_processes 2>/dev/null || echo > /tmp/quickshell_top_processes'], readTopProcesses)
     }
     
     function readTopProcesses() {
@@ -2780,8 +2850,7 @@ PanelWindow {
     }
     
     function updateCpuTemp() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','(sensors 2>/dev/null | grep -i \"cpu\" | grep -oE \"[0-9]+\\.[0-9]+\" | head -1 | cut -d. -f1 > /tmp/quickshell_cpu_temp) || (cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1 | awk \"{print int(\\$1/1000)}\" > /tmp/quickshell_cpu_temp) || echo 0 > /tmp/quickshell_cpu_temp']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readCpuTemp() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','(sensors 2>/dev/null | grep -i "cpu" | grep -oE "[0-9]+\\.[0-9]+" | head -1 | cut -d. -f1 > /tmp/quickshell_cpu_temp) || (cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1 | awk "{print int($1/1000)}" > /tmp/quickshell_cpu_temp) || echo 0 > /tmp/quickshell_cpu_temp'], readCpuTemp)
     }
     
     function readCpuTemp() {
@@ -2797,8 +2866,7 @@ PanelWindow {
     }
     
     function updateGpuTemp() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 > /tmp/quickshell_gpu_temp) || (sensors 2>/dev/null | grep -i \"gpu\\|radeon\\|amdgpu\" | grep -oE \"[0-9]+\\.[0-9]+\" | head -1 | cut -d. -f1 > /tmp/quickshell_gpu_temp) || echo 0 > /tmp/quickshell_gpu_temp']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readGpuTemp() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 > /tmp/quickshell_gpu_temp) || (sensors 2>/dev/null | grep -i "gpu\\|radeon\\|amdgpu" | grep -oE "[0-9]+\\.[0-9]+" | head -1 | cut -d. -f1 > /tmp/quickshell_gpu_temp) || echo 0 > /tmp/quickshell_gpu_temp'], readGpuTemp)
     }
     
     function readGpuTemp() {
@@ -2813,50 +2881,47 @@ PanelWindow {
         xhr.send()
     }
     
-    // Performance timers
+    // Performance timers – only when dashboard is open
     Timer {
         id: diskUsageTimer
         interval: 5000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateDiskUsage()
-        Component.onCompleted: updateDiskUsage()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateDiskUsage()
     }
     
     Timer {
         id: topProcessesTimer
         interval: 3000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateTopProcesses()
-        Component.onCompleted: updateTopProcesses()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateTopProcesses()
     }
     
     Timer {
         id: cpuTempTimer
         interval: 5000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateCpuTemp()
-        Component.onCompleted: updateCpuTemp()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateCpuTemp()
     }
     
     Timer {
         id: gpuTempTimer
         interval: 5000
         repeat: true
-        running: true
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updateGpuTemp()
-        Component.onCompleted: updateGpuTemp()
+        Component.onCompleted: if (sharedData && sharedData.menuVisible) updateGpuTemp()
     }
     
     // ============ CAVA VISUALIZER FUNCTIONS ============
     function startCava() {
-        // Sprawdź czy cava jest zainstalowane
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','which cava > /dev/null 2>&1 && echo 1 > /tmp/quickshell_cava_available || echo 0 > /tmp/quickshell_cava_available']; running: true }", dashboardRoot)
-        
-        // Poczekaj i sprawdź dostępność
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.checkCavaAvailable() }", dashboardRoot)
+        if (sharedData && sharedData.lowPerformanceMode) return
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','which cava > /dev/null 2>&1 && echo 1 > /tmp/quickshell_cava_available || echo 0 > /tmp/quickshell_cava_available'], checkCavaAvailable)
     }
     
     function checkCavaAvailable() {
@@ -2869,19 +2934,17 @@ PanelWindow {
                     // Użyj skryptu start-cava.sh do uruchomienia cava
                     var scriptPath = projectPath ? (projectPath + "/scripts/start-cava.sh") : ""
                     if (!scriptPath || scriptPath === "/scripts/start-cava.sh") {
-                        // Try to get from environment
-                        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_cava_path 2>/dev/null || echo \"\" > /tmp/quickshell_cava_path']; running: true }", dashboardRoot)
-                        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readCavaPath() }", dashboardRoot)
+                        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'echo "$QUICKSHELL_PROJECT_PATH" > /tmp/quickshell_cava_path 2>/dev/null || true'], readCavaPath)
                         return
                     }
                     if (!scriptPath || scriptPath.length === 0 || scriptPath === "/scripts/start-cava.sh") {
                         return
                     }
                     var absScriptPath = scriptPath
-                    Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["bash", "' + absScriptPath + '"]; running: true }', dashboardRoot)
-                    
-                    cavaRunning = true
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readCavaData() }", dashboardRoot)
+                    if (sharedData && sharedData.runCommand) {
+                        cavaRunning = true
+                        sharedData.runCommand(["bash", absScriptPath], readCavaData)
+                    }
                 }
             }
         }
@@ -2898,9 +2961,10 @@ PanelWindow {
                     projectPath = path
                     var scriptPath = projectPath + "/scripts/start-cava.sh"
                     var absScriptPath = scriptPath
-                    Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["bash", "' + absScriptPath + '"]; running: true }', dashboardRoot)
-                    cavaRunning = true
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: dashboardRoot.readCavaData() }", dashboardRoot)
+                    if (sharedData && sharedData.runCommand) {
+                        cavaRunning = true
+                        sharedData.runCommand(["bash", absScriptPath], readCavaData)
+                    }
                 }
             }
         }
@@ -2946,10 +3010,10 @@ PanelWindow {
         xhr.send()
     }
     
-    // Timer do odczytu danych z cava
+    // Timer do odczytu danych z cava (33ms≈30 FPS; 50ms gdy low-perf)
     Timer {
         id: cavaDataTimer
-        interval: 16  // ~60 FPS
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 50 : 33
         repeat: true
         running: cavaRunning
         onTriggered: readCavaData()
@@ -3038,11 +3102,11 @@ PanelWindow {
         updateUptime()
         updateDistro()
         updateWindowManager()
-        // Initialize project path
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_cava_path 2>/dev/null || pwd > /tmp/quickshell_cava_path']; running: true }", dashboardRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: dashboardRoot.readCavaPath() }", dashboardRoot)
-        startCava()
-        // Initialize clipboard monitoring
+        if (projectPath && projectPath.length > 0) {
+            startCava()
+        } else if (sharedData && sharedData.runCommand) {
+            sharedData.runCommand(['sh', '-c', 'echo "$QUICKSHELL_PROJECT_PATH" > /tmp/quickshell_cava_path 2>/dev/null || pwd > /tmp/quickshell_cava_path'], readCavaPath)
+        }
         checkClipboard()
     }
     
@@ -3050,7 +3114,7 @@ PanelWindow {
         target: sharedData
         function onMenuVisibleChanged() {
             if (sharedData && sharedData.menuVisible) {
-                Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: { if (dashboardRoot.dashboardContainer) dashboardRoot.dashboardContainer.forceActiveFocus() } }", dashboardRoot)
+                if (dashboardRoot.dashboardContainer) dashboardRoot.dashboardContainer.forceActiveFocus()
             } else {
                 dashboardContainer.focus = false
             }
@@ -3059,42 +3123,36 @@ PanelWindow {
     
     // ============ POWER MENU FUNCTIONS ============
     function suspendSystem() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'suspend']; running: true }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['systemctl', 'suspend'])
     }
     
     function rebootSystem() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'reboot']; running: true }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['systemctl', 'reboot'])
     }
     
     function shutdownSystem() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['systemctl', 'poweroff']; running: true }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['systemctl', 'poweroff'])
     }
     
     function logoutSystem() {
         // Try loginctl first, fallback to pkill
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'loginctl terminate-session $(loginctl list-sessions | grep $(whoami) | awk \"{print $1}\" | head -1) 2>/dev/null || pkill -KILL -u $(whoami)']; running: true }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'loginctl terminate-session $(loginctl list-sessions | grep $(whoami) | awk "{print $1}" | head -1) 2>/dev/null || pkill -KILL -u $(whoami)'])
     }
     
     // ============ NOTIFICATION FUNCTIONS ============
     function copyToClipboard(text) {
-        // Write text to temp file first, then copy from file to clipboard
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo -n \"' + text.replace(/\\\"/g, '\\\\\"').replace(/\$/g, '\\\\$').replace(/`/g, '\\\\`') + '\" > /tmp/quickshell_clipboard_copy']; running: true }", dashboardRoot)
-        // Wait a moment and copy to clipboard
-        Qt.createQmlObject("import QtQuick; Timer { interval: 50; running: true; repeat: false; onTriggered: dashboardRoot.copyFromFile() }", dashboardRoot)
+        var esc = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$").replace(/`/g, "\\`")
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'echo -n "' + esc + '" > /tmp/quickshell_clipboard_copy'], copyFromFile)
         lastClipboardContent = text
     }
     
     function copyFromFile() {
-        // Copy from file to clipboard using wl-copy (Wayland)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'cat /tmp/quickshell_clipboard_copy | wl-copy']; running: true }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'cat /tmp/quickshell_clipboard_copy | wl-copy'])
     }
     
     // ============ CLIPBOARD FUNCTIONS ============
     function checkClipboard() {
-        // Use wl-paste to read clipboard content (Wayland)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'wl-paste > /tmp/quickshell_clipboard_content 2>/dev/null || echo \"\" > /tmp/quickshell_clipboard_content']; running: true }", dashboardRoot)
-        // Wait a moment and read the result
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: dashboardRoot.readClipboardContent() }", dashboardRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'wl-paste > /tmp/quickshell_clipboard_content 2>/dev/null || echo "" > /tmp/quickshell_clipboard_content'], readClipboardContent)
     }
     
     function readClipboardContent() {

@@ -5,6 +5,13 @@ use std::sync::{Arc, Mutex};
 use crate::core::config::ColorConfig;
 use crate::core::quickshell;
 
+fn schedule_notify_color_change_ms(ms: u32) {
+    gtk4::glib::timeout_add_local(std::time::Duration::from_millis(ms as u64), move || {
+        let _ = quickshell::notify_color_change();
+        gtk4::glib::ControlFlow::Break
+    });
+}
+
 pub struct QuickshellTab {
     widget: ScrolledWindow,
     _config: Arc<Mutex<ColorConfig>>,
@@ -13,7 +20,7 @@ pub struct QuickshellTab {
 impl QuickshellTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false);
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
@@ -43,6 +50,16 @@ impl QuickshellTab {
         let sidebar_position_section = create_sidebar_position_section(Arc::clone(&config));
         sidebar_position_section.set_hexpand(true);
         content.append(&sidebar_position_section);
+
+        // Scaling section
+        let scaling_section = create_scaling_section(Arc::clone(&config));
+        scaling_section.set_hexpand(true);
+        content.append(&scaling_section);
+
+        // Dashboard tile (left) section: Battery vs Network
+        let dashboard_tile_section = create_dashboard_tile_section(Arc::clone(&config));
+        dashboard_tile_section.set_hexpand(true);
+        content.append(&dashboard_tile_section);
 
         // Notifications section
         let notifications_section = create_notifications_section(Arc::clone(&config));
@@ -100,11 +117,7 @@ fn create_sidebar_visible_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
-                // Wait a bit for file to be written
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                // Notify quickshell about change
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }
@@ -173,10 +186,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Update button styles
                 btn.add_css_class("suggested-action");
                 top_btn.remove_css_class("suggested-action");
-                // Wait a bit for file to be written and synced to disk
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }
@@ -196,10 +206,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 // Update button styles
                 btn.add_css_class("suggested-action");
                 left_btn.remove_css_class("suggested-action");
-                // Wait a bit for file to be written and synced to disk
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }
@@ -208,6 +215,198 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     header.append(&button_box);
 
     let desc = Label::new(Some("Choose sidebar position: Left or Top"));
+    desc.add_css_class("section-description");
+    desc.set_xalign(0.0);
+    desc.set_margin_start(18);
+    desc.set_margin_end(18);
+    desc.set_margin_bottom(18);
+
+    section.append(&header);
+    section.append(&desc);
+
+    section
+}
+
+fn create_scaling_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    let header = GtkBox::new(Orientation::Horizontal, 12);
+    header.set_margin_start(18);
+    header.set_margin_end(18);
+    header.set_margin_top(18);
+    header.set_margin_bottom(12);
+    header.set_valign(gtk4::Align::Center);
+
+    let section_title = Label::new(Some("Scaling"));
+    section_title.add_css_class("section-title");
+    section_title.set_xalign(0.0);
+    section_title.set_halign(gtk4::Align::Start);
+    section_title.set_hexpand(true);
+    header.append(&section_title);
+
+    // Button box for scale selection: 75%, 100%, 125%
+    let button_box = GtkBox::new(Orientation::Horizontal, 8);
+    button_box.set_halign(gtk4::Align::End);
+    button_box.set_hexpand(false);
+
+    let current_scale = config.lock().unwrap().ui_scale.unwrap_or(100);
+    let is_75 = current_scale == 75;
+    let is_100 = current_scale == 100;
+    let is_125 = current_scale == 125;
+
+    let btn_75 = Button::with_label("75%");
+    if is_75 {
+        btn_75.add_css_class("suggested-action");
+    }
+    let btn_100 = Button::with_label("100%");
+    if is_100 {
+        btn_100.add_css_class("suggested-action");
+    }
+    let btn_125 = Button::with_label("125%");
+    if is_125 {
+        btn_125.add_css_class("suggested-action");
+    }
+
+    {
+        let config = Arc::clone(&config);
+        let b100 = btn_100.clone();
+        let b125 = btn_125.clone();
+        btn_75.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_ui_scale(75);
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                b100.remove_css_class("suggested-action");
+                b125.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_75);
+
+    {
+        let config = Arc::clone(&config);
+        let b75 = btn_75.clone();
+        let b125 = btn_125.clone();
+        btn_100.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_ui_scale(100);
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                b75.remove_css_class("suggested-action");
+                b125.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_100);
+
+    {
+        let config = Arc::clone(&config);
+        let b75 = btn_75.clone();
+        let b100 = btn_100.clone();
+        btn_125.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_ui_scale(125);
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                b75.remove_css_class("suggested-action");
+                b100.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_125);
+
+    header.append(&button_box);
+
+    let desc = Label::new(Some("UI scale (75%, 100%, 125%). Quickshell: restart via run.sh to apply. Fuse and GTK apps: use it on next launch. When opening Fuse from the shell it uses current scale."));
+    desc.add_css_class("section-description");
+    desc.set_xalign(0.0);
+    desc.set_margin_start(18);
+    desc.set_margin_end(18);
+    desc.set_margin_bottom(18);
+
+    section.append(&header);
+    section.append(&desc);
+
+    section
+}
+
+fn create_dashboard_tile_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    let header = GtkBox::new(Orientation::Horizontal, 12);
+    header.set_margin_start(18);
+    header.set_margin_end(18);
+    header.set_margin_top(18);
+    header.set_margin_bottom(12);
+    header.set_valign(gtk4::Align::Center);
+
+    let section_title = Label::new(Some("Kafelek dashboardu (lewy)"));
+    section_title.add_css_class("section-title");
+    section_title.set_xalign(0.0);
+    section_title.set_halign(gtk4::Align::Start);
+    section_title.set_hexpand(true);
+    header.append(&section_title);
+
+    let button_box = GtkBox::new(Orientation::Horizontal, 8);
+    button_box.set_halign(gtk4::Align::End);
+    button_box.set_hexpand(false);
+
+    let current = config.lock().unwrap().dashboard_tile_left.clone().unwrap_or_else(|| "battery".to_string());
+    let is_battery = current == "battery";
+    let is_network = current == "network";
+
+    let btn_battery = Button::with_label("Bateria");
+    if is_battery {
+        btn_battery.add_css_class("suggested-action");
+    }
+    let btn_network = Button::with_label("Pobieranie i wysyłanie");
+    if is_network {
+        btn_network.add_css_class("suggested-action");
+    }
+
+    {
+        let config = Arc::clone(&config);
+        let btn_net = btn_network.clone();
+        btn_battery.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_tile_left("battery");
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                btn_net.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_battery);
+
+    {
+        let config = Arc::clone(&config);
+        let btn_bat = btn_battery.clone();
+        btn_network.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_tile_left("network");
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                btn_bat.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_network);
+
+    header.append(&button_box);
+
+    let desc = Label::new(Some("Co wyświetlać na lewym kafelku w dashboardzie: Bateria lub pobieranie/wysyłanie sieci"));
     desc.add_css_class("section-description");
     desc.set_xalign(0.0);
     desc.set_margin_start(18);
@@ -258,11 +457,7 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
-                // Wait a bit for file to be written
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                // Notify quickshell about change
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }
@@ -320,11 +515,7 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
-                // Wait a bit for file to be written
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                // Notify quickshell about change
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }

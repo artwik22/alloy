@@ -7,9 +7,7 @@ PanelWindow {
     
     required property var screen
     required property var sharedData
-    
-    screen: edgeDetector.screen
-    
+
     anchors { 
         right: true
         top: true
@@ -22,7 +20,7 @@ PanelWindow {
     implicitHeight: 288  // 80%, dopasowane do VolumeSlider
     
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "qsrightedgedetector"
+    WlrLayershell.namespace: "qsrightedgedetector-" + (screen && screen.name ? screen.name : "0")
     exclusiveZone: 0
     
     color: "transparent"

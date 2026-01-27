@@ -64,7 +64,6 @@ window {
     animation: fadeIn 200ms ease-out;
     min-width: 0;
     min-height: 0;
-    overflow: visible !important;
 }
 
 window.background {
@@ -72,7 +71,6 @@ window.background {
     animation: fadeIn 200ms ease-out;
     min-width: 0;
     min-height: 0;
-    overflow: visible !important;
 }
 
 /* ===== Navigation Sidebar ===== */
@@ -215,13 +213,11 @@ separator {
 .sidebar-listbox {
     background-color: transparent;
     padding: 4px;
-    min-width: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 .sidebar-listbox row {
-    min-width: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 .sidebar-listbox row {
@@ -262,14 +258,18 @@ separator {
     margin: 8px 12px;
 }
 
-/* Disable hover effects on separator rows */
-.sidebar-listbox row:has(separator):hover {
+/* Wiersze-separatory: bez hover/active, zachowaj tylko cienką linię */
+.sidebar-listbox row.sidebar-separator {
+    background-color: transparent;
+    min-height: 1px;
+    margin: 0;
+    border-radius: 0;
+    transition: none;
+}
+.sidebar-listbox row.sidebar-separator:hover,
+.sidebar-listbox row.sidebar-separator:active {
     background-color: transparent;
     transform: none;
-}
-
-.sidebar-listbox row:has(separator) {
-    pointer-events: none;
 }
 
 .sidebar-switcher button {
@@ -559,134 +559,119 @@ entry placeholder {
 
 /* ===== Header Bar ===== */
 headerbar {
-    background-color: transparent !important;
-    box-shadow: none !important;
-    border-bottom: none !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    background-color: transparent;
+    box-shadow: none;
+    border-bottom: none;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
 }
 
 headerbar:backdrop {
-    background-color: transparent !important;
+    background-color: transparent;
 }
 
 headerbar.flat {
-    background-color: transparent !important;
-    border-bottom: none !important;
+    background-color: transparent;
+    border-bottom: none;
 }
 
 headerbar.flat:backdrop {
-    background-color: transparent !important;
+    background-color: transparent;
 }
 
 /* Hide headerbar completely */
 window headerbar {
-    opacity: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    display: none !important;
+    opacity: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 headerbar {
-    opacity: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    display: none !important;
+    opacity: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 /* Hide titlebar decoration */
 window decoration {
-    opacity: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
+    opacity: 0;
+    min-height: 0;
 }
 
 window titlebar {
-    opacity: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    display: none !important;
+    opacity: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 /* Make window content responsive */
 window {
     min-width: 0;
     min-height: 0;
-    overflow: visible !important;
 }
 
 window > box {
     min-width: 0;
     min-height: 0;
-    overflow: visible !important;
 }
 
 /* Ensure main container is always visible */
 applicationwindow {
-    overflow: visible !important;
 }
 
 applicationwindow > box {
-    overflow: visible !important;
 }
 
-/* Make sidebar responsive */
+/* Make sidebar responsive; narrower min so content area usable at 1/4 screen */
 .sidebar {
-    min-width: 180px !important;
-    max-width: 280px !important;
-    flex: 0 0 auto !important;
-    width: auto !important;
-    overflow: visible !important;
+    min-width: 140px;
 }
 
 /* Sidebar ScrolledWindow: allow vertical scroll when many items, keep list usable */
 .sidebar scrolledwindow {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: auto !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 .sidebar listbox {
-    min-width: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 /* Make stack responsive */
 stack {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    flex: 1 1 auto !important;
-    width: auto !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Content area (tabs): allow scrolling so buttons/content stay reachable when window is small */
 stack scrolledwindow {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: auto !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Ensure stack children get correct allocation; scrolling handled by scrolledwindow above */
 stack > child {
-    min-width: 0 !important;
-    min-height: 0 !important;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Sections inside tab content: allow shrink so they scroll on narrow windows */
+.settings-section,
+.content-section {
+    min-width: 0;
 }
 
 /* Show scrollbars in content and sidebar when resizing so controls stay accessible */
@@ -706,94 +691,69 @@ stack scrolledwindow scrollbar:hover,
 
 /* Make main container responsive */
 window > box {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    flex: 1 1 auto !important;
-    width: auto !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Make all boxes responsive */
 box {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Ensure horizontal boxes don't clip content */
 box[orient="horizontal"] {
-    overflow: visible !important;
 }
 
 /* Ensure vertical boxes don't clip content */
 box[orient="vertical"] {
-    overflow: visible !important;
 }
 
 /* Ensure buttons are always visible and responsive */
 button {
-    min-width: 0 !important;
-    max-width: none !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 /* Ensure labels wrap text on small screens */
 label {
-    overflow: visible !important;
-    text-overflow: ellipsis;
-    min-width: 0 !important;
+    min-width: 0;
 }
 
-/* Ensure all widgets are visible */
-widget {
-    overflow: visible !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-}
-
-/* Make ScrolledWindow responsive */
+/* Make ScrolledWindow responsive: allow scroll when content doesn't fit (small window) */
 scrolledwindow {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
 }
 
-/* Ensure ScrolledWindow content is visible */
+/* ScrolledWindow content can shrink so scrollbars appear when needed */
 scrolledwindow > child {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Force responsive behavior */
 applicationwindow > box {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 applicationwindow > box > box {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* Ensure main horizontal container is responsive */
 box[orient="horizontal"] {
-    min-width: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 /* Ensure all listboxes are responsive */
 listbox {
-    min-width: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 listbox row {
-    min-width: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
 }
 
 /* Headerbar buttons */
@@ -1177,7 +1137,6 @@ switch {
     margin: 0;
     padding: 0;
     outline: none;
-    overflow: hidden;
 }
 
 switch:checked {
@@ -1188,15 +1147,12 @@ switch slider {
     background-color: white;
     border-radius: 50%;
     min-width: 14px;
-    width: 14px;
     min-height: 14px;
-    height: 14px;
     margin-top: 3px;
     margin-bottom: 3px;
     margin-left: 3px;
     margin-right: 3px;
     outline: none;
-    box-sizing: border-box;
 }
 
 switch:checked slider {
@@ -1217,7 +1173,6 @@ entry {
                 transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 4px alpha(black, 0.1);
-    overflow: visible !important;
 }
 
 entry:focus {
@@ -1249,7 +1204,6 @@ checkbutton {
     border-radius: 6px;
     transition: background-color 150ms ease;
     /* Don't transition 'all' as it can break layout */
-    overflow: visible !important;
 }
 
 checkbutton:hover {
@@ -1270,7 +1224,6 @@ checkbutton check {
     transition: background-color 200ms ease,
                 border-color 200ms ease;
     /* Don't transition 'all' as it can break layout */
-    overflow: visible !important;
 }
 
 checkbutton check:checked {
@@ -1305,7 +1258,6 @@ checkbutton label {
                 transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 1px 3px alpha(black, 0.08);
-    overflow: visible !important;
 }
 
 .keybind-row:hover {
@@ -1393,8 +1345,8 @@ window.resizing label,
                 color 0ms ease,
                 transform 0ms ease,
                 box-shadow 0ms ease,
-                opacity 0ms ease !important;
-    animation: none !important;
+                opacity 0ms ease;
+    animation: none;
 }
 
 /* Disable hover effects during resize */
@@ -1402,8 +1354,8 @@ window.resizing button:hover,
 window.resizing entry:hover,
 .resizing button:hover,
 .resizing entry:hover {
-    transform: none !important;
-    box-shadow: none !important;
+    transform: none;
+    box-shadow: none;
 }
 
 /* ===== Stack Animation Enhancement ===== */
@@ -1415,17 +1367,15 @@ stack {
 /* Disable stack transitions during resize */
 window.resizing stack,
 .resizing stack {
-    transition: none !important;
+    transition: none;
 }
 
 /* ===== Appearance Tab Animations ===== */
 .settings-section {
     animation: fadeInSlide 300ms ease-out forwards;
     /* Ensure sections don't break layout after animation */
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
 }
 
 @keyframes fadeInSlide {
@@ -1447,8 +1397,6 @@ window.resizing stack,
     transition: box-shadow 250ms cubic-bezier(0.4, 0.0, 0.2, 1),
                 transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
-    flex: 1 1 auto;
-    overflow: visible !important;
 }
 
 .theme-card:hover {
@@ -1472,8 +1420,6 @@ window.resizing stack,
                 box-shadow 200ms ease,
                 transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
-    flex: 1 1 auto;
-    overflow: visible !important;
 }
 
 .rounding-button:hover {
@@ -1482,7 +1428,6 @@ window.resizing stack,
 
 /* Responsive row - stacks vertically on small screens */
 .responsive-row {
-    flex-wrap: wrap;
 }
 
 /* Settings sections - responsive (merged with animation definition above) */
@@ -1490,7 +1435,6 @@ window.resizing stack,
 /* Make theme cards and buttons flexible */
 .responsive-row .theme-card,
 .responsive-row .rounding-button {
-    flex: 1 1 auto;
     min-width: 0;
 }
 
@@ -1501,7 +1445,6 @@ flowbox {
 
 flowbox child {
     min-width: 0;
-    flex: 1 1 auto;
 }
 
 /* ===== About Page Styles ===== */
@@ -1670,7 +1613,6 @@ scale slider:hover {
                 transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 8px alpha(black, 0.08);
-    overflow: visible !important;
 }
 
 .preset-button:hover {
@@ -1689,7 +1631,6 @@ scale slider:hover {
     font-weight: 700;
     color: @window_fg_color;
     letter-spacing: -0.2px;
-    text-align: center;
 }
 
 .color-bar {
@@ -1710,7 +1651,6 @@ scale slider:hover {
     color: alpha(@window_fg_color, 0.8);
     text-transform: uppercase;
     letter-spacing: 1px;
-    text-align: center;
 }
 
 /* Expand wallpapers button */
@@ -1736,7 +1676,6 @@ scale slider:hover {
                 transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 6px alpha(black, 0.08);
-    overflow: visible !important;
 }
 
 .theme-card:hover {
@@ -1750,7 +1689,6 @@ scale slider:hover {
 
 .theme-preview {
     border-radius: 8px 8px 0 0;
-    overflow: hidden;
 }
 
 .theme-preview-light {
@@ -1765,20 +1703,16 @@ scale slider:hover {
     font-size: 12pt;
     font-weight: 600;
     color: @window_fg_color;
-    text-align: center;
 }
 
 /* Wallpaper grid tiles - responsive */
 .wallpaper-tile-appearance {
     min-width: 0;
     min-height: 180px;
-    height: 180px;
     border-radius: 8px;
-    overflow: hidden;
     border: none;
     transition: box-shadow 200ms ease, transform 150ms ease;
     /* Allow tiles to shrink and expand */
-    flex: 1 1 auto;
 }
 
 .wallpaper-tile-appearance:hover {
@@ -1864,9 +1798,8 @@ stack {
 stack > child {
     animation: fadeIn 250ms ease-out forwards;
     /* Ensure children don't break layout */
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: visible !important;
+    min-width: 0;
+    min-height: 0;
     /* Reset transform after animation to prevent layout issues */
 }
 

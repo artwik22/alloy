@@ -7,9 +7,7 @@ PanelWindow {
     
     required property var screen
     property string currentWallpaper: ""
-    
-    screen: wallpaperWindow.screen
-    
+
     anchors {
         left: true
         top: true
@@ -21,7 +19,7 @@ PanelWindow {
     implicitHeight: screen ? screen.height : 1440
     
     WlrLayershell.layer: WlrLayer.Background
-    WlrLayershell.namespace: "qswallpaper"
+    WlrLayershell.namespace: "qswallpaper-" + (screen && screen.name ? screen.name : "0")
     exclusiveZone: -1  // Pełny ekran
     
     visible: true
@@ -44,7 +42,7 @@ PanelWindow {
         source: currentWallpaper ? (currentWallpaper.startsWith("/") ? "file://" + currentWallpaper : currentWallpaper) : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
-        cache: false  // Disable cache to always show latest version
+        cache: true
         
         onStatusChanged: {
             if (status === Image.Error) {

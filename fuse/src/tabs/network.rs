@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Button};
+use gtk4::gio;
 use std::sync::{Arc, Mutex};
 use std::process::Command;
 use std::collections::HashSet;
@@ -14,7 +15,7 @@ pub struct NetworkTab {
 impl NetworkTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false);
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
@@ -76,15 +77,12 @@ fn create_wifi_section() -> GtkBox {
     section_title.set_hexpand(true);
     header.append(&section_title);
 
-    // Wi-Fi toggle
-    let wifi_enabled = is_wifi_enabled();
     let wifi_toggle = Switch::new();
-    wifi_toggle.set_active(wifi_enabled);
     wifi_toggle.set_halign(gtk4::Align::End);
     wifi_toggle.set_valign(gtk4::Align::Center);
     wifi_toggle.set_hexpand(false);
     wifi_toggle.set_vexpand(false);
-    
+
     {
         let wifi_toggle_clone = wifi_toggle.clone();
         wifi_toggle.connect_active_notify(move |toggle| {
@@ -101,20 +99,26 @@ fn create_wifi_section() -> GtkBox {
             });
         });
     }
-    
+
     header.append(&wifi_toggle);
     section.append(&header);
 
-    // Current Wi-Fi connection
-    let current_wifi = get_current_wifi();
-    let wifi_info_row = create_info_row(
-        "Connected to",
-        &current_wifi,
-    );
+    let wifi_info_label = Label::new(Some("…"));
+    let wifi_info_row = create_info_row_with_label("Connected to", &wifi_info_label);
     wifi_info_row.set_margin_start(18);
     wifi_info_row.set_margin_end(18);
     wifi_info_row.set_margin_bottom(12);
     section.append(&wifi_info_row);
+
+    let wifi_toggle_c = wifi_toggle.clone();
+    let wifi_info_c = wifi_info_label.clone();
+    gtk4::glib::MainContext::default().spawn_local(async move {
+        let (enabled, current) = gio::spawn_blocking(|| (is_wifi_enabled(), get_current_wifi()))
+            .await
+            .expect("spawn_blocking");
+        wifi_toggle_c.set_active(enabled);
+        wifi_info_c.set_text(&current);
+    });
 
     // Scan for networks button
     let scan_button = Button::with_label("Scan for Networks");
@@ -155,32 +159,51 @@ fn create_interfaces_section() -> GtkBox {
 
     section.append(&header);
 
-    let interfaces = get_network_interfaces();
-    
-    if interfaces.is_empty() {
-        let placeholder = Label::new(Some("No network interfaces found"));
-        placeholder.add_css_class("dim-label");
-        placeholder.set_xalign(0.0);
-        placeholder.set_margin_start(18);
-        placeholder.set_margin_end(18);
-        placeholder.set_margin_top(12);
-        placeholder.set_margin_bottom(18);
-        section.append(&placeholder);
-    } else {
-        for interface in interfaces {
-            let interface_row = create_interface_row(&interface);
-            interface_row.set_margin_start(18);
-            interface_row.set_margin_end(18);
-            interface_row.set_margin_bottom(0);
-            section.append(&interface_row);
+    let interfaces_container = GtkBox::new(Orientation::Vertical, 0);
+    let loading_label = Label::new(Some("Ładowanie…"));
+    loading_label.add_css_class("dim-label");
+    loading_label.set_margin_start(18);
+    loading_label.set_margin_end(18);
+    loading_label.set_margin_top(12);
+    loading_label.set_margin_bottom(18);
+    interfaces_container.append(&loading_label);
+    section.append(&interfaces_container);
+
+    let container_clone = interfaces_container.clone();
+    gtk4::glib::MainContext::default().spawn_local(async move {
+        let interfaces = gio::spawn_blocking(get_network_interfaces)
+            .await
+            .expect("spawn_blocking");
+        if let Some(loading) = container_clone.first_child() {
+            container_clone.remove(&loading);
         }
-        // Add bottom margin to last item
-        if let Some(last_child) = section.last_child() {
-            if let Some(row) = last_child.downcast_ref::<GtkBox>() {
-                row.set_margin_bottom(18);
+        if interfaces.is_empty() {
+            let placeholder = Label::new(Some("No network interfaces found"));
+            placeholder.add_css_class("dim-label");
+            placeholder.set_xalign(0.0);
+            placeholder.set_margin_start(18);
+            placeholder.set_margin_end(18);
+            placeholder.set_margin_top(12);
+            placeholder.set_margin_bottom(18);
+            container_clone.append(&placeholder);
+        } else {
+            for (i, interface) in interfaces.into_iter().enumerate() {
+                let interface_row = create_interface_row(&interface);
+                interface_row.set_margin_start(18);
+                interface_row.set_margin_end(18);
+                interface_row.set_margin_bottom(0);
+                if i == 0 {
+                    interface_row.set_margin_top(0);
+                }
+                container_clone.append(&interface_row);
+            }
+            if let Some(last_child) = container_clone.last_child() {
+                if let Some(row) = last_child.downcast_ref::<GtkBox>() {
+                    row.set_margin_bottom(18);
+                }
             }
         }
-    }
+    });
 
     section
 }
@@ -380,10 +403,12 @@ fn create_toggle_row_with_switch(
     row
 }
 
-fn create_info_row(
-    title: &str,
-    value: &str,
-) -> GtkBox {
+fn create_info_row(title: &str, value: &str) -> GtkBox {
+    let value_label = Label::new(Some(value));
+    create_info_row_with_label(title, &value_label)
+}
+
+fn create_info_row_with_label(title: &str, value_label: &Label) -> GtkBox {
     let row = GtkBox::new(Orientation::Horizontal, 12);
     row.add_css_class("settings-row");
     row.set_margin_start(0);
@@ -403,11 +428,10 @@ fn create_info_row(
     title_label.set_halign(gtk4::Align::Start);
     text_box.append(&title_label);
 
-    let value_label = Label::new(Some(value));
     value_label.add_css_class("row-description");
     value_label.set_xalign(0.0);
     value_label.set_halign(gtk4::Align::Start);
-    text_box.append(&value_label);
+    text_box.append(value_label);
 
     row.append(&text_box);
 

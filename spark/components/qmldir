@@ -1,4 +1,5 @@
 module qs.components
+ProcessHelper 1.0 ProcessHelper.qml
 AppLauncher 1.0 AppLauncher.qml
 ClipboardManager 1.0 ClipboardManager.qml
 Dashboard 1.0 Dashboard.qml

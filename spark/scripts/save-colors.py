@@ -54,6 +54,10 @@ if "showHiddenFiles" in existing_data:
     colors["showHiddenFiles"] = existing_data["showHiddenFiles"]
 if "presets" in existing_data:
     colors["presets"] = existing_data["presets"]
+if "uiScale" in existing_data:
+    colors["uiScale"] = existing_data["uiScale"]
+if "dashboardTileLeft" in existing_data:
+    colors["dashboardTileLeft"] = existing_data["dashboardTileLeft"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled
@@ -75,6 +79,17 @@ if len(sys.argv) > 13 and sys.argv[13]:
 # Argument 14: showHiddenFiles
 if len(sys.argv) > 14 and sys.argv[14]:
     colors["showHiddenFiles"] = sys.argv[14] == "true"
+
+# Argument 15: uiScale (75, 100, or 125)
+if len(sys.argv) > 15 and sys.argv[15]:
+    try:
+        colors["uiScale"] = int(sys.argv[15])
+    except ValueError:
+        pass
+
+# Argument 16: dashboardTileLeft ("battery" or "network")
+if len(sys.argv) > 16 and sys.argv[16] and sys.argv[16] in ("battery", "network"):
+    colors["dashboardTileLeft"] = sys.argv[16]
 
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)

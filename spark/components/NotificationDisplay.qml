@@ -56,8 +56,8 @@ PanelWindow {
             }
             
             // Play notification sound if enabled
-            if (sharedData && sharedData.notificationSoundsEnabled) {
-                Qt.createQmlObject('import Quickshell.Io; Process { command: ["paplay", "/usr/share/sounds/freedesktop/stereo/message.oga"]; running: true }', notificationDisplayRoot)
+            if (sharedData && sharedData.notificationSoundsEnabled && sharedData.runCommand) {
+                sharedData.runCommand(["paplay", "/usr/share/sounds/freedesktop/stereo/message.oga"])
             }
             
             addNotification(notification)

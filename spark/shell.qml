@@ -7,9 +7,12 @@ import "components"
 
 ShellRoot {
     id: root
-    
+
+    ProcessHelper { id: processHelper }
+
     // Współdzielone właściwości (jeśli potrzebne)
     property var sharedData: QtObject {
+        property var runCommand: processHelper ? processHelper.runCommand : function(){}
         property bool menuVisible: false
         property bool launcherVisible: false
         property bool volumeVisible: false
@@ -31,77 +34,105 @@ ShellRoot {
         property string colorSecondary: "#141414"
         property string colorText: "#ffffff"
         property string colorAccent: "#4a9eff"
+        property real uiScale: 1.0
+        property bool lowPerformanceMode: false  // true gdy ~/.config/alloy/low-perf istnieje – mniejsze zacinki na słabszym PC
+        property string dashboardTileLeft: "battery"  // "battery" | "network" – co pokazywać na lewym kafelku dashboardu
     }
     
     // Color config file path - dynamically determined
     property string colorConfigPath: ""
+    property string projectPath: ""
+
+    // Polecenia z pliku: debounce i pojedyncza obsługa w czasie (unikamy „sam się otwiera i zamyka”)
+    property bool commandHandlerBusy: false
+    property string lastCommandHandled: ""
+    property int lastCommandTime: 0
     
-    // Initialize color config path from environment
+    // Single startup: one Process writes HOME and QUICKSHELL_PROJECT_PATH, then one read + loadColors + readLowPerf
     function initializeColorPath() {
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$HOME\" > /tmp/quickshell_home_root 2>/dev/null || echo \"\" > /tmp/quickshell_home_root']; running: true }", root)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: root.readHomePathRoot() }", root)
+        processHelper.runCommand(['sh', '-c', 'echo "$HOME|$QUICKSHELL_PROJECT_PATH" > /tmp/quickshell_init 2>/dev/null || true'], initPathsFromFile)
     }
-    
-    function readHomePathRoot() {
+
+    // Same path order as Fuse ColorConfig.get_config_path(): alloy → project → sharpshell → /tmp
+    function initPathsFromFile() {
         var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_home_root")
+        xhr.open("GET", "file:///tmp/quickshell_init")
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                var home = xhr.responseText.trim()
-                if (home && home.length > 0) {
-                    // 1. Try ~/.config/alloy/colors.json (Global Alloy Config)
-                    var alloyPath = home + "/.config/alloy/colors.json"
-                    var checkXhr = new XMLHttpRequest()
-                    checkXhr.open("GET", "file://" + alloyPath)
-                    checkXhr.onreadystatechange = function() {
-                        if (checkXhr.readyState === XMLHttpRequest.DONE) {
-                            if (checkXhr.status === 200 || checkXhr.status === 0) {
-                                colorConfigPath = alloyPath
-                                loadColors()
-                            } else {
-                                // 2. Fallback to ~/.config/sharpshell/colors.json
-                                colorConfigPath = home + "/.config/sharpshell/colors.json"
-                                loadColors()
-                            }
-                        }
-                    }
-                    checkXhr.send()
-                } else {
-                    // Fallback - try to use QUICKSHELL_PROJECT_PATH
-                    Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_config_path 2>/dev/null || echo \"\" > /tmp/quickshell_config_path']; running: true }", root)
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: root.readConfigPath() }", root)
-                }
-            }
-        }
-        xhr.send()
-    }
-    
-    function readConfigPath() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_config_path")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                var path = xhr.responseText.trim()
-                if (path && path.length > 0) {
-                    colorConfigPath = path + "/colors.json"
-                } else {
-                    colorConfigPath = "/tmp/sharpshell/colors.json"
-                }
+            if (xhr.readyState !== XMLHttpRequest.DONE) return
+            var line = (xhr.responseText || "").trim()
+            var parts = line.split("|")
+            var home = (parts[0] || "").trim()
+            var projPath = (parts[1] || "").trim()
+            root.projectPath = projPath
+
+            function applyAndFinish(path) {
+                colorConfigPath = path
                 loadColors()
+                readLowPerf()
+            }
+            function tryProjectThenFallback() {
+                if (projPath && projPath.length > 0) {
+                    var projectColors = projPath + "/colors.json"
+                    var pxhr = new XMLHttpRequest()
+                    pxhr.open("GET", "file://" + projectColors)
+                    pxhr.onreadystatechange = function() {
+                        if (pxhr.readyState === XMLHttpRequest.DONE && (pxhr.status === 200 || pxhr.status === 0))
+                            applyAndFinish(projectColors)
+                        else
+                            applyAndFinish(home ? (home + "/.config/sharpshell/colors.json") : "/tmp/sharpshell/colors.json")
+                    }
+                    pxhr.send()
+                } else {
+                    applyAndFinish(home ? (home + "/.config/sharpshell/colors.json") : "/tmp/sharpshell/colors.json")
+                }
+            }
+            function tryAlloy() {
+                if (!(home && home.length > 0)) {
+                    tryProjectThenFallback()
+                    return
+                }
+                var alloyPath = home + "/.config/alloy/colors.json"
+                var checkXhr = new XMLHttpRequest()
+                checkXhr.open("GET", "file://" + alloyPath)
+                checkXhr.onreadystatechange = function() {
+                    if (checkXhr.readyState === XMLHttpRequest.DONE) {
+                        if (checkXhr.status === 200 || checkXhr.status === 0)
+                            applyAndFinish(alloyPath)
+                        else
+                            tryProjectThenFallback()
+                    }
+                }
+                checkXhr.send()
+            }
+            tryAlloy()
+        }
+        xhr.send()
+    }
+
+    function readLowPerf() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_low_perf")
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE && (xhr.status === 200 || xhr.status === 0)) {
+                var v = (xhr.responseText || "").trim()
+                sharedData.lowPerformanceMode = (v === "1" || v === "true")
             }
         }
         xhr.send()
     }
-    
+
     // Load colors on startup
     Component.onCompleted: {
         initializeColorPath()
     }
     
-    function loadColors() {
+    // skipSidebarPrefs: when true (np. przy Fuse notify_color_change) nie nadpisujemy sidebarVisible/sidebarPosition,
+    // żeby powtarzające się powiadomienia nie powodowały migotania panelu
+    function loadColors(skipSidebarPrefs) {
         if (!colorConfigPath) {
             return
         }
+        var skip = !!skipSidebarPrefs
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file://" + colorConfigPath)
         xhr.onreadystatechange = function() {
@@ -132,15 +163,15 @@ ShellRoot {
                             root.currentWallpaperPath = json.lastWallpaper
                         }
                         
-                        // Load sidebar position if available
-                        if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top")) {
-                            sharedData.sidebarPosition = json.sidebarPosition
-                        }
-                        
-                        // Load sidebar visibility if available
-                        if (json.sidebarVisible !== undefined) {
-                            var visible = json.sidebarVisible === true || json.sidebarVisible === "true"
-                            sharedData.sidebarVisible = visible
+                        if (!skip) {
+                            // Sidebar prefs tylko przy starcie / init – przy Fuse notify nie nadpisujemy, żeby nie migotało
+                            if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top")) {
+                                sharedData.sidebarPosition = json.sidebarPosition
+                            }
+                            if (json.sidebarVisible !== undefined) {
+                                var visible = json.sidebarVisible === true || json.sidebarVisible === "true"
+                                sharedData.sidebarVisible = visible
+                            }
                         }
                         
                         // Load color preset if available (for reference, not applied automatically)
@@ -153,6 +184,12 @@ ShellRoot {
                         }
                         if (json.notificationSoundsEnabled !== undefined) {
                             sharedData.notificationSoundsEnabled = json.notificationSoundsEnabled === true || json.notificationSoundsEnabled === "true"
+                        }
+                        if (json.uiScale === 75 || json.uiScale === 100 || json.uiScale === 125) {
+                            sharedData.uiScale = json.uiScale / 100.0
+                        }
+                        if (json.dashboardTileLeft === "battery" || json.dashboardTileLeft === "network") {
+                            sharedData.dashboardTileLeft = json.dashboardTileLeft
                         }
                     } catch (e) {
                     }
@@ -183,16 +220,15 @@ ShellRoot {
 
     // Funkcja otwierania aplikacji ustawień (fuse)
     function openSettings() {
-        // Launch fuse application
-        Qt.createQmlObject("import Quickshell.Io; Process { command: ['sh', '-c', 'fuse 2>/dev/null || $HOME/.local/bin/fuse 2>/dev/null || $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null']; running: true }", root)
+        var scaleFactor = (sharedData && sharedData.uiScale) ? sharedData.uiScale : 1.0
+        var scaleStr = String(scaleFactor)
+        var cmd = "GTK_SCALE_FACTOR=" + scaleStr + " fuse 2>/dev/null || GTK_SCALE_FACTOR=" + scaleStr + " $HOME/.local/bin/fuse 2>/dev/null || GTK_SCALE_FACTOR=" + scaleStr + " $HOME/.config/alloy/fuse/target/release/fuse 2>/dev/null"
+        processHelper.runCommand(['sh', '-c', cmd.replace(/'/g, "'\"'\"'")])
     }
     
     // Screenshot Service - Take screenshot with area selection
     function takeScreenshot() {
-        
-        // Get script path - try environment variable first, then fallback to home directory
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'if [ -n \"$QUICKSHELL_PROJECT_PATH\" ]; then echo \"$QUICKSHELL_PROJECT_PATH/scripts/take-screenshot.sh\"; elif [ -n \"$HOME\" ]; then echo \"$HOME/.config/sharpshell/scripts/take-screenshot.sh\"; else echo \"/tmp/sharpshell/scripts/take-screenshot.sh\"; fi > /tmp/quickshell_screenshot_script_path']; running: true }", root)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: root.runScreenshotScript() }", root)
+        processHelper.runCommand(['sh', '-c', 'if [ -n "$QUICKSHELL_PROJECT_PATH" ]; then echo "$QUICKSHELL_PROJECT_PATH/scripts/take-screenshot.sh"; elif [ -n "$HOME" ]; then echo "$HOME/.config/sharpshell/scripts/take-screenshot.sh"; else echo "/tmp/sharpshell/scripts/take-screenshot.sh"; fi > /tmp/quickshell_screenshot_script_path'], runScreenshotScript)
     }
     
     function runScreenshotScript() {
@@ -202,54 +238,58 @@ ShellRoot {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var scriptPath = xhr.responseText.trim()
                 if (scriptPath && scriptPath.length > 0) {
-                    // Run screenshot script through hyprctl to ensure it has proper Wayland access
-                    // This allows slurp to interact with the user properly
-                    Qt.createQmlObject(
-                        "import Quickshell.Io; import QtQuick; Process { " +
-                        "command: ['sh', '-c', 'hyprctl dispatch exec \"bash \\\"" + scriptPath.replace(/"/g, '\\"') + "\\\"\"']; " +
-                        "running: true }",
-                        root
-                    )
-                } else {
+                    var esc = scriptPath.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+                    processHelper.runCommand(['sh', '-c', 'hyprctl dispatch exec "bash \\"' + esc + '\\""'])
                 }
             }
         }
         xhr.send()
     }
     
-    // Timer do monitorowania pliku poleceń dla skrótów klawiszowych z Hyprland
+    // Timer do monitorowania pliku poleceń – debounce, clear-first, jedna obsługa w czasie
     Timer {
         id: commandCheckTimer
-        interval: 100  // Sprawdzaj co 100ms
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 1200 : 400
         running: true
         repeat: true
         
         onTriggered: {
+            if (root.commandHandlerBusy) return
+            root.commandHandlerBusy = true
             var xhr = new XMLHttpRequest()
             xhr.open("GET", "file:///tmp/quickshell_command")
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200 || xhr.status === 0) {
-                        var cmd = xhr.responseText.trim()
-                        if (cmd === "openLauncher") {
-                            root.openLauncher()
-                            // Usuń plik po przetworzeniu
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_command']; running: true }", root)
-                        } else if (cmd === "toggleMenu") {
-                            root.toggleMenu()
-                            // Usuń plik po przetworzeniu
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_command']; running: true }", root)
-                        } else if (cmd === "openClipboardManager") {
-                            root.openClipboardManager()
-                            // Usuń plik po przetworzeniu
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_command']; running: true }", root)
-                        } else if (cmd === "openSettings") {
-                            root.openSettings()
-                            // Usuń plik po przetworzeniu
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_command']; running: true }", root)
-                        }
-                    }
+                if (xhr.readyState !== XMLHttpRequest.DONE) return
+                if (xhr.status !== 200 && xhr.status !== 0) {
+                    root.commandHandlerBusy = false
+                    return
                 }
+                var cmd = (xhr.responseText || "").trim()
+                if (!cmd || cmd.length === 0) {
+                    root.commandHandlerBusy = false
+                    return
+                }
+                var now = Date.now()
+                if (cmd === root.lastCommandHandled && (now - root.lastCommandTime) < 400) {
+                    processHelper.runCommand(['sh', '-c', ': > /tmp/quickshell_command'], function() {
+                        root.commandHandlerBusy = false
+                    })
+                    return
+                }
+                processHelper.runCommand(['sh', '-c', ': > /tmp/quickshell_command'], function() {
+                    if (cmd === "openLauncher") {
+                        root.openLauncher()
+                    } else if (cmd === "toggleMenu") {
+                        root.toggleMenu()
+                    } else if (cmd === "openClipboardManager") {
+                        root.openClipboardManager()
+                    } else if (cmd === "openSettings") {
+                        root.openSettings()
+                    }
+                    root.lastCommandHandled = cmd
+                    root.lastCommandTime = Date.now()
+                    root.commandHandlerBusy = false
+                })
             }
             xhr.send()
         }
@@ -261,7 +301,7 @@ ShellRoot {
     // Timer do monitorowania zmiany tapety
     Timer {
         id: wallpaperCheckTimer
-        interval: 200  // Sprawdzaj co 200ms
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 1500 : 1000
         running: true
         repeat: true
         
@@ -274,9 +314,8 @@ ShellRoot {
                         var path = xhr.responseText.trim()
                         if (path && path.length > 0 && path !== root.currentWallpaperPath) {
                             root.currentWallpaperPath = path
-                            // Usuń plik po przetworzeniu
-                            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'rm -f /tmp/quickshell_wallpaper_path']; running: true }", root)
                         }
+                        // Plik pozostawiamy – kolejna zmiana tapety go nadpisze
                     }
                 }
             }
@@ -284,10 +323,30 @@ ShellRoot {
         }
     }
     
-    // Timer do monitorowania zmiany kolorów i ustawień
+    // Szybszy timer tylko dla sygnału Fuse – kolory odświeżane w ~500 ms po zmianie w Fuse
+    Timer {
+        id: fuseNotifyTimer
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 800 : 500
+        running: true
+        repeat: true
+        onTriggered: {
+            if (!root.colorConfigPath) return
+            var xhr = new XMLHttpRequest()
+            xhr.open("GET", "file:///tmp/quickshell_color_change?_=" + Date.now())
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && (xhr.status === 200 || xhr.status === 0)) {
+                    var cmd = (xhr.responseText || "").trim()
+                    if (cmd.length > 0) root.loadColors(true)
+                }
+            }
+            xhr.send()
+        }
+    }
+    
+    // Timer do monitorowania zmiany kolorów i ustawień (colors.json + ponownie sygnał)
     Timer {
         id: colorCheckTimer
-        interval: 500  // Sprawdzaj co 500ms
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 4000 : 2500
         running: true
         repeat: true
         
@@ -302,32 +361,23 @@ ShellRoot {
                             try {
                                 var json = JSON.parse(xhr.responseText)
                                 var changed = false
+                                var bg, prim, sec, txt, acc
+                                if (json.colorPreset && json.presets && json.presets[json.colorPreset]) {
+                                    var p = json.presets[json.colorPreset]
+                                    bg = p.background; prim = p.primary; sec = p.secondary; txt = p.text; acc = p.accent
+                                } else {
+                                    bg = json.background; prim = json.primary; sec = json.secondary; txt = json.text; acc = json.accent
+                                }
+                                if (bg && bg !== sharedData.colorBackground) { sharedData.colorBackground = bg; changed = true }
+                                if (prim && prim !== sharedData.colorPrimary) { sharedData.colorPrimary = prim; changed = true }
+                                if (sec && sec !== sharedData.colorSecondary) { sharedData.colorSecondary = sec; changed = true }
+                                if (txt && txt !== sharedData.colorText) { sharedData.colorText = txt; changed = true }
+                                if (acc && acc !== sharedData.colorAccent) { sharedData.colorAccent = acc; changed = true }
                                 
-                                if (json.background && json.background !== sharedData.colorBackground) {
-                                    sharedData.colorBackground = json.background
-                                    changed = true
-                                }
-                                if (json.primary && json.primary !== sharedData.colorPrimary) {
-                                    sharedData.colorPrimary = json.primary
-                                    changed = true
-                                }
-                                if (json.secondary && json.secondary !== sharedData.colorSecondary) {
-                                    sharedData.colorSecondary = json.secondary
-                                    changed = true
-                                }
-                                if (json.text && json.text !== sharedData.colorText) {
-                                    sharedData.colorText = json.text
-                                    changed = true
-                                }
-                                if (json.accent && json.accent !== sharedData.colorAccent) {
-                                    sharedData.colorAccent = json.accent
-                                    changed = true
-                                }
-                                
-                                // Load sidebar position if available
-                                if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top")) {
-                                    if (json.sidebarPosition !== sharedData.sidebarPosition) {
-                                        sharedData.sidebarPosition = json.sidebarPosition
+                                // sidebarPosition/sidebarVisible tylko przy starcie (loadColors); periodiczne odświeżanie kolorów ich nie nadpisuje
+                                if (json.dashboardTileLeft === "battery" || json.dashboardTileLeft === "network") {
+                                    if (json.dashboardTileLeft !== sharedData.dashboardTileLeft) {
+                                        sharedData.dashboardTileLeft = json.dashboardTileLeft
                                         changed = true
                                     }
                                 }
@@ -346,17 +396,17 @@ ShellRoot {
                 xhr.send()
             }
             
-            // Sprawdź czy jest plik z poleceniem do przeładowania
+            // Sprawdź czy jest plik z poleceniem do przeładowania (Fuse notify_color_change)
+            // Cache-busting: ?_=timestamp zapobiega zwracaniu cache’owanej treści przez file://
             var cmdXhr = new XMLHttpRequest()
-            cmdXhr.open("GET", "file:///tmp/quickshell_color_change")
+            cmdXhr.open("GET", "file:///tmp/quickshell_color_change?_=" + Date.now())
             cmdXhr.onreadystatechange = function() {
                 if (cmdXhr.readyState === XMLHttpRequest.DONE) {
                     if (cmdXhr.status === 200 || cmdXhr.status === 0) {
-                        var cmd = cmdXhr.responseText.trim()
-                        if (cmd && cmd.length > 0) {
-                            // Przeładuj kolory
-                            root.loadColors()
-                            // Plik zostawiamy dla innych aplikacji
+                        var cmd = (cmdXhr.responseText || "").trim()
+                        if (cmd.length > 0) {
+                            // Przeładuj kolory z colors.json (skipSidebarPrefs=true – bez migotania panelu)
+                            root.loadColors(true)
                         }
                     }
                 }
@@ -365,79 +415,80 @@ ShellRoot {
         }
     }
     
+    // Per-screen: każdy typ okna ma własny Variants z delegate = PanelWindow (wymagane dla poprawnego bindowania do ekranu)
     Variants {
         model: Quickshell.screens
-        
         delegate: Component {
-            Item {
-                id: screenContainer
+            WallpaperBackground {
                 required property var modelData
-                
-                // Wallpaper background - jeden na ekran
-                WallpaperBackground {
-                    id: wallpaperInstance
-                    screen: modelData
-                    currentWallpaper: root.currentWallpaperPath
-                }
-                
-                // Panel boczny - lewy (SidePanel) - jeden na ekran
-                SidePanel {
-                    id: sidePanelLeftInstance
-                    screen: modelData
-                    panelPosition: "left"
-                    sharedData: root.sharedData
-                    launcherFunction: root.openLauncher
-                    screenshotFunction: root.takeScreenshot
-                }
-                
-                // Panel boczny - górny (SidePanel) - jeden na ekran
-                SidePanel {
-                    id: sidePanelTopInstance
-                    screen: modelData
-                    panelPosition: "top"
-                    sharedData: root.sharedData
-                    launcherFunction: root.openLauncher
-                    screenshotFunction: root.takeScreenshot
-                }
-                
-                // Wykrywacz górnej krawędzi - wykrywa najechanie myszką
-                TopEdgeDetector {
-                    id: edgeDetectorInstance
-                    screen: modelData
-                    sharedData: root.sharedData
-                }
-                
-                // Wykrywacz prawej krawędzi - wykrywa najechanie myszką
-                RightEdgeDetector {
-                    id: rightEdgeDetectorInstance
-                    screen: modelData
-                    sharedData: root.sharedData
-                }
-
-                // Lock screen - pełnoekranowy overlay z polem hasła (jeden na ekran)
-                LockScreen {
-                    screen: modelData
-                    sharedData: root.sharedData
-                }
+                screen: modelData
+                currentWallpaper: root.currentWallpaperPath
             }
         }
     }
-    
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
+            SidePanel {
+                required property var modelData
+                screen: modelData
+                panelPosition: (root.sharedData && root.sharedData.sidebarPosition) ? root.sharedData.sidebarPosition : "left"
+                sharedData: root.sharedData
+                primaryScreen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+                projectPath: root.projectPath
+                launcherFunction: root.openLauncher
+                screenshotFunction: root.takeScreenshot
+            }
+        }
+    }
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
+            TopEdgeDetector {
+                required property var modelData
+                screen: modelData
+                sharedData: root.sharedData
+            }
+        }
+    }
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
+            RightEdgeDetector {
+                required property var modelData
+                screen: modelData
+                sharedData: root.sharedData
+            }
+        }
+    }
+    Variants {
+        model: Quickshell.screens
+        delegate: Component {
+            LockScreen {
+                required property var modelData
+                screen: modelData
+                sharedData: root.sharedData
+            }
+        }
+    }
+
     // Dashboard - jeden globalny (nie per-ekran)
     // Pokazuje się gdy myszka najedzie na górną krawędź ekranu
     Dashboard {
         id: dashboardInstance
         sharedData: root.sharedData
+        projectPath: root.projectPath
     }
-    
+
     // AppLauncher - launcher aplikacji (rofi-like)
     // Używamy pierwszego ekranu do wyśrodkowania
     AppLauncher {
         id: appLauncherInstance
         sharedData: root.sharedData
         screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+        projectPath: root.projectPath
     }
-    
+
     // VolumeSlider - slider głośności na prawej krawędzi
     // Pokazuje się gdy myszka najedzie na prawą krawędź ekranu
     VolumeSlider {
@@ -445,7 +496,7 @@ ShellRoot {
         sharedData: root.sharedData
         screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     }
-    
+
     // ClipboardManager - menedżer schowka (jeden na pierwszym ekranie)
     ClipboardManager {
         id: clipboardManagerInstance
@@ -453,12 +504,10 @@ ShellRoot {
         sharedData: root.sharedData
     }
 
-
     // NotificationDisplay - wyświetlanie powiadomień w prawym górnym rogu
     NotificationDisplay {
         id: notificationDisplayInstance
         sharedData: root.sharedData
     }
-    
 }
 

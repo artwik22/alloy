@@ -3,6 +3,7 @@ use libadwaita::Application;
 use gtk4::{gio, CssProvider};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use crate::window::FuseWindow;
 use crate::core::config::ColorConfig;
@@ -11,33 +12,39 @@ const APP_ID: &str = "com.alloy.fuse";
 
 pub struct FuseApp {
     app: Application,
+    _config: Arc<Mutex<ColorConfig>>,
     _css_provider: Rc<RefCell<Option<CssProvider>>>,
     _monitors: Vec<gio::FileMonitor>,
 }
 
 impl FuseApp {
-    pub fn new() -> Self {
+    pub fn new(config: ColorConfig) -> Self {
+        let config = Arc::new(Mutex::new(config));
         let app = Application::builder()
             .application_id(APP_ID)
             .build();
         let css_provider = Rc::new(RefCell::new(None));
 
         let css_provider_clone = css_provider.clone();
+        let config_startup = Arc::clone(&config);
         app.connect_startup(move |_| {
-            load_css_with_colors(&css_provider_clone);
+            load_css_with_colors(&css_provider_clone, &config_startup);
         });
 
-        app.connect_activate(|app| {
-            let window = FuseWindow::new(app);
+        let config_activate = Arc::clone(&config);
+        app.connect_activate(move |app| {
+            let window = FuseWindow::new(app, &config_activate);
             window.present();
         });
 
         // Start monitoring for color changes
         let css_provider_monitor = css_provider.clone();
-        let monitors = start_color_monitoring(css_provider_monitor);
+        let config_monitor = Arc::clone(&config);
+        let monitors = start_color_monitoring(css_provider_monitor, config_monitor);
 
         Self { 
             app,
+            _config: config,
             _css_provider: css_provider,
             _monitors: monitors,
         }
@@ -48,8 +55,8 @@ impl FuseApp {
     }
 }
 
-fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>) {
-    let config = ColorConfig::load();
+fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>, config: &Arc<Mutex<ColorConfig>>) {
+    let config = config.lock().unwrap().clone();
     
     // Load base CSS
     let base_css = include_str!("resources/style.css");
@@ -97,7 +104,7 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>) {
     *css_provider_rc.borrow_mut() = Some(provider);
 }
 
-fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>) -> Vec<gio::FileMonitor> {
+fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>, config: Arc<Mutex<ColorConfig>>) -> Vec<gio::FileMonitor> {
     let mut monitors = Vec::new();
     let config_path = ColorConfig::get_config_path();
     
@@ -105,9 +112,11 @@ fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>) -> 
     let file = gio::File::for_path(&config_path);
     if let Ok(monitor) = file.monitor_file(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE) {
         let css_provider_rc_clone = css_provider_rc.clone();
+        let config_clone = Arc::clone(&config);
         monitor.connect_changed(move |_, _, _, event_type| {
             if matches!(event_type, gio::FileMonitorEvent::Changed | gio::FileMonitorEvent::ChangesDoneHint) {
-                load_css_with_colors(&css_provider_rc_clone);
+                *config_clone.lock().unwrap() = ColorConfig::load();
+                load_css_with_colors(&css_provider_rc_clone, &config_clone);
             }
         });
         monitors.push(monitor);
@@ -117,9 +126,11 @@ fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>) -> 
     let notification_file = gio::File::for_path("/tmp/quickshell_color_change");
     if let Ok(monitor) = notification_file.monitor_file(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE) {
         let css_provider_rc_clone = css_provider_rc.clone();
+        let config_clone = Arc::clone(&config);
         monitor.connect_changed(move |_, _, _, event_type| {
             if matches!(event_type, gio::FileMonitorEvent::Changed | gio::FileMonitorEvent::ChangesDoneHint | gio::FileMonitorEvent::Created) {
-                load_css_with_colors(&css_provider_rc_clone);
+                *config_clone.lock().unwrap() = ColorConfig::load();
+                load_css_with_colors(&css_provider_rc_clone, &config_clone);
             }
         });
         monitors.push(monitor);

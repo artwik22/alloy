@@ -4,23 +4,32 @@ use gtk4::{
     Box as GtkBox, Orientation, Label, Stack, ListBox, ListBoxRow, Separator, ScrolledWindow,
     Spinner,
 };
+use std::cell::RefCell;
+use std::collections::HashSet;
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use glib;
+use gtk4::glib;
 
 use crate::core::config::ColorConfig;
 use crate::tabs::{appearance::AppearanceTab,
                   system::SystemTab, audio::AudioTab, index::IndexTab, bluetooth::BluetoothTab, network::NetworkTab, notifications::NotificationsTab, about::AboutTab, quickshell::QuickshellTab};
 
+const LAZY_TAB_NAMES: &[&str] = &["network", "appearance", "system"];
+
 pub struct FuseWindow {
     window: ApplicationWindow,
     _config: Arc<Mutex<ColorConfig>>,
     _stack: Stack,
+    _lazy_built: Rc<RefCell<HashSet<String>>>,
+    _lazy_placeholders: Rc<RefCell<(Option<GtkBox>, Option<GtkBox>, Option<GtkBox>)>>,
+    _lazy_network: Rc<RefCell<Option<NetworkTab>>>,
+    _lazy_appearance: Rc<RefCell<Option<AppearanceTab>>>,
+    _lazy_system: Rc<RefCell<Option<SystemTab>>>,
 }
 
 impl FuseWindow {
-    pub fn new(app: &libadwaita::Application) -> Self {
-        // Load config once for shell
-        let config = Arc::new(Mutex::new(ColorConfig::load()));
+    pub fn new(app: &libadwaita::Application, config: &Arc<Mutex<ColorConfig>>) -> Self {
+        let config = Arc::clone(config);
 
         let window = ApplicationWindow::builder()
             .application(app)
@@ -31,7 +40,7 @@ impl FuseWindow {
             .build();
 
         window.set_default_size(1100, 750);
-        window.set_size_request(560, 400);
+        window.set_size_request(380, 300);
 
         let stack = Stack::new();
         stack.set_transition_type(gtk4::StackTransitionType::Crossfade);
@@ -77,17 +86,50 @@ impl FuseWindow {
         window.set_title(Some("⚙️ Fuse Settings"));
         window.set_content(Some(&main_box));
 
-        // Build tabs in idle so the window shows right away (local = nie wymaga Send, tylko wątek główny)
-        let config_idle = Arc::clone(&config);
-        let stack_idle = stack.clone();
-        glib::source::idle_add_local_once(move || {
-            populate_stack_with_tabs(&stack_idle, &config_idle);
-        });
+        let lazy_built = Rc::new(RefCell::new(HashSet::new()));
+        let lazy_placeholders = Rc::new(RefCell::new((
+            Some(create_lazy_placeholder()),
+            Some(create_lazy_placeholder()),
+            Some(create_lazy_placeholder()),
+        )));
+        let lazy_network = Rc::new(RefCell::new(None));
+        let lazy_appearance = Rc::new(RefCell::new(None));
+        let lazy_system = Rc::new(RefCell::new(None));
+
+        let config_for_notify = Arc::clone(&config);
+        let built = Rc::clone(&lazy_built);
+        let placeholders_notify = Rc::clone(&lazy_placeholders);
+        let ln = Rc::clone(&lazy_network);
+        let la = Rc::clone(&lazy_appearance);
+        let ls = Rc::clone(&lazy_system);
+        stack.connect_closure(
+            "notify::visible-child-name",
+            false,
+            gtk4::glib::closure_local!(move |stack: gtk4::Stack, _pspec: gtk4::glib::ParamSpec| {
+                on_visible_child_maybe_build_lazy(
+                    &stack,
+                    &config_for_notify,
+                    &built,
+                    &placeholders_notify,
+                    &ln,
+                    &la,
+                    &ls,
+                );
+            }),
+        );
+
+        // Build one tab per idle so the main loop can process events between tabs
+        schedule_build_tab(stack.clone(), Arc::clone(&config), 0, Rc::clone(&lazy_placeholders));
 
         Self {
             window,
             _config: config,
             _stack: stack,
+            _lazy_built: lazy_built,
+            _lazy_placeholders: lazy_placeholders,
+            _lazy_network: lazy_network,
+            _lazy_appearance: lazy_appearance,
+            _lazy_system: lazy_system,
         }
     }
 
@@ -96,38 +138,153 @@ impl FuseWindow {
     }
 }
 
-fn populate_stack_with_tabs(stack: &Stack, config: &Arc<Mutex<ColorConfig>>) {
-    let network_tab = NetworkTab::new(Arc::clone(config));
-    let bluetooth_tab = BluetoothTab::new(Arc::clone(config));
-    let appearance_tab = AppearanceTab::new(Arc::clone(config));
-    let audio_tab = AudioTab::new(Arc::clone(config));
-    let index_tab = IndexTab::new(Arc::clone(config));
-    let notifications_tab = NotificationsTab::new(Arc::clone(config));
-    let quickshell_tab = QuickshellTab::new(Arc::clone(config));
-    let system_tab = SystemTab::new(Arc::clone(config));
-    let about_tab = AboutTab::new(Arc::clone(config));
+fn create_lazy_placeholder() -> GtkBox {
+    let box_ = GtkBox::new(Orientation::Vertical, 18);
+    box_.set_halign(gtk4::Align::Center);
+    box_.set_valign(gtk4::Align::Center);
+    box_.set_hexpand(true);
+    box_.set_vexpand(true);
+    let spinner = Spinner::new();
+    spinner.set_spinning(true);
+    spinner.set_size_request(48, 48);
+    box_.append(&spinner);
+    let label = Label::new(Some("Ładowanie…"));
+    label.add_css_class("title");
+    box_.append(&label);
+    box_
+}
 
-    if let Some(loading) = stack.child_by_name("loading") {
-        stack.remove(&loading);
+fn on_visible_child_maybe_build_lazy(
+    stack: &Stack,
+    config: &Arc<Mutex<ColorConfig>>,
+    built: &Rc<RefCell<HashSet<String>>>,
+    placeholders: &Rc<RefCell<(Option<GtkBox>, Option<GtkBox>, Option<GtkBox>)>>,
+    lazy_network: &Rc<RefCell<Option<NetworkTab>>>,
+    lazy_appearance: &Rc<RefCell<Option<AppearanceTab>>>,
+    lazy_system: &Rc<RefCell<Option<SystemTab>>>,
+) {
+    let Some(name) = stack.visible_child_name() else { return };
+    let name = name.as_str();
+    if !LAZY_TAB_NAMES.contains(&name) {
+        return;
     }
+    if built.borrow().contains(name) {
+        return;
+    }
+    let c = Arc::clone(config);
+    match name {
+        "network" => {
+            if let Some(old) = stack.child_by_name("network") {
+                stack.remove(&old);
+            }
+            placeholders.borrow_mut().0 = None;
+            let t = NetworkTab::new(c);
+            stack.add_titled(t.widget(), Some("network"), "󰤨 Network");
+            lazy_network.borrow_mut().replace(t);
+            built.borrow_mut().insert("network".into());
+        }
+        "appearance" => {
+            if let Some(old) = stack.child_by_name("appearance") {
+                stack.remove(&old);
+            }
+            placeholders.borrow_mut().1 = None;
+            let t = AppearanceTab::new(c);
+            stack.add_titled(t.widget(), Some("appearance"), "󰋺 Appearance");
+            lazy_appearance.borrow_mut().replace(t);
+            built.borrow_mut().insert("appearance".into());
+        }
+        "system" => {
+            if let Some(old) = stack.child_by_name("system") {
+                stack.remove(&old);
+            }
+            placeholders.borrow_mut().2 = None;
+            let t = SystemTab::new(c);
+            stack.add_titled(t.widget(), Some("system"), "󰍛 System");
+            lazy_system.borrow_mut().replace(t);
+            built.borrow_mut().insert("system".into());
+        }
+        _ => {}
+    }
+}
 
-    stack.add_titled(network_tab.widget(), Some("network"), "󰤨 Network");
-    stack.add_titled(bluetooth_tab.widget(), Some("bluetooth"), "󰂯 Bluetooth");
-    stack.add_titled(appearance_tab.widget(), Some("appearance"), "󰋺 Appearance");
-    stack.add_titled(audio_tab.widget(), Some("audio"), "󰕧 Audio");
-    stack.add_titled(index_tab.widget(), Some("index"), "󰉋 Index");
-    stack.add_titled(notifications_tab.widget(), Some("notifications"), "󰂚 Notifications");
-    stack.add_titled(quickshell_tab.widget(), Some("quickshell"), "󰍜 QuickShell");
-    stack.add_titled(system_tab.widget(), Some("system"), "󰍛 System");
-    stack.add_titled(about_tab.widget(), Some("about"), "󰋼 About");
+/// Build one tab per idle callback so the main loop can process events between tabs.
+fn schedule_build_tab(
+    stack: Stack,
+    config: Arc<Mutex<ColorConfig>>,
+    index: usize,
+    placeholders: Rc<RefCell<(Option<GtkBox>, Option<GtkBox>, Option<GtkBox>)>>,
+) {
+    let stack_clone = stack.clone();
+    let config_clone = Arc::clone(&config);
+    let placeholders_clone = Rc::clone(&placeholders);
+    glib::source::idle_add_local_once(move || {
+        build_one_tab(&stack_clone, &config_clone, index, &placeholders_clone);
+        if index + 1 < 9 {
+            schedule_build_tab(stack_clone, config_clone, index + 1, placeholders_clone);
+        } else {
+            if let Some(loading) = stack_clone.child_by_name("loading") {
+                stack_clone.remove(&loading);
+            }
+            stack_clone.set_visible_child_name("network");
+        }
+    });
+}
 
-    stack.set_visible_child_name("network");
+fn build_one_tab(
+    stack: &Stack,
+    config: &Arc<Mutex<ColorConfig>>,
+    index: usize,
+    placeholders: &Rc<RefCell<(Option<GtkBox>, Option<GtkBox>, Option<GtkBox>)>>,
+) {
+    let c = Arc::clone(config);
+    match index {
+        0 => {
+            if let Some(ref ph) = placeholders.borrow().0 {
+                stack.add_titled(ph, Some("network"), "󰤨 Network");
+            }
+        }
+        1 => {
+            let t = BluetoothTab::new(c);
+            stack.add_titled(t.widget(), Some("bluetooth"), "󰂯 Bluetooth");
+        }
+        2 => {
+            if let Some(ref ph) = placeholders.borrow().1 {
+                stack.add_titled(ph, Some("appearance"), "󰋺 Appearance");
+            }
+        }
+        3 => {
+            let t = AudioTab::new(c);
+            stack.add_titled(t.widget(), Some("audio"), "󰕧 Audio");
+        }
+        4 => {
+            let t = IndexTab::new(c);
+            stack.add_titled(t.widget(), Some("index"), "󰉋 Index");
+        }
+        5 => {
+            let t = NotificationsTab::new(c);
+            stack.add_titled(t.widget(), Some("notifications"), "󰂚 Notifications");
+        }
+        6 => {
+            let t = QuickshellTab::new(c);
+            stack.add_titled(t.widget(), Some("quickshell"), "󰍜 QuickShell");
+        }
+        7 => {
+            if let Some(ref ph) = placeholders.borrow().2 {
+                stack.add_titled(ph, Some("system"), "󰍛 System");
+            }
+        }
+        8 => {
+            let t = AboutTab::new(c);
+            stack.add_titled(t.widget(), Some("about"), "󰋼 About");
+        }
+        _ => {}
+    }
 }
 
 fn create_custom_sidebar(stack: &Stack) -> GtkBox {
-    // GNOME Settings style: sidebar with minimum width so items stay visible when resizing
+    // Sidebar: narrower min on small windows so content area gets more space
     let sidebar = GtkBox::new(Orientation::Vertical, 0);
-    sidebar.set_size_request(180, -1); // Min width 180px so labels/buttons don't disappear
+    sidebar.set_size_request(140, -1);
     sidebar.set_hexpand(false);
     sidebar.set_vexpand(true);
     sidebar.add_css_class("sidebar");
@@ -205,6 +362,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     separator.set_margin_start(12);
     separator.set_margin_end(12);
     let separator_row = ListBoxRow::new();
+    separator_row.add_css_class("sidebar-separator");
     separator_row.set_selectable(false);
     separator_row.set_activatable(false);
     separator_row.set_child(Some(&separator));
@@ -233,6 +391,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     separator2.set_margin_start(12);
     separator2.set_margin_end(12);
     let separator_row2 = ListBoxRow::new();
+    separator_row2.add_css_class("sidebar-separator");
     separator_row2.set_selectable(false);
     separator_row2.set_activatable(false);
     separator_row2.set_child(Some(&separator2));

@@ -7,16 +7,14 @@ PanelWindow {
     
     required property var screen
     required property var sharedData
-    
-    screen: edgeDetector.screen
-    
+
     anchors { top: true }
     margins { top: 0 }
     implicitWidth: screen ? screen.width : 2160
     implicitHeight: 5  // Bardzo cienki pasek do wykrywania
     
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "qsedgedetector"
+    WlrLayershell.namespace: "qsedgedetector-" + (screen && screen.name ? screen.name : "0")
     exclusiveZone: 0
     
     color: "transparent"

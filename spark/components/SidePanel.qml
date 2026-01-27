@@ -9,10 +9,10 @@ PanelWindow {
     
     required property var screen
     required property string panelPosition  // "left" or "top" - determines which panel this is
-    property string projectPath: ""  // Will be set from environment or auto-detected
-    
-    screen: sidePanel.screen
-    
+    property var primaryScreen: null  // Tylko ten ekran uruchamia cava/zegar – unika zacinków przy 2+ monitorach
+    property string projectPath: ""  // Set from root (shell) or via loadProjectPath
+    onProjectPathChanged: { if (projectPath && projectPath.length > 0 && isPrimaryPanel && !cavaRunning && !(sharedData && sharedData.lowPerformanceMode)) startCava() }
+
     // Anchors based on panel position
     anchors.left: panelPosition === "left" ? true : false
     anchors.right: panelPosition === "top" ? true : false
@@ -23,26 +23,21 @@ PanelWindow {
     implicitWidth: panelPosition === "left" ? 33 : (panelPosition === "top" ? (screen ? screen.width : 2160) : 0)
     implicitHeight: panelPosition === "top" ? 33 : (panelPosition === "left" ? (screen ? screen.height : 1440) : 0)
     color: "transparent"
-
-    // Detect if any workspace on this screen has a fullscreen window
-    property bool isFullscreenActive: {
-        if (!Hyprland || !Hyprland.workspaces || !screen) return false;
-        return Hyprland.workspaces.values.some(w => 
-            w.monitor && w.monitor.name === screen.name && 
-            w.lastIpcObject && w.lastIpcObject.hasfullscreen
-        );
-    }
-
-    // Visible only when this panel's position matches the current sidebar position and not in fullscreen
-    visible: (sharedData && sharedData.sidebarVisible !== undefined ? sharedData.sidebarVisible : true) && 
-             (sharedData && sharedData.sidebarPosition === panelPosition) &&
-             !isFullscreenActive
-    
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "qssidepanel"
-    exclusiveZone: visible ? ((panelPosition === "top") ? implicitHeight : implicitWidth) : 0
-    
     property var sharedData: null
+
+    // --- Animacja wejścia/wyjścia (bez glitchy) ---
+    property bool panelActive: !!(sharedData && (sharedData.sidebarVisible === undefined || sharedData.sidebarVisible) && sharedData.sidebarPosition === panelPosition)
+    property real panelProgress: panelActive ? 1.0 : 0.0
+    Behavior on panelProgress {
+        NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+    }
+    visible: panelProgress > 0.01
+    exclusiveZone: panelProgress * ((panelPosition === "top") ? implicitHeight : implicitWidth)
+
+    property bool isPrimaryPanel: (primaryScreen === null || primaryScreen === undefined || (screen && primaryScreen && screen.name === primaryScreen.name)) && panelActive
+
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "qssidepanel-" + (panelPosition || "left") + "-" + (screen && screen.name ? screen.name : "0")
     
     // Margins based on panel position
     margins {
@@ -86,16 +81,12 @@ PanelWindow {
             z: -2
         }
         
-        // Smooth fade animation when panel appears/disappears
-        opacity: sidePanel.visible ? 1.0 : 0.0
+        opacity: sidePanel.panelProgress
         Behavior on opacity {
-            NumberAnimation {
-                duration: 300
-                easing.type: Easing.OutCubic
-            }
+            NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
         }
     }
-    
+
     // Container for all sidebar content (clock, workspace switcher, visualizer)
     Item {
         id: sidePanelContent
@@ -224,7 +215,7 @@ PanelWindow {
             id: sidePanelClockTimer
             interval: 1000
             repeat: true
-            running: true
+            running: isPrimaryPanel
             onTriggered: {
                 var now = new Date()
                 var h = now.getHours()
@@ -721,123 +712,81 @@ PanelWindow {
     // Screenshot Button - OUTSIDE sidePanelRect and sidePanelContent to ensure it's clickable
     Item {
         id: screenshotButtonContainer
-        width: 30
-        height: 30
+        width: 32
+        height: 32
 
         anchors.horizontalCenter: panelPosition === "left" ? parent.horizontalCenter : undefined
         anchors.right: panelPosition === "top" ? parent.right : undefined
-        anchors.rightMargin: panelPosition === "top" ? 7 : 0
+        anchors.rightMargin: panelPosition === "top" ? 6 : 0
         anchors.bottom: panelPosition === "left" ? parent.bottom : undefined
-        anchors.bottomMargin: panelPosition === "left" ? 7 : 0
-        z: 100000  // Very high z to ensure it's on top of everything (increased from 10000)
+        anchors.bottomMargin: panelPosition === "left" ? 6 : 0
+        z: 100000
         visible: true
         enabled: true
-        
-        // Debug: Make sure button is visible and clickable
-        Component.onCompleted: {
-        }
 
-        // Smooth repositioning when panel position changes
         Behavior on anchors.rightMargin {
-            NumberAnimation {
-                duration: 400
-                easing.type: Easing.OutCubic
-            }
+            NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
         }
         Behavior on anchors.bottomMargin {
-            NumberAnimation {
-                duration: 400
-                easing.type: Easing.OutCubic
-            }
+            NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
         }
-        
-        // Material Design button with elevation - NOWY DESIGN
+
+        property color btnBg: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"
+        property color btnBgHover: Qt.lighter(btnBg, 1.08)
+        property color btnIcon: Qt.rgba(0.65, 0.65, 0.7, 1)
+        property color btnIconHover: Qt.rgba(0.85, 0.85, 0.9, 1)
+
         Rectangle {
             id: screenshotButton
-            width: 28
-            height: 28
+            width: 26
+            height: 26
             anchors.centerIn: parent
-            radius: 4
-            // Material Design button color
-            color: screenshotButtonMouseArea.containsMouse ?
-                ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
-                ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a")
-            
-            property real buttonScale: screenshotButtonMouseArea.pressed ? 0.95 : (screenshotButtonMouseArea.containsMouse ? 1.05 : 1.0)
-            property real buttonElevation: screenshotButtonMouseArea.pressed ? 1 : (screenshotButtonMouseArea.containsMouse ? 3 : 2)
-            
-            // Material Design elevation shadow
-            Rectangle {
+            radius: 0
+            color: screenshotButtonMouseArea.containsMouse
+                ? screenshotButtonContainer.btnBgHover
+                : screenshotButtonContainer.btnBg
+            border.width: 0
+            opacity: screenshotButtonMouseArea.pressed ? 0.85 : 1.0
+
+            property real btnScale: screenshotButtonMouseArea.pressed ? 0.97 : (screenshotButtonMouseArea.containsMouse ? 1.02 : 1.0)
+
+            scale: btnScale
+            transformOrigin: Item.Center
+
+            // MouseArea wewnątrz Rectangle – wtedy kliknięcia zawsze trafiają w przycisk
+            MouseArea {
+                id: screenshotButtonMouseArea
                 anchors.fill: parent
-                anchors.margins: -buttonElevation
-                color: "transparent"
-                border.color: Qt.rgba(0, 0, 0, 0.15 + buttonElevation * 0.05)
-                border.width: buttonElevation
-                z: -1
-                
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: 200
-                        easing.type: Easing.OutQuart
-                    }
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton
+
+                onClicked: {
+                    if (sidePanel.screenshotFunction) sidePanel.screenshotFunction()
                 }
             }
-            
+
             Behavior on color {
-                ColorAnimation {
-                    duration: 200
-                    easing.type: Easing.OutQuart
-                }
+                ColorAnimation { duration: 180; easing.type: Easing.OutCubic }
             }
-            
-            Behavior on buttonScale {
-                NumberAnimation {
-                    duration: 150
-                    easing.type: Easing.OutQuart
-                }
+            Behavior on opacity {
+                NumberAnimation { duration: 100 }
             }
-            
-            scale: buttonScale
-            
+            Behavior on btnScale {
+                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+            }
+
             Text {
-                text: "󰹑"  // Camera/screenshot icon (Nerd Fonts)
-                font.pixelSize: 14
+                text: "󰹑"
+                font.pixelSize: 13
                 anchors.centerIn: parent
-                color: screenshotButtonMouseArea.containsMouse ? 
-                    ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff")
-                
+                color: screenshotButtonMouseArea.containsMouse
+                    ? screenshotButtonContainer.btnIconHover
+                    : screenshotButtonContainer.btnIcon
+
                 Behavior on color {
-                    ColorAnimation {
-                        duration: 200
-                        easing.type: Easing.OutQuart
-                    }
+                    ColorAnimation { duration: 180; easing.type: Easing.OutCubic }
                 }
-            }
-        }
-        
-        MouseArea {
-            id: screenshotButtonMouseArea
-            anchors.fill: parent
-            anchors.margins: -10  // Much larger hit area
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-            enabled: true
-            propagateComposedEvents: false
-            acceptedButtons: Qt.LeftButton
-            z: 10001
-            
-            onClicked: {
-                if (screenshotFunction) {
-                    screenshotFunction()
-                } else {
-                }
-            }
-
-            onPressed: {
-            }
-
-            onEntered: {
             }
         }
     }
@@ -851,14 +800,18 @@ PanelWindow {
     property bool cavaRunning: false
     
     function startCava() {
-        // Sprawdź czy cava jest zainstalowane
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','which cava > /dev/null 2>&1 && echo 1 > /tmp/quickshell_cava_available || echo 0 > /tmp/quickshell_cava_available']; running: true }", sidePanel)
-        
-        // Poczekaj i sprawdź dostępność
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: sidePanel.checkCavaAvailable() }", sidePanel)
+        if (!isPrimaryPanel)
+            return
+        if (sharedData && sharedData.lowPerformanceMode)
+            return
+        if (sharedData && sharedData.runCommand) {
+            sharedData.runCommand(['sh', '-c', 'which cava > /dev/null 2>&1 && echo 1 > /tmp/quickshell_cava_available || echo 0 > /tmp/quickshell_cava_available'], checkCavaAvailable)
+        }
     }
     
     function checkCavaAvailable() {
+        if (!isPrimaryPanel)
+            return
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_cava_available")
         xhr.onreadystatechange = function() {
@@ -869,19 +822,19 @@ PanelWindow {
                     // Use projectPath if available, otherwise try to detect
                     var scriptPath = (projectPath && projectPath.length > 0) ? (projectPath + "/scripts/start-cava.sh") : ""
                     if (!scriptPath || scriptPath === "/scripts/start-cava.sh") {
-                        // Try to get from environment or use relative path
-                        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_cava_path 2>/dev/null || echo \"\" > /tmp/quickshell_cava_path']; running: true }", sidePanel)
-                        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: sidePanel.readCavaPath() }", sidePanel)
+                        if (sharedData && sharedData.runCommand) {
+                            sharedData.runCommand(['sh', '-c', 'echo "$QUICKSHELL_PROJECT_PATH" > /tmp/quickshell_cava_path 2>/dev/null || true'], readCavaPath)
+                        }
                         return
                     }
                     if (!scriptPath || scriptPath.length === 0 || scriptPath === "/scripts/start-cava.sh") {
                         return
                     }
                     var absScriptPath = scriptPath
-                    Qt.createQmlObject('import Quickshell.Io; import QtQuick; Process { command: ["bash", "' + absScriptPath + '"]; running: true }', sidePanel)
-                    
-                    cavaRunning = true
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 500; running: true; repeat: false; onTriggered: sidePanel.readCavaData() }", sidePanel)
+                    if (sharedData && sharedData.runCommand) {
+                        cavaRunning = true
+                        sharedData.runCommand(["bash", absScriptPath], readCavaData)
+                    }
                 }
             }
         }
@@ -967,21 +920,21 @@ PanelWindow {
         xhr.send()
     }
     
-    // Timer do odczytu danych z cava
+    // Timer do odczytu danych z cava (50ms=20 FPS domyślnie; 100ms w low-perf; wyłączony w low-perf)
     Timer {
         id: cavaDataTimer
-        interval: 16  // ~60 FPS
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 100 : 50
         repeat: true
-        running: cavaRunning
+        running: cavaRunning && isPrimaryPanel && !(sharedData && sharedData.lowPerformanceMode)
         onTriggered: readCavaData()
     }
     
-    // Timer do sprawdzania czy cava działa (fallback)
+    // Timer do sprawdzania czy cava działa (fallback) – tylko w panelu głównym
     Timer {
         id: cavaCheckTimer
         interval: 5000  // Co 5 sekund
         repeat: true
-        running: true
+        running: isPrimaryPanel
         onTriggered: {
             if (cavaRunning) {
                 // Sprawdź czy plik istnieje i ma dane
@@ -1025,9 +978,9 @@ PanelWindow {
     
     // Load project path from environment
     function loadProjectPath() {
-        // Try to read path from environment variable
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_sidepanel_path 2>/dev/null || echo \"\" > /tmp/quickshell_sidepanel_path']; running: true }", sidePanel)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: sidePanel.readProjectPath() }", sidePanel)
+        if (sharedData && sharedData.runCommand) {
+            sharedData.runCommand(['sh', '-c', 'echo "$QUICKSHELL_PROJECT_PATH" > /tmp/quickshell_sidepanel_path 2>/dev/null || true'], readProjectPath)
+        }
     }
     
     function readProjectPath() {

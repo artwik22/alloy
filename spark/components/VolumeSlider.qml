@@ -401,18 +401,12 @@ PanelWindow {
     // --- Funkcje Brightness ---
     function setSystemBrightness(value) {
         brightnessValue = Math.round(value)
-        // Use brightnessctl to set brightness percentage
         var percentStr = Math.round(value).toString() + '%'
-        var cmd = "import Quickshell.Io; import QtQuick; Process { command: ['brightnessctl','set','" + percentStr + "']; running: true }"
-        Qt.createQmlObject(cmd, volumeSliderRoot)
-        // Odśwież brightness po ustawieniu
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.getSystemBrightness() }", volumeSliderRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 350; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemBrightness() }", volumeSliderRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['brightnessctl','set',percentStr], getSystemBrightness)
     }
 
     function getSystemBrightness() {
-        // Get brightness percentage: calculate from current/max values
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','CURRENT=$(brightnessctl get); MAX=$(brightnessctl max); echo $(awk \\\"BEGIN {printf \\\\\\\"%.0f\\\\\\\", ($CURRENT / $MAX * 100)}\\\") > /tmp/quickshell_brightness']; running: true }", volumeSliderRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','CURRENT=$(brightnessctl get); MAX=$(brightnessctl max); echo $(awk "BEGIN {printf \"%.0f\", ($CURRENT / $MAX * 100)}") > /tmp/quickshell_brightness'], readSystemBrightness)
     }
 
     function readSystemBrightness() {
@@ -427,8 +421,7 @@ PanelWindow {
                         brightnessValue = brightness
                     }
                 } else {
-                    // Jeśli plik jest pusty, spróbuj ponownie
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: function() { volumeSliderRoot.getSystemBrightness(); Qt.createQmlObject('import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemBrightness() }', volumeSliderRoot) } }", volumeSliderRoot)
+                    if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'sleep 0.2'], getSystemBrightness)
                 }
             }
         }
@@ -438,15 +431,11 @@ PanelWindow {
     // --- Funkcje Volume ---
     function setSystemVolume(value) {
         volumeValue = Math.round(value)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['pactl','set-sink-volume','@DEFAULT_SINK@','" + Math.round(value) + "%']; running: true }", volumeSliderRoot)
-        // Odśwież volume po ustawieniu
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.getSystemVolume() }", volumeSliderRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 350; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemVolume() }", volumeSliderRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl','set-sink-volume','@DEFAULT_SINK@',Math.round(value) + '%'], getSystemVolume)
     }
 
     function getSystemVolume() {
-        // Zapisz volume do pliku - bezpośrednie wywołanie pactl
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk \\\"{print $5}\\\" | tr -d % > /tmp/quickshell_volume']; running: true }", volumeSliderRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk "{print $5}" | tr -d % > /tmp/quickshell_volume'], readSystemVolume)
     }
 
     function readSystemVolume() {
@@ -479,8 +468,6 @@ PanelWindow {
         onTriggered: {
             getSystemVolume()
             getSystemBrightness()
-            // Poczekaj 150ms i przeczytaj wartości
-            Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: function() { volumeSliderRoot.readSystemVolume(); volumeSliderRoot.readSystemBrightness(); } }", volumeSliderRoot)
         }
         Component.onCompleted: {
             // Przy starcie timera również zsynchronizuj głośność i jasność
@@ -503,22 +490,14 @@ PanelWindow {
     }
 
     function syncVolumeOnStart() {
-        // Synchronizuj głośność przy starcie
         getSystemVolume()
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemVolume() }", volumeSliderRoot)
     }
 
     function syncBrightnessOnStart() {
-        // Synchronizuj jasność przy starcie
         getSystemBrightness()
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemBrightness() }", volumeSliderRoot)
     }
 
     Component.onCompleted: {
-        // Ustaw głośność na 35% przy starcie quickshella
-        // Poczekaj chwilę na inicjalizację systemu audio
-        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: volumeSliderRoot.setSystemVolume(35) }", volumeSliderRoot)
-        // Synchronizuj jasność przy starcie
         syncBrightnessOnStart()
     }
 }

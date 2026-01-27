@@ -1,5 +1,7 @@
 use gtk4::prelude::*;
 use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow};
+use gtk4::glib;
+use gtk4::gio;
 use std::sync::{Arc, Mutex};
 use std::process::Command;
 use std::fs;
@@ -14,7 +16,7 @@ pub struct SystemTab {
 impl SystemTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false);
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
@@ -73,37 +75,80 @@ fn create_system_info_section() -> GtkBox {
 
     section.append(&header);
 
-    // OS Information
-    let os_info = get_os_info();
-    let os_row = create_info_row("Operating System", &os_info);
+    let placeholder = "…";
+    let os_value = Label::new(Some(placeholder));
+    let wm_value = Label::new(Some(placeholder));
+    let cpu_value = Label::new(Some(placeholder));
+    let gpu_value = Label::new(Some(placeholder));
+    let memory_value = Label::new(Some(placeholder));
+    let kernel_value = Label::new(Some(placeholder));
+
+    let os_row = create_info_row_with_value_label("Operating System", &os_value);
+    let wm_row = create_info_row_with_value_label("Window Manager / DE", &wm_value);
+    let cpu_row = create_info_row_with_value_label("Processor", &cpu_value);
+    let gpu_row = create_info_row_with_value_label("Graphics", &gpu_value);
+    let memory_row = create_info_row_with_value_label("Memory", &memory_value);
+    let kernel_row = create_info_row_with_value_label("Kernel", &kernel_value);
+
     section.append(&os_row);
-
-    // Window Manager / Desktop Environment
-    let wm_de = get_wm_de();
-    let wm_row = create_info_row("Window Manager / DE", &wm_de);
     section.append(&wm_row);
-
-    // CPU Information
-    let cpu_info = get_cpu_info();
-    let cpu_row = create_info_row("Processor", &cpu_info);
     section.append(&cpu_row);
-
-    // GPU Information
-    let gpu_info = get_gpu_info();
-    let gpu_row = create_info_row("Graphics", &gpu_info);
     section.append(&gpu_row);
-
-    // Memory Information
-    let memory_info = get_memory_info();
-    let memory_row = create_info_row("Memory", &memory_info);
     section.append(&memory_row);
-
-    // Kernel Information
-    let kernel_info = get_kernel_info();
-    let kernel_row = create_info_row("Kernel", &kernel_info);
     section.append(&kernel_row);
 
+    let os_c = os_value.clone();
+    let wm_c = wm_value.clone();
+    let cpu_c = cpu_value.clone();
+    let gpu_c = gpu_value.clone();
+    let memory_c = memory_value.clone();
+    let kernel_c = kernel_value.clone();
+    glib::MainContext::default().spawn_local(async move {
+        let data = gio::spawn_blocking(|| {
+            (
+                get_os_info(),
+                get_wm_de(),
+                get_cpu_info(),
+                get_gpu_info(),
+                get_memory_info(),
+                get_kernel_info(),
+            )
+        })
+        .await
+        .expect("spawn_blocking");
+        os_c.set_text(&data.0);
+        wm_c.set_text(&data.1);
+        cpu_c.set_text(&data.2);
+        gpu_c.set_text(&data.3);
+        memory_c.set_text(&data.4);
+        kernel_c.set_text(&data.5);
+    });
+
     section
+}
+
+fn create_info_row_with_value_label(label: &str, value_label: &Label) -> GtkBox {
+    let row = GtkBox::new(Orientation::Horizontal, 12);
+    row.add_css_class("settings-row");
+    row.set_margin_start(18);
+    row.set_margin_end(18);
+    row.set_margin_top(0);
+    row.set_margin_bottom(0);
+
+    let label_widget = Label::new(Some(label));
+    label_widget.add_css_class("row-title");
+    label_widget.set_xalign(0.0);
+    label_widget.set_halign(gtk4::Align::Start);
+    label_widget.set_hexpand(true);
+    row.append(&label_widget);
+
+    value_label.add_css_class("row-description");
+    value_label.set_xalign(1.0);
+    value_label.set_halign(gtk4::Align::End);
+    value_label.set_hexpand(false);
+    row.append(value_label);
+
+    row
 }
 
 fn create_info_row(label: &str, value: &str) -> GtkBox {

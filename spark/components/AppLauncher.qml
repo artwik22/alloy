@@ -1,4 +1,5 @@
 import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -14,11 +15,7 @@ PanelWindow {
     property string projectPath: "" // Will be set by Component.onCompleted
     
     function loadProjectPath() {
-        // Try to read path from environment variable
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$QUICKSHELL_PROJECT_PATH\" > /tmp/quickshell_project_path 2>/dev/null || echo \"\" > /tmp/quickshell_project_path']; running: true }", appLauncherRoot)
-        
-        // Wait a moment and read the result
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: appLauncherRoot.readProjectPath() }", appLauncherRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'echo "$QUICKSHELL_PROJECT_PATH" > /tmp/quickshell_project_path 2>/dev/null || true'], readProjectPath)
     }
     
     function readProjectPath() {
@@ -31,9 +28,9 @@ PanelWindow {
                     projectPath = path
                 } else {
                     // Try to detect from current script location
-                    if (Qt.application && Qt.application.arguments && Qt.application.arguments.length > 0) {
-                        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'dirname \"$(readlink -f \"$0\" 2>/dev/null || echo \"$0\")\" 2>/dev/null | head -1 > /tmp/quickshell_script_dir || echo \"\" > /tmp/quickshell_script_dir', '--', '" + Qt.application.arguments.join("' '") + "']; running: true }", appLauncherRoot)
-                        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: appLauncherRoot.readScriptDir() }", appLauncherRoot)
+                    if (Qt.application && Qt.application.arguments && Qt.application.arguments.length > 0 && sharedData && sharedData.runCommand) {
+                        var args = Qt.application.arguments
+                        sharedData.runCommand(['sh', '-c', 'dirname "$(readlink -f "$1" 2>/dev/null || echo "$1")" 2>/dev/null | head -1 > /tmp/quickshell_script_dir || true', 'sh', args[0] || ''], readScriptDir)
                     } else {
                         // Last resort fallback
                         projectPath = "/tmp/sharpshell"
@@ -63,7 +60,7 @@ PanelWindow {
     
     Component.onCompleted: {
         initializePaths()
-        loadProjectPath()
+        if (!(projectPath && projectPath.length > 0)) loadProjectPath()
         loadApps()
         if (sharedData) {
             // Load colors from sharedData if available
@@ -114,8 +111,7 @@ PanelWindow {
     // Initialize paths from environment
     function initializePaths() {
         // Get home directory from environment
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"$HOME\" > /tmp/quickshell_home 2>/dev/null || echo \"\" > /tmp/quickshell_home']; running: true }", appLauncherRoot)
-        Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: appLauncherRoot.readHomePath() }", appLauncherRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'echo "$HOME" > /tmp/quickshell_home 2>/dev/null || true'], readHomePath)
     }
 
     function loadNotes() {
@@ -431,25 +427,23 @@ PanelWindow {
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qslauncher"
-    WlrLayershell.keyboardFocus: (sharedData && sharedData.launcherVisible) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: (launcherShowProgress > 0.02) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     exclusiveZone: 0
-    
-    // Visibility control - always visible, controlled by slideOffset
-    visible: true
-    color: "transparent"  // Transparent, background will be in container with gradient
-    
-    // Slide up animation from bottom - negative value moves down (off screen)
-    property int slideOffset: (sharedData && sharedData.launcherVisible) ? 0 : -400
-    
-    margins.bottom: slideOffset
-    
-    Behavior on slideOffset {
-        NumberAnimation { 
-            duration: 500
-            easing.type: Easing.OutExpo
-        }
+
+    // Jeden sterownik animacji (jak w Dashboard) – start od 0, Binding = brak skoku na pierwszej klatce
+    property real launcherShowProgress: 0
+    Binding on launcherShowProgress {
+        value: (sharedData && sharedData.launcherVisible) ? 1.0 : 0.0
     }
-    
+    Behavior on launcherShowProgress {
+        NumberAnimation { duration: 380; easing.type: Easing.OutCubic }
+    }
+
+    visible: true
+    color: "transparent"
+    property int launcherSlideAmount: 400
+    margins.bottom: -launcherSlideAmount * (1.0 - launcherShowProgress)
+
     // Applications list
     property var apps: []
     property int selectedIndex: 0
@@ -855,8 +849,7 @@ PanelWindow {
             // Remove multiple spaces and trim
             exec = exec.replace(/\s+/g, " ").trim()
             
-            // Run via sh -c for better compatibility
-            Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + exec.replace(/'/g, "\\'") + " &']; running: true }", appLauncherRoot)
+            if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', exec.replace(/'/g, "'\"'\"'") + ' &'])
             
             if (sharedData) {
                 sharedData.launcherVisible = false
@@ -871,11 +864,7 @@ PanelWindow {
         loadedAppsCount = 0
         totalFilesToLoad = 0
         
-        // Load applications from .desktop files (more applications)
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'find /usr/share/applications ~/.local/share/applications -name \"*.desktop\" 2>/dev/null | head -100 > /tmp/quickshell_apps_list']; running: true }", appLauncherRoot)
-        
-        // After a moment, read the list and load applications
-        Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: appLauncherRoot.readAppsList() }", appLauncherRoot)
+        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'find /usr/share/applications ~/.local/share/applications -name "*.desktop" 2>/dev/null | head -100 > /tmp/quickshell_apps_list'], readAppsList)
     }
     
     function readAppsList() {
@@ -1345,12 +1334,24 @@ PanelWindow {
         }
     }
     
-    // Obserwuj zmiany launcherVisible
+    // Jeden Timer na focus przy otwarciu – zamiast 3x createQmlObject przy każdym open
+    Timer {
+        id: launcherOpenFocusTimer
+        interval: 80
+        repeat: false
+        running: false
+        onTriggered: {
+            if (launcherContainer && sharedData && sharedData.launcherVisible) {
+                launcherContainer.forceActiveFocus()
+            }
+        }
+    }
+
     Connections {
         target: sharedData
+        enabled: !!sharedData
         function onLauncherVisibleChanged() {
             if (sharedData && sharedData.launcherVisible) {
-                // Reset do wyboru trybu
                 currentMode = -1
                 currentPackageMode = -1
                 installSourceMode = -1
@@ -1359,24 +1360,8 @@ PanelWindow {
                 searchText = ""
                 packageSearchText = ""
                 selectedIndex = 0
-                
-                // Wymuś focus natychmiast (użyj Qt.callLater dla pewności)
-                Qt.callLater(function() {
-                    if (appLauncherRoot.launcherContainer) {
-                        appLauncherRoot.launcherContainer.forceActiveFocus()
-                    }
-                })
-                
-                // Automatycznie złap focus po otwarciu - użyj większego opóźnienia dla pewności
-                Qt.createQmlObject("import QtQuick; Timer { interval: 50; running: true; repeat: false; onTriggered: { if (appLauncherRoot.launcherContainer && appLauncherRoot.sharedData && appLauncherRoot.sharedData.launcherVisible) { appLauncherRoot.launcherContainer.forceActiveFocus() } } }", appLauncherRoot)
-                
-                // Dodatkowe wymuszenie focus po dłuższym czasie jako fallback
-                Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: { if (appLauncherRoot.launcherContainer && appLauncherRoot.sharedData && appLauncherRoot.sharedData.launcherVisible) { appLauncherRoot.launcherContainer.forceActiveFocus() } } }", appLauncherRoot)
-                
-                // Ostatnie wymuszenie focus po jeszcze dłuższym czasie jako ostateczny fallback
-                Qt.createQmlObject("import QtQuick; Timer { interval: 300; running: true; repeat: false; onTriggered: { if (appLauncherRoot.launcherContainer && appLauncherRoot.sharedData && appLauncherRoot.sharedData.launcherVisible) { appLauncherRoot.launcherContainer.forceActiveFocus() } } }", appLauncherRoot)
+                launcherOpenFocusTimer.restart()
             } else {
-                // Gdy się zamyka, usuń focus
                 searchInput.focus = false
                 pacmanSearchInput.focus = false
                 aurSearchInput.focus = false
@@ -1387,48 +1372,15 @@ PanelWindow {
         }
     }
     
-    // Kontener z zawartością
+    // Kontener z zawartością – opacity/scale/enabled z jednego launcherShowProgress
     Item {
         id: launcherContainer
         anchors.fill: parent
-        opacity: (sharedData && sharedData.launcherVisible) ? 1.0 : 0.0
-        enabled: opacity > 0.1  // Wyłącz interakcję gdy niewidoczne
-        focus: (sharedData && sharedData.launcherVisible)  // Focus dla klawiatury
-        scale: (sharedData && sharedData.launcherVisible) ? 1.0 : 0.95
-        
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 350
-                easing.type: Easing.OutQuart
-            }
-        }
-        
-        Behavior on scale {
-            NumberAnimation {
-                duration: 450
-                easing.type: Easing.OutBack
-                easing.amplitude: 1.1
-            }
-        }
-        
-        // Wymuś focus gdy staje się widoczny
-        onEnabledChanged: {
-            if (enabled && sharedData && sharedData.launcherVisible) {
-                Qt.callLater(function() {
-                    launcherContainer.forceActiveFocus()
-                })
-            }
-        }
-        
-        // Wymuś focus gdy opacity się zmienia (dodatkowe zabezpieczenie)
-        onOpacityChanged: {
-            if (opacity > 0.5 && sharedData && sharedData.launcherVisible) {
-                Qt.callLater(function() {
-                    launcherContainer.forceActiveFocus()
-                })
-            }
-        }
-        
+        opacity: launcherShowProgress
+        enabled: launcherShowProgress > 0.02
+        focus: launcherShowProgress > 0.02
+        scale: 0.95 + 0.05 * launcherShowProgress
+
         // Tło z gradientem
         // Material Design launcher background with elevation
         Rectangle {
@@ -1456,11 +1408,13 @@ PanelWindow {
         Keys.onPressed: function(event) {
             // Escape - zamknij launcher lub wróć do wyboru trybu
             if (event.key === Qt.Key_Escape) {
-                if (currentMode === -1) {
-                    // Jeśli jesteśmy w wyborze trybu, zamknij launcher
+                if (currentMode === -1 || currentMode === 0) {
+                    // Wybór trybu lub Launch App – jeden Escape zamyka launcher
                     if (sharedData) {
                         sharedData.launcherVisible = false
                     }
+                    event.accepted = true
+                    return
                 } else if (currentMode === 3 && currentNotesMode !== -1) {
                     // W edytorze notes - wróć do menu notes
                     currentNotesMode = -1
@@ -2083,63 +2037,23 @@ PanelWindow {
                                     }
                                 }
                                 
-                                // Staggered entry for items
-                                add: Transition {
-                                    ParallelAnimation {
-                                        NumberAnimation {
-                                            property: "opacity"
-                                            from: 0
-                                            to: 1
-                                            duration: 400
-                                            easing.type: Easing.OutQuart
-                                        }
-                                        NumberAnimation {
-                                            property: "scale"
-                                            from: 0.9
-                                            to: 1
-                                            duration: 500
-                                            easing.type: Easing.OutBack
-                                        }
-                                        NumberAnimation {
-                                            property: "x"
-                                            from: -20
-                                            to: 0
-                                            duration: 500
-                                            easing.type: Easing.OutExpo
-                                        }
-                                    }
-                                }
-                                
-                                addDisplaced: Transition {
-                                    NumberAnimation {
-                                        properties: "y"
-                                        duration: 400
-                                        easing.type: Easing.OutBack
-                                    }
-                                }
-                                
-                                removeDisplaced: Transition {
-                                    NumberAnimation {
-                                        properties: "y"
-                                        duration: 300
-                                        easing.type: Easing.OutQuart
-                                    }
-                                }
+                                // Brak animacji przejść – mniejsze zacinki
+                                add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 0 } }
+                                addDisplaced: Transition { NumberAnimation { properties: "y"; duration: 0 } }
+                                removeDisplaced: Transition { NumberAnimation { properties: "y"; duration: 0 } }
                                 
                                 delegate: Rectangle {
                                     id: appItem
                                     width: appsList.width
-                                    height: 36
+                                    height: 52
                                     radius: 0
-                                    // Material Design card color
                                     color: (selectedIndex === index || appItemMouseArea.containsMouse) ?
                                         ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                                         "transparent"
-                                    scale: (selectedIndex === index || appItemMouseArea.containsMouse) ? 1.02 : 1.0
+                                    scale: 1.0
                                     
                                     property real cardElevation: (selectedIndex === index || appItemMouseArea.containsMouse) ? 2 : 0
                                     
-                                    // Material Design elevation shadow
                                     Rectangle {
                                         anchors.fill: parent
                                         anchors.margins: -cardElevation
@@ -2147,80 +2061,71 @@ PanelWindow {
                                         border.color: cardElevation > 0 ? Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05) : "transparent"
                                         border.width: cardElevation
                                         z: -1
+                                    }
+                                    
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
+                                        height: 2
+                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        radius: 0
+                                    }
+                                    
+                                    property string appName: model.name || "Unknown"
+                                    property string appComment: model.comment || ""
+                                    property string appExec: model.exec || ""
+                                    property string appIcon: model.icon || ""
+                                    property bool appIsCalculator: model.isCalculator || false
+                                    
+                                    Row {
+                                        id: appItemRow
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.leftMargin: 16
+                                        anchors.rightMargin: 16
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 12
                                         
-                                        Behavior on border.color {
-                                            ColorAnimation {
-                                                duration: 200
-                                                easing.type: Easing.OutQuart
+                                        Text {
+                                            text: appItem.appIcon || "󰄭"
+                                            font.pixelSize: 18
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                            width: 24
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        
+                                        Column {
+                                            id: appTextColumn
+                                            width: Math.max(0, appItem.width - 16 - 16 - 12 - 24)
+                                            spacing: 2
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            
+                                            Text {
+                                                width: parent.width
+                                                text: appItem.appName
+                                                font.pixelSize: 14
+                                                font.family: "sans-serif"
+                                                font.weight: selectedIndex === index ? Font.Bold : Font.Medium
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+                                                color: selectedIndex === index ? colorText : (appItemMouseArea.containsMouse ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"))
+                                            }
+                                            Text {
+                                                width: parent.width
+                                                text: appItem.appComment
+                                                font.pixelSize: 12
+                                                font.family: "sans-serif"
+                                                font.weight: Font.Normal
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                                opacity: selectedIndex === index ? 0.85 : (appItemMouseArea.containsMouse ? 0.75 : 0.6)
+                                                visible: appItem.appComment && appItem.appComment.length > 0
                                             }
                                         }
                                     }
-                                    
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 250
-                                            easing.type: Easing.OutQuart
-                                        }
-                                    }
-                                    
-                                    Behavior on scale {
-                                        SpringAnimation {
-                                            spring: 4.5
-                                            damping: 0.45
-                                            epsilon: 0.005
-                                        }
-                                    }
-
-                                // Bottom accent line for selected items (Material Design ripple)
-                                Rectangle {
-                                    anchors.bottom: parent.bottom
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                    height: 2
-                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                    radius: 0
-
-                                    Behavior on width {
-                                        NumberAnimation {
-                                            duration: 300
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                }
-                                
-                                // Pobierz dane z modelu
-                                property string appName: model.name || "Unknown"
-                                property string appComment: model.comment || ""
-                                property string appExec: model.exec || ""
-                                property string appIcon: model.icon || ""
-                                property bool appIsCalculator: model.isCalculator || false
-                                
-                                Column {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 20
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 6
-                                    
-                                    Text {
-                                        text: appItem.appName
-                                        font.pixelSize: 16
-                                        font.family: "sans-serif"
-                                        font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                        font.letterSpacing: 0.1
-                                        color: selectedIndex === index ? colorText : (appItemMouseArea.containsMouse ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"))
-                                    }
-
-                                    Text {
-                                        text: appItem.appComment
-                                        font.pixelSize: 16
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Normal
-                                        font.letterSpacing: 0.1
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                        opacity: selectedIndex === index ? 0.85 : (appItemMouseArea.containsMouse ? 0.75 : 0.6)
-                                        visible: appItem.appComment && appItem.appComment.length > 0
-                                    }
-                                }
                                 
                                 MouseArea {
                                     id: appItemMouseArea

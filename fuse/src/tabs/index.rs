@@ -16,7 +16,7 @@ pub struct IndexTab {
 impl IndexTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false);
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
@@ -352,12 +352,12 @@ fn create_keybind_row(action: &str, keybinds: Arc<Mutex<HashMap<String, (String,
     row.set_hexpand(true);
     row.set_halign(gtk4::Align::Fill);
     
-    // Title
+    // Title: narrower min than before so keybind rows fit on small windows
     let title_label = Label::new(Some(action_display_name(action)));
     title_label.add_css_class("row-title");
     title_label.set_xalign(0.0);
     title_label.set_halign(gtk4::Align::Start);
-    title_label.set_size_request(180, -1);
+    title_label.set_size_request(80, -1);
     row.append(&title_label);
     
     // Key entry

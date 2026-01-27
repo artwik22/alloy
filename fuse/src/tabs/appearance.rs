@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Button, FlowBox, Picture, Overlay, gdk};
+use gtk4::gio;
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::fs;
@@ -8,25 +9,50 @@ use std::collections::HashMap;
 use crate::core::config::ColorConfig;
 use crate::core::quickshell;
 
-// Helper function to set background color on a Box using CSS provider
-fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
-    // Create a unique CSS class name based on color
-    let color_class = format!("color-bar-{}", color.replace("#", "c").replace(" ", ""));
-    box_widget.add_css_class(&color_class);
-    
-    // Create CSS provider with the color
-    let css_provider = gtk4::CssProvider::new();
-    let css = format!(".{} {{ background-color: {}; }}", color_class, color);
-    
-    css_provider.load_from_string(&css);
-    
+fn schedule_notify_color_change_ms(ms: u32) {
+    gtk4::glib::timeout_add_local(std::time::Duration::from_millis(ms as u64), move || {
+        let _ = quickshell::notify_color_change();
+        gtk4::glib::ControlFlow::Break
+    });
+}
+
+fn color_class_for_preset(color: &str) -> String {
+    format!("color-bar-c{}", color.replace("#", "").replace(" ", ""))
+}
+
+/// Add one CSS provider for all preset color bars. Call once before building preset cards.
+fn add_preset_colors_provider_to_display() {
+    let mut colors: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for preset in COLOR_PRESETS.iter() {
+        // preset: (name, theme, bg, primary, secondary, text, accent)
+        colors.insert(preset.2.to_string());
+        colors.insert(preset.3.to_string());
+        colors.insert(preset.4.to_string());
+        colors.insert(preset.5.to_string());
+        colors.insert(preset.6.to_string());
+    }
+    let rules: Vec<String> = colors
+        .iter()
+        .map(|c| {
+            let class = color_class_for_preset(c);
+            format!(".{} {{ background-color: {}; }}", class, c)
+        })
+        .collect();
+    let css = rules.join("\n");
+    let provider = gtk4::CssProvider::new();
+    provider.load_from_string(&css);
     if let Some(display) = gdk::Display::default() {
         gtk4::style_context_add_provider_for_display(
             &display,
-            &css_provider,
+            &provider,
             gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
     }
+}
+
+/// Set background color on a Box by adding its preset color class. add_preset_colors_provider_to_display() must have been called first.
+fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
+    box_widget.add_css_class(&color_class_for_preset(color));
 }
 
 // 8 new color presets, each with light and dark variants
@@ -69,53 +95,43 @@ pub struct AppearanceTab {
 impl AppearanceTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false); // stałe paski przewijania przy małym oknie
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        let content = GtkBox::new(Orientation::Vertical, 0);
-        content.set_margin_start(24);
-        content.set_margin_end(24);
-        content.set_margin_top(24);
-        content.set_margin_bottom(24);
+        // Same layout pattern as Network/Bluetooth: vertical, 12px margins, 24px spacing
+        let content = GtkBox::new(Orientation::Vertical, 24);
+        content.set_margin_start(12);
+        content.set_margin_end(12);
+        content.set_margin_top(12);
+        content.set_margin_bottom(12);
         content.set_hexpand(true);
         content.set_vexpand(true);
-        content.set_homogeneous(false);
 
-        // Title with better spacing
         let title = Label::new(Some("Appearance"));
         title.add_css_class("title");
         title.set_xalign(0.0);
-        title.set_margin_bottom(32);
+        title.set_halign(gtk4::Align::Start);
         content.append(&title);
 
-        // Main content area - organized layout
-        // Row 1: Theme and Rounding side by side (responsive)
-        let row1 = GtkBox::new(Orientation::Horizontal, 24);
-        row1.set_hexpand(true);
-        row1.add_css_class("responsive-row");
-        row1.set_homogeneous(true); // Equal width for both sections
-        
+        // Single-column layout (like Network/Bluetooth) so it scrolls well at any width
         let theme_section = create_theme_section(Arc::clone(&config));
         theme_section.set_hexpand(true);
-        theme_section.set_vexpand(false);
-        row1.append(&theme_section);
-        
+        content.append(&theme_section);
+
         let rounding_section = create_rounding_section(Arc::clone(&config));
         rounding_section.set_hexpand(true);
-        rounding_section.set_vexpand(false);
-        row1.append(&rounding_section);
-        
-        content.append(&row1);
+        rounding_section.set_margin_top(24);
+        content.append(&rounding_section);
 
-        // Row 2: Colors section (full width)
         let colors_section = create_colors_section(Arc::clone(&config));
+        colors_section.set_hexpand(true);
         colors_section.set_margin_top(24);
         content.append(&colors_section);
 
-        // Row 3: Background section (full width)
         let background_section = create_background_section(Arc::clone(&config));
+        background_section.set_hexpand(true);
         background_section.set_margin_top(24);
         content.append(&background_section);
 
@@ -223,9 +239,7 @@ fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 if let Err(e) = cfg.save() {
                 } else {
                     *config_clone.lock().unwrap() = cfg.clone();
-                    std::thread::sleep(std::time::Duration::from_millis(300));
-                    if let Err(e) = quickshell::notify_color_change() {
-                    }
+                    schedule_notify_color_change_ms(300);
                 }
             } else {
             }
@@ -257,9 +271,7 @@ fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 if let Err(e) = cfg.save() {
                 } else {
                     *config_clone.lock().unwrap() = cfg.clone();
-                    std::thread::sleep(std::time::Duration::from_millis(300));
-                    if let Err(e) = quickshell::notify_color_change() {
-                    }
+                    schedule_notify_color_change_ms(300);
                 }
             } else {
             }
@@ -309,6 +321,8 @@ fn create_theme_card(name: &str, theme: &str, is_selected: bool) -> Button {
 }
 
 fn create_colors_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    add_preset_colors_provider_to_display();
+
     let section = GtkBox::new(Orientation::Vertical, 0);
     section.add_css_class("settings-section");
     section.set_hexpand(true);
@@ -522,9 +536,7 @@ fn create_preset_card_with_variants(
         if let Err(e) = cfg.save() {
         } else {
             *config.lock().unwrap() = cfg.clone();
-            std::thread::sleep(std::time::Duration::from_millis(200));
-            if let Err(e) = quickshell::notify_color_change() {
-            }
+            schedule_notify_color_change_ms(200);
         }
     });
 
@@ -606,9 +618,7 @@ fn create_preset_card_single(
         if let Err(e) = cfg.save() {
         } else {
             *config.lock().unwrap() = cfg.clone();
-            std::thread::sleep(std::time::Duration::from_millis(200));
-            if let Err(e) = quickshell::notify_color_change() {
-            }
+            schedule_notify_color_change_ms(200);
         }
     });
 
@@ -635,23 +645,14 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     section_title.set_halign(gtk4::Align::Start);
     header.append(&section_title);
 
-    // Wallpaper grid - 2 rows
-    let wallpapers_path = quickshell::get_wallpapers_path();
-    let all_wallpapers = find_wallpapers(&wallpapers_path);
-    let current_wallpaper = config.lock().unwrap().last_wallpaper.clone();
-
-    // Create responsive container using FlowBox instead of Grid
+    // Create responsive container and empty FlowBoxes; populate from background
     let grid_container = GtkBox::new(Orientation::Vertical, 12);
     grid_container.set_margin_start(20);
     grid_container.set_margin_end(20);
     grid_container.set_margin_bottom(20);
     grid_container.set_hexpand(true);
     grid_container.set_vexpand(true);
-    // Set minimum height to ensure all 6 wallpapers (2 rows) are fully visible
-    // 2 rows * 180px height + 12px spacing = 372px minimum
-    grid_container.set_size_request(-1, 400);
 
-    // Create responsive FlowBox for initial wallpapers (2 rows = 6 wallpapers)
     let flowbox = FlowBox::new();
     flowbox.set_column_spacing(12);
     flowbox.set_row_spacing(12);
@@ -659,25 +660,10 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     flowbox.set_hexpand(true);
     flowbox.set_vexpand(true);
     flowbox.set_max_children_per_line(3);
-    flowbox.set_min_children_per_line(3); // Always 3 columns for 2 rows
+    flowbox.set_min_children_per_line(1);
     flowbox.set_selection_mode(gtk4::SelectionMode::None);
     flowbox.set_homogeneous(true);
 
-    // Show first 6 wallpapers (2 rows x 3 columns)
-    let initial_wallpapers: Vec<_> = all_wallpapers.iter().take(6).collect();
-
-    for wallpaper_path in initial_wallpapers.iter() {
-        let is_selected = current_wallpaper.as_ref()
-            .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
-            .unwrap_or(false);
-        
-        let tile = create_wallpaper_tile(wallpaper_path, is_selected, Arc::clone(&config));
-        flowbox.append(&tile);
-    }
-
-    grid_container.append(&flowbox);
-
-    // Create expanded FlowBox (hidden initially) - shows ALL wallpapers
     let expanded_flowbox = FlowBox::new();
     expanded_flowbox.set_column_spacing(12);
     expanded_flowbox.set_row_spacing(12);
@@ -685,40 +671,62 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     expanded_flowbox.set_hexpand(true);
     expanded_flowbox.set_vexpand(true);
     expanded_flowbox.set_max_children_per_line(3);
-    expanded_flowbox.set_min_children_per_line(3); // Always 3 columns
+    expanded_flowbox.set_min_children_per_line(1);
     expanded_flowbox.set_selection_mode(gtk4::SelectionMode::None);
     expanded_flowbox.set_homogeneous(true);
     expanded_flowbox.set_visible(false);
 
-    // Add ALL wallpapers to expanded FlowBox (including the initial 6)
-    for wallpaper_path in all_wallpapers.iter() {
-        let is_selected = current_wallpaper.as_ref()
-            .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
-            .unwrap_or(false);
-        
-        let tile = create_wallpaper_tile(wallpaper_path, is_selected, Arc::clone(&config));
-        expanded_flowbox.append(&tile);
-    }
+    let flowbox_c = flowbox.clone();
+    let expanded_c = expanded_flowbox.clone();
+    let config_c = Arc::clone(&config);
+    gtk4::glib::MainContext::default().spawn_local(async move {
+        let config_for_blocking = Arc::clone(&config_c);
+        let (all_wallpapers, current_wallpaper) = gio::spawn_blocking(move || {
+            let wallpapers_path = quickshell::get_wallpapers_path();
+            let all_wallpapers = find_wallpapers(&wallpapers_path);
+            let current_wallpaper = config_for_blocking.lock().unwrap().last_wallpaper.clone();
+            (all_wallpapers, current_wallpaper)
+        })
+        .await
+        .expect("spawn_blocking");
+        for wallpaper_path in all_wallpapers.iter().take(6) {
+            let is_selected = current_wallpaper
+                .as_ref()
+                .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
+                .unwrap_or(false);
+            let tile = create_wallpaper_tile(wallpaper_path, is_selected, Arc::clone(&config_c));
+            flowbox_c.append(&tile);
+        }
+        for wallpaper_path in all_wallpapers.iter() {
+            let is_selected = current_wallpaper
+                .as_ref()
+                .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
+                .unwrap_or(false);
+            let tile = create_wallpaper_tile(wallpaper_path, is_selected, Arc::clone(&config_c));
+            expanded_c.append(&tile);
+        }
+    });
 
-    // Show more button in header
+    grid_container.append(&flowbox);
+
     let show_more_button = Button::with_label("Show more");
     show_more_button.add_css_class("flat");
     show_more_button.add_css_class("expand-wallpapers-button");
     show_more_button.set_halign(gtk4::Align::End);
-    
+
     let expanded_flowbox_clone = expanded_flowbox.clone();
     let flowbox_clone = flowbox.clone();
     show_more_button.connect_clicked(move |btn| {
         let is_visible = expanded_flowbox_clone.is_visible();
         expanded_flowbox_clone.set_visible(!is_visible);
-        flowbox_clone.set_visible(is_visible); // Hide initial flowbox when showing all
+        flowbox_clone.set_visible(is_visible);
         if is_visible {
             btn.set_label("Show more");
         } else {
             btn.set_label("Show less");
         }
     });
-    
+
     header.append(&show_more_button);
 
     grid_container.append(&expanded_flowbox);
@@ -874,9 +882,7 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 *config.lock().unwrap() = cfg.clone();
                 btn.add_css_class("suggested-action");
                 sharp_btn.remove_css_class("suggested-action");
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }
@@ -893,9 +899,7 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 *config.lock().unwrap() = cfg.clone();
                 btn.add_css_class("suggested-action");
                 rounded_btn.remove_css_class("suggested-action");
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                if let Err(e) = quickshell::notify_color_change() {
-                }
+                schedule_notify_color_change_ms(200);
             }
         });
     }

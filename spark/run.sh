@@ -1,10 +1,26 @@
 #!/bin/bash
-# Skrypt uruchamiający quickshell z wymaganą zmienną środowiskową
+# =============================================================================
+# Spark – uruchomienie quickshell (Alloy/SharpShell)
+# Ścieżka projektu musi być ustawiona przed startem.
+# Do przełączania menu/dashboardu: ./toggle-menu.sh (lub bind w Hyprland).
+# =============================================================================
+
 export QML_XHR_ALLOW_FILE_READ=1
-export QUICKSHELL_PROJECT_PATH="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export QUICKSHELL_PROJECT_PATH="$SCRIPT_DIR"
 
-# Ustaw głośność na 35% przy starcie
-pactl set-sink-volume @DEFAULT_SINK@ 35% 2>/dev/null || true
+# Skalowanie UI z ~/.config/alloy/colors.json (uiScale: 75, 100, 125)
+CONFIG_ALLOY="${HOME}/.config/alloy/colors.json"
+if [ -f "$CONFIG_ALLOY" ]; then
+    SCALE=$(grep '"uiScale"' "$CONFIG_ALLOY" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+    case "${SCALE:-100}" in
+        75)  export QT_SCALE_FACTOR=0.75 ;;
+        125) export QT_SCALE_FACTOR=1.25 ;;
+        *)   export QT_SCALE_FACTOR=1.0 ;;
+    esac
+fi
 
-quickshell --path "$QUICKSHELL_PROJECT_PATH"
+# Tryb low-perf: touch ~/.config/alloy/low-perf i zrestartuj shella
+[ -f "${HOME}/.config/alloy/low-perf" ] && echo 1 > /tmp/quickshell_low_perf || echo 0 > /tmp/quickshell_low_perf
 
+exec quickshell --path "$QUICKSHELL_PROJECT_PATH"

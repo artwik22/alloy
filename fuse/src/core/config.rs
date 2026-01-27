@@ -26,6 +26,10 @@ pub struct ColorConfig {
     pub rounding: Option<String>,
     #[serde(rename = "showHiddenFiles", skip_serializing_if = "Option::is_none")]
     pub show_hidden_files: Option<bool>,
+    #[serde(rename = "uiScale", skip_serializing_if = "Option::is_none")]
+    pub ui_scale: Option<u8>,
+    #[serde(rename = "dashboardTileLeft", skip_serializing_if = "Option::is_none")]
+    pub dashboard_tile_left: Option<String>,
 }
 
 impl Default for ColorConfig {
@@ -44,6 +48,8 @@ impl Default for ColorConfig {
             sidebar_visible: Some(true),
             rounding: Some("rounded".to_string()),
             show_hidden_files: Some(false),
+            ui_scale: Some(100),
+            dashboard_tile_left: Some("battery".to_string()),
         }
     }
 }
@@ -122,14 +128,35 @@ impl ColorConfig {
         let path = Self::get_config_path();
         let path_str = path.to_string_lossy();
         
-        // Try to find Python script in QUICKSHELL_PROJECT_PATH or use direct save
-        let script_path = if let Ok(project_path) = std::env::var("QUICKSHELL_PROJECT_PATH") {
-            PathBuf::from(project_path).join("scripts").join("save-colors.py")
-        } else if let Some(home) = dirs::home_dir() {
-            home.join(".config").join("sharpshell").join("scripts").join("save-colors.py")
-        } else {
-            // Fallback: save directly
-            return self.save_direct();
+        // Try to find Python script: alloy config -> alloy/spark/scripts, then QUICKSHELL_PROJECT_PATH, then sharpshell
+        let script_path = {
+            let path = Self::get_config_path();
+            if let Some(parent) = path.parent() {
+                if parent.ends_with("alloy") {
+                    let alloy_script = parent.join("spark").join("scripts").join("save-colors.py");
+                    if alloy_script.exists() {
+                        alloy_script
+                    } else if let Ok(project_path) = std::env::var("QUICKSHELL_PROJECT_PATH") {
+                        PathBuf::from(project_path).join("scripts").join("save-colors.py")
+                    } else if let Some(home) = dirs::home_dir() {
+                        home.join(".config").join("sharpshell").join("scripts").join("save-colors.py")
+                    } else {
+                        return self.save_direct();
+                    }
+                } else if let Ok(project_path) = std::env::var("QUICKSHELL_PROJECT_PATH") {
+                    PathBuf::from(project_path).join("scripts").join("save-colors.py")
+                } else if let Some(home) = dirs::home_dir() {
+                    home.join(".config").join("sharpshell").join("scripts").join("save-colors.py")
+                } else {
+                    return self.save_direct();
+                }
+            } else if let Ok(project_path) = std::env::var("QUICKSHELL_PROJECT_PATH") {
+                PathBuf::from(project_path).join("scripts").join("save-colors.py")
+            } else if let Some(home) = dirs::home_dir() {
+                home.join(".config").join("sharpshell").join("scripts").join("save-colors.py")
+            } else {
+                return self.save_direct();
+            }
         };
 
         if !script_path.exists() {
@@ -194,6 +221,18 @@ impl ColorConfig {
         
         if let Some(show_hidden) = self.show_hidden_files {
             cmd.arg(if show_hidden { "true" } else { "false" });
+        } else {
+            cmd.arg("");
+        }
+        
+        if let Some(scale) = self.ui_scale {
+            cmd.arg(scale.to_string());
+        } else {
+            cmd.arg("");
+        }
+        
+        if let Some(ref tile) = self.dashboard_tile_left {
+            cmd.arg(tile);
         } else {
             cmd.arg("");
         }
@@ -264,5 +303,32 @@ impl ColorConfig {
 
     pub fn set_show_hidden_files(&mut self, show_hidden: bool) {
         self.show_hidden_files = Some(show_hidden);
+    }
+
+    pub fn set_ui_scale(&mut self, value: u8) {
+        self.ui_scale = Some(value);
+    }
+
+    pub fn set_dashboard_tile_left(&mut self, value: &str) {
+        self.dashboard_tile_left = Some(value.to_string());
+    }
+
+    /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.
+    pub fn apply_scale_env_to_process() {
+        let config = Self::load();
+        Self::apply_scale_env_from_config(&config);
+    }
+
+    /// Set GTK_SCALE_FACTOR from existing config. Use when config is already loaded.
+    pub fn apply_scale_env_from_config(config: &Self) {
+        if let Some(scale) = config.ui_scale {
+            let factor = match scale {
+                75 => "0.75",
+                100 => "1.0",
+                125 => "1.25",
+                _ => "1.0",
+            };
+            std::env::set_var("GTK_SCALE_FACTOR", factor);
+        }
     }
 }

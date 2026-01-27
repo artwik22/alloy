@@ -48,7 +48,7 @@ pub struct ColorsTab {
 impl ColorsTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
-        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_policy(gtk4::PolicyType::Automatic, gtk4::PolicyType::Automatic);
         scrolled.set_overlay_scrolling(false); // stałe paski przewijania przy małym oknie
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
@@ -64,6 +64,7 @@ impl ColorsTab {
         let title = Label::new(Some("Color Presets"));
         title.add_css_class("title");
         title.set_xalign(0.0);
+        title.set_halign(gtk4::Align::Start);
         content.append(&title);
 
         // Presets grid
