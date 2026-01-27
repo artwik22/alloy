@@ -67,13 +67,13 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>) {
         .replace("@define-color sidebar_bg_color #2a2a2a", &format!("@define-color sidebar_bg_color {}", config.secondary))
         .replace("@define-color view_bg_color #1e1e1e", &format!("@define-color view_bg_color {}", config.background));
     
-    // Apply rounding setting
+    // Apply rounding setting (simple replace to avoid regex on large CSS at startup)
     let rounding = config.rounding.as_deref().unwrap_or("rounded");
     if rounding == "sharp" {
-        // Replace all border-radius values with 0px
-        use regex::Regex;
-        let re = Regex::new(r"border-radius:\s*[^;]+;").unwrap();
-        dynamic_css = re.replace_all(&dynamic_css, "border-radius: 0px;").to_string();
+        dynamic_css = dynamic_css.replace("border-radius: 8px", "border-radius: 0px")
+            .replace("border-radius: 6px", "border-radius: 0px")
+            .replace("border-radius: 12px", "border-radius: 0px")
+            .replace("border-radius: 4px", "border-radius: 0px");
     }
     
     let provider = CssProvider::new();

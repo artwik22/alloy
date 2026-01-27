@@ -37,6 +37,7 @@ const PRESETS: &[(&str, &str, &str, &str, &str, &str)] = &[
     ("Ocean Blue", "#050a0f", "#0d1419", "#091116", "#d8e8f5", "#3b82f6"),
     ("Deep Purple", "#0a0514", "#140d1f", "#0f0916", "#e8d8f5", "#8b5cf6"),
     ("GNOME Monochrome", "#242424", "#303030", "#2a2a2a", "#ffffff", "#3584e4"),
+    ("Pure Black", "#030303", "#0a0a0a", "#060606", "#ffffff", "#c0c0c0"),
 ];
 
 pub struct LookAndFeelTab {
@@ -48,6 +49,7 @@ impl LookAndFeelTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
         scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_overlay_scrolling(false);
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         

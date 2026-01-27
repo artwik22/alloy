@@ -1,7 +1,7 @@
-/home/iartwik/alloy/index/target/release/deps/event_listener_strategy-11d5eec3227a4c7e.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs
+/home/iartwik/.config/alloy/index/target/release/deps/event_listener_strategy-11d5eec3227a4c7e.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs
 
-/home/iartwik/alloy/index/target/release/deps/libevent_listener_strategy-11d5eec3227a4c7e.rlib: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs
+/home/iartwik/.config/alloy/index/target/release/deps/libevent_listener_strategy-11d5eec3227a4c7e.rlib: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs
 
-/home/iartwik/alloy/index/target/release/deps/libevent_listener_strategy-11d5eec3227a4c7e.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs
+/home/iartwik/.config/alloy/index/target/release/deps/libevent_listener_strategy-11d5eec3227a4c7e.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs
 
 /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/event-listener-strategy-0.5.4/src/lib.rs:

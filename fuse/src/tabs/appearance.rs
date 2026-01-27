@@ -44,6 +44,9 @@ const COLOR_PRESETS: &[(&str, &str, &str, &str, &str, &str, &str)] = &[
     // Preset 4: Monochrome - Classic black/white
     ("Monochrome", "light", "#f5f5f5", "#e8e8e8", "#d0d0d0", "#1a1a1a", "#808080"),
     ("Monochrome", "dark", "#0a0a0a", "#1a1a1a", "#151515", "#e8e8e8", "#a0a0a0"),
+    // Preset: Pure Black - Deeper black, brighter white (monochrome)
+    ("Pure Black", "light", "#fafafa", "#f0f0f0", "#e5e5e5", "#0a0a0a", "#505050"),
+    ("Pure Black", "dark", "#030303", "#0a0a0a", "#060606", "#ffffff", "#c0c0c0"),
     // Preset 5: Midnight Blue - Deep blue
     ("Midnight Blue", "light", "#e8f0ff", "#d0e0ff", "#c0d8ff", "#0a0a2e", "#3b82f6"),
     ("Midnight Blue", "dark", "#050a1a", "#0a0a2e", "#091025", "#d0e0ff", "#60a5fa"),
@@ -67,6 +70,7 @@ impl AppearanceTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
         scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_overlay_scrolling(false); // stałe paski przewijania przy małym oknie
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         

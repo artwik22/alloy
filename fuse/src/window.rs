@@ -2,6 +2,7 @@ use libadwaita::prelude::*;
 use libadwaita::ApplicationWindow;
 use gtk4::{
     Box as GtkBox, Orientation, Label, Stack, ListBox, ListBoxRow, Separator, ScrolledWindow,
+    Spinner,
 };
 use std::sync::{Arc, Mutex};
 use glib;
@@ -18,7 +19,7 @@ pub struct FuseWindow {
 
 impl FuseWindow {
     pub fn new(app: &libadwaita::Application) -> Self {
-        // Load config
+        // Load config once for shell
         let config = Arc::new(Mutex::new(ColorConfig::load()));
 
         let window = ApplicationWindow::builder()
@@ -28,21 +29,15 @@ impl FuseWindow {
             .default_height(750)
             .resizable(true)
             .build();
-        
-        // Set minimum size after building - allow smaller sizes for responsiveness
-        window.set_default_size(1100, 750);
-        // Set minimum size constraints - very flexible for responsiveness (reduced for better small window support)
-        window.set_size_request(500, 350);
 
-        // Content area with stack
+        window.set_default_size(1100, 750);
+        window.set_size_request(560, 400);
+
         let stack = Stack::new();
         stack.set_transition_type(gtk4::StackTransitionType::Crossfade);
-        stack.set_transition_duration(150); // Reduced for better performance
-        
-        // Store stack reference for sidebar
+        stack.set_transition_duration(150);
         let stack_clone = stack.clone();
 
-        // Main container - GNOME spacing (no gap, use margins)
         let main_box = GtkBox::new(Orientation::Horizontal, 0);
         main_box.set_margin_start(0);
         main_box.set_margin_end(0);
@@ -52,33 +47,25 @@ impl FuseWindow {
         main_box.set_vexpand(true);
         main_box.set_homogeneous(false);
 
-        // Sidebar (200px width) with custom layout
         let sidebar = create_custom_sidebar(&stack_clone);
         main_box.append(&sidebar);
 
-        // Create tabs
-        let appearance_tab = AppearanceTab::new(Arc::clone(&config));
-        let system_tab = SystemTab::new(Arc::clone(&config));
-        let audio_tab = AudioTab::new(Arc::clone(&config));
-        let index_tab = IndexTab::new(Arc::clone(&config));
-        let bluetooth_tab = BluetoothTab::new(Arc::clone(&config));
-        let network_tab = NetworkTab::new(Arc::clone(&config));
-        let notifications_tab = NotificationsTab::new(Arc::clone(&config));
-        let quickshell_tab = QuickshellTab::new(Arc::clone(&config));
-        let about_tab = AboutTab::new(Arc::clone(&config));
+        // Placeholder: show "Loading..." so window appears immediately
+        let loading_box = GtkBox::new(Orientation::Vertical, 18);
+        loading_box.set_halign(gtk4::Align::Center);
+        loading_box.set_valign(gtk4::Align::Center);
+        loading_box.set_hexpand(true);
+        loading_box.set_vexpand(true);
+        let spinner = Spinner::new();
+        spinner.set_spinning(true);
+        spinner.set_size_request(48, 48);
+        loading_box.append(&spinner);
+        let loading_label = Label::new(Some("Ładowanie…"));
+        loading_label.add_css_class("title");
+        loading_box.append(&loading_label);
+        stack.add_titled(&loading_box, Some("loading"), "Loading");
+        stack.set_visible_child_name("loading");
 
-        // Add tabs in order: Network and Bluetooth first, then separator, then others
-        stack.add_titled(network_tab.widget(), Some("network"), "󰤨 Network");
-        stack.add_titled(bluetooth_tab.widget(), Some("bluetooth"), "󰂯 Bluetooth");
-        stack.add_titled(appearance_tab.widget(), Some("appearance"), "󰋺 Appearance");
-        stack.add_titled(audio_tab.widget(), Some("audio"), "󰕧 Audio");
-        stack.add_titled(index_tab.widget(), Some("index"), "󰉋 Index");
-        stack.add_titled(notifications_tab.widget(), Some("notifications"), "󰂚 Notifications");
-        stack.add_titled(quickshell_tab.widget(), Some("quickshell"), "󰍜 QuickShell");
-        stack.add_titled(system_tab.widget(), Some("system"), "󰍛 System");
-        stack.add_titled(about_tab.widget(), Some("about"), "󰋼 About");
-
-        // Content area - GNOME spacing (12px margins), fully responsive
         stack.set_hexpand(true);
         stack.set_vexpand(true);
         stack.set_margin_start(0);
@@ -87,11 +74,15 @@ impl FuseWindow {
         stack.set_margin_bottom(12);
         main_box.append(&stack);
 
-        // AdwApplicationWindow already has a header bar, we don't need to set it
-        // Just set the title
         window.set_title(Some("⚙️ Fuse Settings"));
-
         window.set_content(Some(&main_box));
+
+        // Build tabs in idle so the window shows right away (local = nie wymaga Send, tylko wątek główny)
+        let config_idle = Arc::clone(&config);
+        let stack_idle = stack.clone();
+        glib::source::idle_add_local_once(move || {
+            populate_stack_with_tabs(&stack_idle, &config_idle);
+        });
 
         Self {
             window,
@@ -105,10 +96,38 @@ impl FuseWindow {
     }
 }
 
+fn populate_stack_with_tabs(stack: &Stack, config: &Arc<Mutex<ColorConfig>>) {
+    let network_tab = NetworkTab::new(Arc::clone(config));
+    let bluetooth_tab = BluetoothTab::new(Arc::clone(config));
+    let appearance_tab = AppearanceTab::new(Arc::clone(config));
+    let audio_tab = AudioTab::new(Arc::clone(config));
+    let index_tab = IndexTab::new(Arc::clone(config));
+    let notifications_tab = NotificationsTab::new(Arc::clone(config));
+    let quickshell_tab = QuickshellTab::new(Arc::clone(config));
+    let system_tab = SystemTab::new(Arc::clone(config));
+    let about_tab = AboutTab::new(Arc::clone(config));
+
+    if let Some(loading) = stack.child_by_name("loading") {
+        stack.remove(&loading);
+    }
+
+    stack.add_titled(network_tab.widget(), Some("network"), "󰤨 Network");
+    stack.add_titled(bluetooth_tab.widget(), Some("bluetooth"), "󰂯 Bluetooth");
+    stack.add_titled(appearance_tab.widget(), Some("appearance"), "󰋺 Appearance");
+    stack.add_titled(audio_tab.widget(), Some("audio"), "󰕧 Audio");
+    stack.add_titled(index_tab.widget(), Some("index"), "󰉋 Index");
+    stack.add_titled(notifications_tab.widget(), Some("notifications"), "󰂚 Notifications");
+    stack.add_titled(quickshell_tab.widget(), Some("quickshell"), "󰍜 QuickShell");
+    stack.add_titled(system_tab.widget(), Some("system"), "󰍛 System");
+    stack.add_titled(about_tab.widget(), Some("about"), "󰋼 About");
+
+    stack.set_visible_child_name("network");
+}
+
 fn create_custom_sidebar(stack: &Stack) -> GtkBox {
-    // GNOME Settings style: flexible sidebar width
+    // GNOME Settings style: sidebar with minimum width so items stay visible when resizing
     let sidebar = GtkBox::new(Orientation::Vertical, 0);
-    sidebar.set_size_request(-1, -1); // Fully responsive - no fixed size
+    sidebar.set_size_request(180, -1); // Min width 180px so labels/buttons don't disappear
     sidebar.set_hexpand(false);
     sidebar.set_vexpand(true);
     sidebar.add_css_class("sidebar");
@@ -120,6 +139,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     // Create ScrolledWindow for sidebar to enable scrolling in small windows
     let scrolled = ScrolledWindow::new();
     scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+    scrolled.set_overlay_scrolling(false);
     scrolled.set_hexpand(true);
     scrolled.set_vexpand(true);
     scrolled.set_min_content_width(-1);

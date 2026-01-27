@@ -648,17 +648,18 @@ applicationwindow > box {
 
 /* Make sidebar responsive */
 .sidebar {
-    min-width: 140px !important;
-    max-width: 320px !important;
+    min-width: 180px !important;
+    max-width: 280px !important;
     flex: 0 0 auto !important;
     width: auto !important;
     overflow: visible !important;
 }
 
-/* Ensure sidebar content is visible */
+/* Sidebar ScrolledWindow: allow vertical scroll when many items, keep list usable */
 .sidebar scrolledwindow {
-    overflow: visible !important;
     min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: auto !important;
 }
 
 .sidebar listbox {
@@ -675,11 +676,32 @@ stack {
     overflow: visible !important;
 }
 
-/* Ensure stack children are visible */
+/* Content area (tabs): allow scrolling so buttons/content stay reachable when window is small */
+stack scrolledwindow {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: auto !important;
+}
+
+/* Ensure stack children get correct allocation; scrolling handled by scrolledwindow above */
 stack > child {
     min-width: 0 !important;
     min-height: 0 !important;
-    overflow: visible !important;
+}
+
+/* Show scrollbars in content and sidebar when resizing so controls stay accessible */
+stack scrolledwindow scrollbar,
+stack scrolledwindow scrollbar trough,
+stack scrolledwindow scrollbar slider,
+.sidebar scrolledwindow scrollbar,
+.sidebar scrolledwindow scrollbar trough,
+.sidebar scrolledwindow scrollbar slider {
+    opacity: 0.75;
+}
+
+stack scrolledwindow scrollbar:hover,
+.sidebar scrolledwindow scrollbar:hover {
+    opacity: 1;
 }
 
 /* Make main container responsive */

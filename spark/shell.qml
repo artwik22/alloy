@@ -16,6 +16,7 @@ ShellRoot {
         property bool volumeEdgeHovered: false  // Czy myszka jest nad detektorem krawędzi
         property bool clipboardVisible: false
         property bool settingsVisible: false
+        property bool lockScreenVisible: false  // Własny lock screen (zamiast swaylock/loginctl)
         property bool sidebarVisible: true  // Sidebar visibility toggle
         property string sidebarPosition: "left"  // Sidebar position: "left" or "top"
         property bool notificationsEnabled: true  // Enable/disable notifications
@@ -409,6 +410,12 @@ ShellRoot {
                 // Wykrywacz prawej krawędzi - wykrywa najechanie myszką
                 RightEdgeDetector {
                     id: rightEdgeDetectorInstance
+                    screen: modelData
+                    sharedData: root.sharedData
+                }
+
+                // Lock screen - pełnoekranowy overlay z polem hasła (jeden na ekran)
+                LockScreen {
                     screen: modelData
                     sharedData: root.sharedData
                 }

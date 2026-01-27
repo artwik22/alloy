@@ -532,10 +532,9 @@ PanelWindow {
                                             cursorShape: Qt.PointingHandCursor
                                             hoverEnabled: true
                                             onClicked: {
-                                                // Try loginctl lock-session first, fallback to swaylock
-                                                Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'loginctl lock-session $(loginctl list-sessions | grep $(whoami) | awk \"{print \\$1}\" | head -1) 2>/dev/null || swaylock 2>/dev/null || loginctl lock-session 2>/dev/null']; running: true }", dashboardRoot)
-                                                // Close dashboard after locking
+                                                // Własny lock screen – overlay z polem hasła (bez swaylock/loginctl)
                                                 if (sharedData) {
+                                                    sharedData.lockScreenVisible = true
                                                     sharedData.menuVisible = false
                                                 }
                                             }

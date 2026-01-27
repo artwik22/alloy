@@ -14,6 +14,7 @@ impl QuickshellTab {
     pub fn new(config: Arc<Mutex<ColorConfig>>) -> Self {
         let scrolled = ScrolledWindow::new();
         scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_overlay_scrolling(false);
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         

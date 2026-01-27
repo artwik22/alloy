@@ -365,6 +365,13 @@ PanelWindow {
             secondary: "#150f0f",
             text: "#ffffff",
             accent: "#d67a7a"
+        },
+        "Pure Black": {
+            background: "#030303",
+            primary: "#0a0a0a",
+            secondary: "#060606",
+            text: "#ffffff",
+            accent: "#c0c0c0"
         }
     }
     

@@ -56,6 +56,8 @@ impl AudioTab {
         let all_inputs_section = create_all_devices_section("All Input Devices", "󰍬", false);
         content.append(&all_inputs_section);
 
+        scrolled.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+        scrolled.set_overlay_scrolling(false);
         scrolled.set_child(Some(&content));
 
         Self {

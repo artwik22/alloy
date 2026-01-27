@@ -2,6 +2,7 @@ module qs.components
 AppLauncher 1.0 AppLauncher.qml
 ClipboardManager 1.0 ClipboardManager.qml
 Dashboard 1.0 Dashboard.qml
+LockScreen 1.0 LockScreen.qml
 LoadingOverlay 1.0 LoadingOverlay.qml
 NotificationDisplay 1.0 NotificationDisplay.qml
 NotificationItem 1.0 NotificationItem.qml
