@@ -29,7 +29,7 @@ PanelWindow {
     property bool panelActive: !!(sharedData && (sharedData.sidebarVisible === undefined || sharedData.sidebarVisible) && sharedData.sidebarPosition === panelPosition)
     property real panelProgress: panelActive ? 1.0 : 0.0
     Behavior on panelProgress {
-        NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
     }
     visible: panelProgress > 0.01
     exclusiveZone: panelProgress * ((panelPosition === "top") ? implicitHeight : implicitWidth)
@@ -83,7 +83,7 @@ PanelWindow {
         
         opacity: sidePanel.panelProgress
         Behavior on opacity {
-            NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
         }
     }
 

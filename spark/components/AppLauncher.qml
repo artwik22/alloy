@@ -436,7 +436,7 @@ PanelWindow {
         value: (sharedData && sharedData.launcherVisible) ? 1.0 : 0.0
     }
     Behavior on launcherShowProgress {
-        NumberAnimation { duration: 380; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
     }
 
     visible: true
@@ -1334,10 +1334,10 @@ PanelWindow {
         }
     }
     
-    // Jeden Timer na focus przy otwarciu – zamiast 3x createQmlObject przy każdym open
+    // Jeden Timer na focus przy otwarciu – krótki interval = focus od razu z pojawieniem się
     Timer {
         id: launcherOpenFocusTimer
-        interval: 80
+        interval: 30
         repeat: false
         running: false
         onTriggered: {

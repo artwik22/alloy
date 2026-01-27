@@ -9,6 +9,8 @@ ShellRoot {
     id: root
 
     ProcessHelper { id: processHelper }
+    // Osobna kolejka tylko do czyszczenia /tmp/quickshell_command – bez czekania na cava/wallpaper/itd.
+    ProcessHelper { id: processHelperClear }
 
     // Współdzielone właściwości (jeśli potrzebne)
     property var sharedData: QtObject {
@@ -246,10 +248,11 @@ ShellRoot {
         xhr.send()
     }
     
-    // Timer do monitorowania pliku poleceń – debounce, clear-first, jedna obsługa w czasie
+    // Polecenia: odczyt XHR; gdy niepusty – akcja od razu, potem clear. busy=false dopiero w callbacku clear,
+    // żeby następny poll nie zobaczył tego samego polecenia (brak migotania, bez okien „duplikat”).
     Timer {
         id: commandCheckTimer
-        interval: (sharedData && sharedData.lowPerformanceMode) ? 1200 : 400
+        interval: (sharedData && sharedData.lowPerformanceMode) ? 600 : 40
         running: true
         repeat: true
         
@@ -269,25 +272,16 @@ ShellRoot {
                     root.commandHandlerBusy = false
                     return
                 }
-                var now = Date.now()
-                if (cmd === root.lastCommandHandled && (now - root.lastCommandTime) < 400) {
-                    processHelper.runCommand(['sh', '-c', ': > /tmp/quickshell_command'], function() {
-                        root.commandHandlerBusy = false
-                    })
-                    return
+                if (cmd === "openLauncher") {
+                    root.openLauncher()
+                } else if (cmd === "toggleMenu") {
+                    root.toggleMenu()
+                } else if (cmd === "openClipboardManager") {
+                    root.openClipboardManager()
+                } else if (cmd === "openSettings") {
+                    root.openSettings()
                 }
-                processHelper.runCommand(['sh', '-c', ': > /tmp/quickshell_command'], function() {
-                    if (cmd === "openLauncher") {
-                        root.openLauncher()
-                    } else if (cmd === "toggleMenu") {
-                        root.toggleMenu()
-                    } else if (cmd === "openClipboardManager") {
-                        root.openClipboardManager()
-                    } else if (cmd === "openSettings") {
-                        root.openSettings()
-                    }
-                    root.lastCommandHandled = cmd
-                    root.lastCommandTime = Date.now()
+                processHelperClear.runCommand(['sh', '-c', ': > /tmp/quickshell_command'], function() {
                     root.commandHandlerBusy = false
                 })
             }
