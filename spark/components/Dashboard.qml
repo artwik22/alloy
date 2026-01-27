@@ -9,13 +9,11 @@ import "."
 PanelWindow {
     id: dashboardRoot
 
-    anchors { 
-        right: true
-        top: true
-        bottom: true
-    }
-    implicitWidth: 449  // 80% (562 × 0.8)
-    implicitHeight: (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].height : 1440  // Pełna wysokość ekranu
+    anchors.right: true
+    anchors.top: true
+    anchors.bottom: true
+    implicitWidth: 449
+    implicitHeight: (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].height : 1440
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsdashboard"
@@ -100,7 +98,7 @@ PanelWindow {
             Rectangle {
                 id: navBar
                 width: parent.width
-                height: 37
+                height: 44
                 color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                 
                 RowLayout {
@@ -147,11 +145,11 @@ PanelWindow {
                             
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 8
+                                spacing: 10
                                 
                                 Text {
                                     text: modelData.icon
-                                    font.pixelSize: 10
+                                    font.pixelSize: 12
                                     color: tabRect.isActive ? 
                                         ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
                                         (tabRect.isHovered ? 
@@ -177,7 +175,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: modelData.label
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                     font.family: "sans-serif"
                                     font.weight: tabRect.isActive ? Font.Bold : Font.Normal
                                     color: tabRect.isActive ? 
@@ -209,7 +207,7 @@ PanelWindow {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: parent.width * 0.6
-                                height: 2
+                                height: 3
                                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                 opacity: tabRect.isActive ? 1.0 : 0.0
                                 
@@ -278,15 +276,17 @@ PanelWindow {
                         }
                     }
                     
-                    Column {
+                    ColumnLayout {
+                        id: dashboardTabColumn
                         anchors.fill: parent
                         anchors.margins: 12
                         spacing: 5
                         
                         // Row with Battery % and Quick Actions side by side
                         Row {
-                            width: parent.width
-                            height: 80
+                            Layout.fillWidth: true
+                            Layout.fillHeight: false
+                            Layout.preferredHeight: 90
                             spacing: 5
                             
                             // Battery % Card (left)
@@ -315,7 +315,7 @@ PanelWindow {
                                     spacing: 5
                                     Text {
                                         text: batteryPercent >= 90 ? "󰁹" : (batteryPercent >= 70 ? "󰂂" : (batteryPercent >= 50 ? "󰂀" : (batteryPercent >= 30 ? "󰁾" : (batteryPercent >= 10 ? "󰁼" : "󰂃"))))
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
@@ -323,7 +323,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: "Battery"
-                                        font.pixelSize: 8
+                                        font.pixelSize: 11
                                         font.weight: Font.Bold
                                         font.family: "sans-serif"
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -334,7 +334,7 @@ PanelWindow {
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: batteryPercent >= 0 ? (batteryPercent + "%") : "—"
-                                    font.pixelSize: 19
+                                    font.pixelSize: 22
                                     font.family: "sans-serif"
                                     font.weight: Font.Bold
                                     color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -395,7 +395,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰍜"
-                                                font.pixelSize: 9
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -403,13 +403,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Toggle Sidebar"
-                                                font.pixelSize: 8
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 16)
+                                                width: Math.max(0, parent.width - 18)
                                             }
                                         }
                                         
@@ -452,7 +452,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰂛"
-                                                font.pixelSize: 9
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 opacity: (sharedData && sharedData.notificationsEnabled === false) ? 1.0 : 0.6
@@ -461,13 +461,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Do Not Disturb"
-                                                font.pixelSize: 8
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 16)
+                                                width: Math.max(0, parent.width - 18)
                                             }
                                         }
                                         
@@ -508,7 +508,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰌾"
-                                                font.pixelSize: 9
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -516,13 +516,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Lock"
-                                                font.pixelSize: 8
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 16)
+                                                width: Math.max(0, parent.width - 18)
                                             }
                                         }
                                         
@@ -566,7 +566,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰐥"
-                                                font.pixelSize: 9
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -574,13 +574,13 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "Poweroff"
-                                                font.pixelSize: 8
+                                                font.pixelSize: 11
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 elide: Text.ElideRight
                                                 maximumLineCount: 1
-                                                width: Math.max(0, parent.width - 16)
+                                                width: Math.max(0, parent.width - 18)
                                             }
                                         }
                                         
@@ -603,10 +603,12 @@ PanelWindow {
                             }
                         }
                         
-                        // Date/Calendar Card
+                        // Date/Calendar Card – rozciąga się
                         Rectangle {
-                            width: parent.width
-                            height: 192
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: 220
+                            Layout.minimumHeight: 192
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
@@ -624,7 +626,7 @@ PanelWindow {
                                     Text {
                                         id: calendarHoursDisplay
                                         text: "00"
-                                        font.pixelSize: 45
+                                        font.pixelSize: 42
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -634,7 +636,7 @@ PanelWindow {
                                     Text {
                                         id: calendarMinutesDisplay
                                         text: "00"
-                                        font.pixelSize: 45
+                                        font.pixelSize: 42
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -657,10 +659,10 @@ PanelWindow {
                                             model: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
                                             Text {
                                                 text: modelData
-                                                font.pixelSize: 9
+                                                font.pixelSize: 10
                                                 font.family: "sans-serif"
                                                 color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.3) : "#aaaaaa"
-                                                width: 21
+                                                width: 22
                                                 horizontalAlignment: Text.AlignHCenter
                                             }
                                         }
@@ -676,8 +678,8 @@ PanelWindow {
                                             model: calendarDays
                                             
                                             Rectangle {
-                                                width: 21
-                                                height: 21
+                                                width: 22
+                                                height: 22
                                                 radius: 0
                                                 color: modelData.isToday ? 
                                                     ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
@@ -685,7 +687,7 @@ PanelWindow {
                                                 
                                                 Text {
                                                     text: modelData.day
-                                                    font.pixelSize: 9
+                                                    font.pixelSize: 10
                                                     font.family: "sans-serif"
                                                     color: modelData.isToday ? 
                                                         ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -701,10 +703,12 @@ PanelWindow {
                             }
                         }
                         
-                        // CPU Usage Card
+                        // CPU Usage Card – rozciąga się
                         Rectangle {
-                            width: parent.width
-                            height: 165
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: 190
+                            Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                                     
@@ -717,14 +721,14 @@ PanelWindow {
                                     spacing: 5
                                         Text {
                                         text: "󰻠"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                         }
                                         
                                         Text {
                                         text: "CPU"
-                                        font.pixelSize: 8
+                                        font.pixelSize: 11
                                             font.family: "sans-serif"
                                         font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -733,9 +737,9 @@ PanelWindow {
                                         
                                         Text {
                                         text: cpuUsageValue + "%"
-                                        font.pixelSize: 8
+                                        font.pixelSize: 11
                                             font.family: "sans-serif"
-                                            font.weight: Font.Bold
+                                        font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -827,10 +831,12 @@ PanelWindow {
                             }
                         }
                         
-                        // RAM Usage Card
+                        // RAM Usage Card – rozciąga się
                         Rectangle {
-                            width: parent.width
-                            height: 165
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: 190
+                            Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
@@ -843,14 +849,14 @@ PanelWindow {
                                     spacing: 5
                                     Text {
                                         text: "󰍛"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                 }
                                     
                                     Text {
                                         text: "RAM"
-                                        font.pixelSize: 8
+                                        font.pixelSize: 11
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -859,7 +865,7 @@ PanelWindow {
                                     
                                     Text {
                                         text: ramUsageValue + "%"
-                                        font.pixelSize: 8
+                                        font.pixelSize: 11
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
@@ -953,22 +959,26 @@ PanelWindow {
                             }
                         }
                         
-                        // Media Player Card
+                        // Media Player Card – rozciąga się
                         Rectangle {
-                            width: parent.width
-                            height: 165
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: 190
+                            Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.margins: 16
-                                spacing: 13
+                                spacing: 16
                                 
-                                // Album Art - wyśrodkowane wertykalnie
+                                // Cover art – kwadrat, po lewej, wyśrodkowany w pionie
                                 Rectangle {
-                                    Layout.preferredWidth: 88
-                                    Layout.preferredHeight: 110
+                                    Layout.preferredWidth: 100
+                                    Layout.preferredHeight: 100
+                                    Layout.minimumWidth: 100
+                                    Layout.minimumHeight: 100
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: 0
                                     color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
@@ -993,29 +1003,30 @@ PanelWindow {
                                     
                                     Text {
                                         text: "󰎆"
-                                        font.pixelSize: 37
+                                        font.pixelSize: 40
                                         anchors.centerIn: parent
                                         visible: !mpArt
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                     }
                                 }
                                 
-                                // Track Info and Controls - wyśrodkowane wertykalnie
+                                // Track info + kontrolki – po prawej, przesunięte w dół
                                 Column {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     Layout.alignment: Qt.AlignVCenter
-                                    spacing: 8
+                                    spacing: 10
                                     
-                                    // Track Info - wyśrodkowane
+                                    Item { width: 1; height: 24 }
+                                    
                                     Column {
-                                        width: parent.width
-                                        spacing: 5
+                                        width: parent.width - 20
+                                        spacing: 4
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         
                                         Text {
                                             text: mpTitle ? mpTitle : "Nothing playing"
-                                            font.pixelSize: 9
+                                            font.pixelSize: 12
                                             font.family: "sans-serif"
                                             font.weight: Font.Bold
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
@@ -1026,7 +1037,7 @@ PanelWindow {
                                         
                                         Text {
                                             text: mpArtist ? mpArtist : "—"
-                                            font.pixelSize: 9
+                                            font.pixelSize: 11
                                             font.family: "sans-serif"
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                             elide: Text.ElideRight
@@ -1035,10 +1046,10 @@ PanelWindow {
                                         }
                                     }
                                     
-                                    // Controls - wyśrodkowane
+                                    // Kontrolki prev | play | next – symetryczne, wyśrodkowane
                                     Row {
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        spacing: 5
+                                        spacing: 8
                                         
                                         Rectangle {
                                             width: 29
@@ -1068,7 +1079,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰒮"
-                                                font.pixelSize: 8
+                                                font.pixelSize: 10
                                                 anchors.centerIn: parent
                                                 color: prevAreaCard.containsMouse ? 
                                                     ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -1121,7 +1132,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: mpPlaying ? "󰏤" : "󰐊"
-                                                font.pixelSize: 9
+                                                font.pixelSize: 10
                                                 anchors.centerIn: parent
                                                 color: playAreaCard.containsMouse ? 
                                                     ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
@@ -1183,7 +1194,7 @@ PanelWindow {
                                             
                                             Text {
                                                 text: "󰒭"
-                                                font.pixelSize: 8
+                                                font.pixelSize: 10
                                                 anchors.centerIn: parent
                                                 color: nextAreaCard.containsMouse ? 
                                                     ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
