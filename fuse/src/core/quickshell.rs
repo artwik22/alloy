@@ -19,23 +19,22 @@ pub fn set_wallpaper(wallpaper_path: &str) -> Result<(), Box<dyn std::error::Err
 }
 
 pub fn notify_color_change() -> Result<(), Box<dyn std::error::Error>> {
-    // Write command to trigger quickshell to reload colors.json
-    // Quickshell should monitor this file and reload colors when it changes
-    // Use timestamp to ensure file change is detected
+    // Write path to colors.json so Quickshell reads the exact file we just saved.
+    // Format: "PATH\n" – Quickshell uses first line as path, then loads that file.
     use std::time::{SystemTime, UNIX_EPOCH};
+    let path = ColorConfig::get_config_path();
+    let path_str = path.to_string_lossy();
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_millis();
-    
-    let content = format!("reload_colors_{}", timestamp);
+    let content = format!("{}\nreload_{}", path_str, timestamp);
     fs::write(COLOR_CHANGE_FILE, content)?;
-    
-    // Ensure the write is flushed to disk
+
     if let Ok(file) = std::fs::OpenOptions::new().write(true).open(COLOR_CHANGE_FILE) {
         file.sync_all().ok();
     }
-    
+
     Ok(())
 }
 

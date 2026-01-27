@@ -398,11 +398,40 @@ PanelWindow {
     property real volumeValue: 35
     property real brightnessValue: 50
 
+    // Debounce: przy przeciąganiu wysyłamy polecenie do systemu co 50ms zamiast przy każdym ruchu – brak kolejki i natychmiastowa reakcja UI.
+    property int _pendingBrightness: -1
+    property int _pendingVolume: -1
+    Timer {
+        id: applyBrightnessTimer
+        interval: 50
+        repeat: false
+        onTriggered: {
+            if (_pendingBrightness >= 0 && sharedData && sharedData.runCommand) {
+                var p = Math.round(Math.max(0, Math.min(100, _pendingBrightness)))
+                sharedData.runCommand(['brightnessctl', 'set', p + '%'], null)
+                _pendingBrightness = -1
+            }
+        }
+    }
+    Timer {
+        id: applyVolumeTimer
+        interval: 50
+        repeat: false
+        onTriggered: {
+            if (_pendingVolume >= 0 && sharedData && sharedData.runCommand) {
+                var v = Math.round(Math.max(0, Math.min(100, _pendingVolume)))
+                sharedData.runCommand(['pactl', 'set-sink-volume', '@DEFAULT_SINK@', v + '%'], null)
+                _pendingVolume = -1
+            }
+        }
+    }
+
     // --- Funkcje Brightness ---
     function setSystemBrightness(value) {
-        brightnessValue = Math.round(value)
-        var percentStr = Math.round(value).toString() + '%'
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['brightnessctl','set',percentStr], getSystemBrightness)
+        var v = Math.round(Math.max(0, Math.min(100, value)))
+        brightnessValue = v
+        _pendingBrightness = v
+        applyBrightnessTimer.restart()
     }
 
     function getSystemBrightness() {
@@ -410,19 +439,12 @@ PanelWindow {
     }
 
     function readSystemBrightness() {
-        // Read brightness from file
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_brightness")
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.responseText && xhr.responseText.trim() !== "") {
-                    var brightness = parseInt(xhr.responseText.trim())
-                    if (!isNaN(brightness) && brightness >= 0 && brightness <= 100) {
-                        brightnessValue = brightness
-                    }
-                } else {
-                    if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'sleep 0.2'], getSystemBrightness)
-                }
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText && xhr.responseText.trim() !== "") {
+                var b = parseInt(xhr.responseText.trim())
+                if (!isNaN(b) && b >= 0 && b <= 100) brightnessValue = b
             }
         }
         xhr.send()
@@ -430,8 +452,10 @@ PanelWindow {
 
     // --- Funkcje Volume ---
     function setSystemVolume(value) {
-        volumeValue = Math.round(value)
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl','set-sink-volume','@DEFAULT_SINK@',Math.round(value) + '%'], getSystemVolume)
+        var v = Math.round(Math.max(0, Math.min(100, value)))
+        volumeValue = v
+        _pendingVolume = v
+        applyVolumeTimer.restart()
     }
 
     function getSystemVolume() {
@@ -439,27 +463,18 @@ PanelWindow {
     }
 
     function readSystemVolume() {
-        // Użyj XMLHttpRequest z QML_XHR_ALLOW_FILE_READ=1 (ustawione w run.sh)
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_volume")
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.responseText && xhr.responseText.trim() !== "") {
-                    var vol = parseInt(xhr.responseText.trim())
-                    if (!isNaN(vol) && vol >= 0 && vol <= 100) {
-                        volumeValue = vol
-                        // Volume synchronized
-                    }
-                } else {
-                    // Jeśli plik jest pusty, spróbuj ponownie
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: function() { volumeSliderRoot.getSystemVolume(); Qt.createQmlObject('import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: volumeSliderRoot.readSystemVolume() }', volumeSliderRoot) } }", volumeSliderRoot)
-                }
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText && xhr.responseText.trim() !== "") {
+                var vol = parseInt(xhr.responseText.trim())
+                if (!isNaN(vol) && vol >= 0 && vol <= 100) volumeValue = vol
             }
         }
         xhr.send()
     }
 
-    // Timer do odświeżania głośności i jasności
+    // Timer do odświeżania głośności i jasności z systemu (co 1s)
     Timer {
         id: volumeTimer
         interval: 1000
@@ -470,21 +485,18 @@ PanelWindow {
             getSystemBrightness()
         }
         Component.onCompleted: {
-            // Przy starcie timera również zsynchronizuj głośność i jasność
             syncVolumeOnStart()
             syncBrightnessOnStart()
         }
     }
 
-    // Obserwuj zmiany volumeVisible
+    // Gdy slider się otwiera – odśwież wartości z systemu (bez długiego łańcucha callbacków)
     Connections {
         target: sharedData
         function onVolumeVisibleChanged() {
             if (sharedData && sharedData.volumeVisible) {
-                // Gdy slider się otwiera, sprawdź aktualną głośność i jasność
                 getSystemVolume()
                 getSystemBrightness()
-                Qt.createQmlObject("import QtQuick; Timer { interval: 150; running: true; repeat: false; onTriggered: function() { volumeSliderRoot.readSystemVolume(); volumeSliderRoot.readSystemBrightness(); } }", volumeSliderRoot)
             }
         }
     }

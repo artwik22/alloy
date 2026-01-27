@@ -106,6 +106,13 @@ PanelWindow {
                 colorAccent = sharedData.colorAccent
             }
         }
+
+        // Gdy launcher się otwiera i lista aplikacji jest pusta – załaduj aplikacje (np. po starcie runCommand nie był gotowy)
+        function onLauncherVisibleChanged() {
+            if (sharedData && sharedData.launcherVisible && apps.length === 0) {
+                loadApps()
+            }
+        }
     }
     
     // Initialize paths from environment
@@ -250,18 +257,19 @@ PanelWindow {
     }
     
     // Color management functions
-    function saveColors() {
-        // Validate paths before saving
+    // optionalPresetName: when applying a preset, pass its name so it's written to colors.json (arg 8).
+    // Quickshell loadColors uses presets[colorPreset] – without saving the name, reload would apply the old preset.
+    function saveColors(optionalPresetName) {
         if (!projectPath || projectPath.length === 0) {
             return
         }
         if (!colorConfigPath || colorConfigPath.length === 0) {
             return
         }
-        // Use Python script to save colors - pass colors as arguments
         var scriptPath = projectPath + "/scripts/save-colors.py"
-        var cmd = 'python3 "' + scriptPath + '" "' + colorBackground + '" "' + colorPrimary + '" "' + colorSecondary + '" "' + colorText + '" "' + colorAccent + '" "' + colorConfigPath + '"'
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + cmd + "']; running: true }", appLauncherRoot)
+        var presetArg = (optionalPresetName && String(optionalPresetName).length > 0) ? String(optionalPresetName).replace(/"/g, '\\"') : ""
+        var cmd = 'python3 "' + scriptPath + '" "' + colorBackground + '" "' + colorPrimary + '" "' + colorSecondary + '" "' + colorText + '" "' + colorAccent + '" "' + colorConfigPath + '" "" "' + presetArg + '"'
+        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', '" + cmd.replace(/'/g, "'\"'\"'") + "']; running: true }", appLauncherRoot)
     }
     
     
@@ -321,9 +329,12 @@ PanelWindow {
             sharedData.colorAccent = preset.accent
         }
         
-        // Save to file
-        saveColors()
-        
+        // Save to file – must pass preset name so colors.json has colorPreset set; otherwise Quickshell reload applies the old preset.
+        saveColors(presetName)
+        // Trigger Quickshell reload after save finishes (script is async)
+        if (sharedData && sharedData.runCommand) {
+            sharedData.runCommand(['sh', '-c', 'sleep 0.5 && echo 1 > /tmp/quickshell_color_change'])
+        }
     }
     
     property var colorPresets: {
@@ -334,33 +345,68 @@ PanelWindow {
             text: "#ffffff",
             accent: "#b0b0b0"
         },
-        "Midnight Blue": {
-            background: "#0a0a0f",
-            primary: "#1a1a25",
-            secondary: "#0f0f15",
+        "Professional Modern": {
+            background: "#0a0a0a",
+            primary: "#1a1a1a",
+            secondary: "#151515",
             text: "#ffffff",
-            accent: "#6b8dd6"
+            accent: "#4a9eff"
         },
-        "Deep Forest": {
-            background: "#0a0f0a",
-            primary: "#1a251a",
-            secondary: "#0f150f",
+        "Dark Warm": {
+            background: "#0d0d0d",
+            primary: "#1f1f1f",
+            secondary: "#181818",
             text: "#f5f5f5",
-            accent: "#7a9a7a"
+            accent: "#ff6b35"
         },
-        "Dark Violet": {
-            background: "#0f0a15",
-            primary: "#1f1a25",
-            secondary: "#150f1a",
-            text: "#ffffff",
-            accent: "#9a7ab5"
+        "Cool Blue": {
+            background: "#080d14",
+            primary: "#0f1419",
+            secondary: "#0a1016",
+            text: "#e1e5e9",
+            accent: "#00d4ff"
         },
-        "Crimson": {
-            background: "#0f0a0a",
-            primary: "#251a1a",
-            secondary: "#150f0f",
+        "Minimal Gray": {
+            background: "#0c0c0c",
+            primary: "#161616",
+            secondary: "#121212",
+            text: "#f0f0f0",
+            accent: "#a0a0a0"
+        },
+        "Forest Green": {
+            background: "#0a0f0a",
+            primary: "#141914",
+            secondary: "#0e120e",
+            text: "#e8f5e8",
+            accent: "#4ade80"
+        },
+        "Sunset Orange": {
+            background: "#0f0a05",
+            primary: "#1a140d",
+            secondary: "#140f09",
+            text: "#f5e8d8",
+            accent: "#ff9500"
+        },
+        "Ocean Blue": {
+            background: "#050a0f",
+            primary: "#0d1419",
+            secondary: "#091116",
+            text: "#d8e8f5",
+            accent: "#3b82f6"
+        },
+        "Deep Purple": {
+            background: "#0a0514",
+            primary: "#140d1f",
+            secondary: "#0f0916",
+            text: "#e8d8f5",
+            accent: "#8b5cf6"
+        },
+        "GNOME Monochrome": {
+            background: "#242424",
+            primary: "#303030",
+            secondary: "#2a2a2a",
             text: "#ffffff",
-            accent: "#d67a7a"
+            accent: "#3584e4"
         },
         "Pure Black": {
             background: "#030303",
@@ -858,18 +904,29 @@ PanelWindow {
     }
     
     // Function to load applications
+    property int _loadAppsRetries: 0
     function loadApps() {
+        if (!(sharedData && sharedData.runCommand)) {
+            // runCommand może nie być gotowe przy starcie – spróbuj ponownie po chwili albo gdy użytkownik otworzy launcher
+            if (_loadAppsRetries < 5) {
+                _loadAppsRetries++
+                Qt.callLater(function() {
+                    var t = Qt.createQmlObject("import QtQuick; Timer { interval: 400; running: true; repeat: false; onTriggered: appLauncherRoot.loadApps() }", appLauncherRoot)
+                })
+            }
+            return
+        }
+        _loadAppsRetries = 0
         apps = []
         filteredApps.clear()
         loadedAppsCount = 0
         totalFilesToLoad = 0
-        
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'find /usr/share/applications ~/.local/share/applications -name "*.desktop" 2>/dev/null | head -100 > /tmp/quickshell_apps_list'], readAppsList)
+        sharedData.runCommand(['sh', '-c', 'find /usr/share/applications ~/.local/share/applications -name "*.desktop" 2>/dev/null | head -200 > /tmp/quickshell_apps_list'], readAppsList)
     }
     
     function readAppsList() {
         var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_apps_list")
+        xhr.open("GET", "file:///tmp/quickshell_apps_list?_=" + Date.now())
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 var files = xhr.responseText.trim().split("\n").filter(function(f) { return f.trim().length > 0 })
@@ -1775,7 +1832,7 @@ PanelWindow {
                 id: modeItem
                 width: modesList.width
                 height: 50
-                radius: 4
+                radius: 0
                 color: (selectedIndex === index || modeItemMouseArea.containsMouse) ?
                     ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                     "transparent"
@@ -1886,11 +1943,11 @@ PanelWindow {
             }
         }
         
-        // Zawartość trybów
+        // Zawartość trybów – te same marginesy co strona główna (20)
         Item {
             id: modeContent
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 20
             visible: currentMode !== -1
         
             // Tryb 0: Launcher
@@ -2026,7 +2083,7 @@ PanelWindow {
                                 width: parent.width
                                 height: parent.height - searchBox.height - parent.spacing
                                 clip: true
-                                spacing: 6
+                                spacing: 8
                                 
                                 model: filteredApps
                                 currentIndex: selectedIndex
@@ -2045,31 +2102,25 @@ PanelWindow {
                                 delegate: Rectangle {
                                     id: appItem
                                     width: appsList.width
-                                    height: 52
+                                    height: 50
                                     radius: 0
                                     color: (selectedIndex === index || appItemMouseArea.containsMouse) ?
                                         ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                                         "transparent"
-                                    scale: 1.0
                                     
-                                    property real cardElevation: (selectedIndex === index || appItemMouseArea.containsMouse) ? 2 : 0
-                                    
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        anchors.margins: -cardElevation
-                                        color: "transparent"
-                                        border.color: cardElevation > 0 ? Qt.rgba(0, 0, 0, 0.15 + cardElevation * 0.05) : "transparent"
-                                        border.width: cardElevation
-                                        z: -1
+                                    Behavior on color {
+                                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                                     }
                                     
                                     Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
                                         anchors.bottom: parent.bottom
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                        height: 2
+                                        width: selectedIndex === index ? 3 : 0
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        radius: 0
+                                        Behavior on width {
+                                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                        }
                                     }
                                     
                                     property string appName: model.name || "Unknown"
@@ -2078,52 +2129,36 @@ PanelWindow {
                                     property string appIcon: model.icon || ""
                                     property bool appIsCalculator: model.isCalculator || false
                                     
-                                    Row {
-                                        id: appItemRow
+                                    Column {
+                                        id: appTextColumn
                                         anchors.left: parent.left
                                         anchors.right: parent.right
                                         anchors.leftMargin: 16
                                         anchors.rightMargin: 16
                                         anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 12
+                                        spacing: 2
+                                        width: parent.width - 32
                                         
                                         Text {
-                                            text: appItem.appIcon || "󰄭"
-                                            font.pixelSize: 18
+                                            width: parent.width
+                                            text: appItem.appName
+                                            font.pixelSize: 15
+                                            font.family: "sans-serif"
+                                            font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
                                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                            width: 24
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
                                         }
-                                        
-                                        Column {
-                                            id: appTextColumn
-                                            width: Math.max(0, appItem.width - 16 - 16 - 12 - 24)
-                                            spacing: 2
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            
-                                            Text {
-                                                width: parent.width
-                                                text: appItem.appName
-                                                font.pixelSize: 14
-                                                font.family: "sans-serif"
-                                                font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                                elide: Text.ElideRight
-                                                maximumLineCount: 1
-                                                color: selectedIndex === index ? colorText : (appItemMouseArea.containsMouse ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"))
-                                            }
-                                            Text {
-                                                width: parent.width
-                                                text: appItem.appComment
-                                                font.pixelSize: 12
-                                                font.family: "sans-serif"
-                                                font.weight: Font.Normal
-                                                elide: Text.ElideRight
-                                                maximumLineCount: 1
-                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                                opacity: selectedIndex === index ? 0.85 : (appItemMouseArea.containsMouse ? 0.75 : 0.6)
-                                                visible: appItem.appComment && appItem.appComment.length > 0
-                                            }
+                                        Text {
+                                            width: parent.width
+                                            text: appItem.appComment
+                                            font.pixelSize: 12
+                                            font.family: "sans-serif"
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                            opacity: 0.7
+                                            visible: appItem.appComment && appItem.appComment.length > 0
                                         }
                                     }
                                 
@@ -2171,12 +2206,13 @@ PanelWindow {
                 }
             }
             
-            // Tryb 1: Packages - prosta lista (tło usunięte - używa głównego tła)
+            // Tryb 1: Packages – ten sam wygląd co strona główna (height 50, radius 4, lewy pasek)
             
             ListView {
                 id: packagesOptionsList
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
+                spacing: 8
                 visible: currentMode === 1 && currentPackageMode === -1
                 clip: true
                 z: 1
@@ -2195,65 +2231,69 @@ PanelWindow {
                     ListElement { name: "Update"; description: "Update system packages (pacman -Syyu)"; action: "update"; icon: "󰏕" }
                 }
                 
-                Component.onCompleted: {
-                }
-                
                 delegate: Rectangle {
                     id: packageOptionItem
                     width: packagesOptionsList.width
-                    height: 36
-                    color: "transparent"
+                    height: 50
                     radius: 0
-                    scale: (selectedIndex === index || packageOptionItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                    // Bottom accent line for selected items
+                    color: (selectedIndex === index || packageOptionItemMouseArea.containsMouse) ?
+                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                        "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
+                    
                     Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                        height: 2
+                        width: selectedIndex === index ? 3 : 0
                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                        radius: 1.5
-
                         Behavior on width {
-                            NumberAnimation {
-                                duration: 300
-                                easing.type: Easing.OutCubic
-                            }
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
                         }
                     }
                     
                     Row {
                         anchors.left: parent.left
-                        anchors.leftMargin: 20
+                        anchors.right: parent.right
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 9
+                        spacing: 12
                         
                         Text {
                             text: model.icon || ""
-                            font.pixelSize: 16
+                            font.pixelSize: 20
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                            width: 24
+                            horizontalAlignment: Text.AlignLeft
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         
                         Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 6
-                        
-                        Text {
-                            text: model.name || "Unknown"
-                                font.pixelSize: 16
-                            font.family: "sans-serif"
-                            font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                            color: selectedIndex === index ? colorText : (packageOptionItemMouseArea.containsMouse ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"))
-                        }
-                        
-                        Text {
-                            text: model.description || ""
-                                font.pixelSize: 16
-                            font.family: "sans-serif"
-                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                            opacity: selectedIndex === index ? 0.85 : (packageOptionItemMouseArea.containsMouse ? 0.75 : 0.6)
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+                            width: parent.width - 36
+                            
+                            Text {
+                                text: model.name || "Unknown"
+                                font.pixelSize: 15
+                                font.family: "sans-serif"
+                                font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                width: parent.width
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                text: model.description || ""
+                                font.pixelSize: 12
+                                font.family: "sans-serif"
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                opacity: 0.7
+                                width: parent.width
+                                elide: Text.ElideRight
                             }
                         }
                     }
@@ -2292,11 +2332,12 @@ PanelWindow {
                 }
             }
             
-            // Wybór źródła instalacji (Pacman/AUR) - gdy currentPackageMode === 0
+            // Wybór źródła instalacji (Pacman/AUR) – ten sam wygląd co strona główna
             ListView {
                 id: installSourceList
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
+                spacing: 8
                 visible: currentMode === 1 && currentPackageMode === 0
                 clip: true
                 z: 1
@@ -2309,59 +2350,66 @@ PanelWindow {
                 delegate: Rectangle {
                     id: installSourceItem
                     width: installSourceList.width
-                    height: 36
-                    color: "transparent"
+                    height: 50
                     radius: 0
-                    scale: (selectedIndex === index || installSourceItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                    // Bottom accent line for selected items
+                    color: (selectedIndex === index || installSourceItemMouseArea.containsMouse) ?
+                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                        "transparent"
+                    
+                    Behavior on color {
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
+                    
                     Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                        height: 2
+                        width: selectedIndex === index ? 3 : 0
                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                        radius: 1.5
-
                         Behavior on width {
-                            NumberAnimation {
-                                duration: 300
-                                easing.type: Easing.OutCubic
-                            }
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
                         }
                     }
                     
                     Row {
                         anchors.left: parent.left
-                        anchors.leftMargin: 20
+                        anchors.right: parent.right
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 9
+                        spacing: 12
                         
                         Text {
                             text: model.icon || ""
-                            font.pixelSize: 16
+                            font.pixelSize: 20
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                            width: 24
+                            horizontalAlignment: Text.AlignLeft
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
+                            spacing: 2
+                            width: parent.width - 36
                             
                             Text {
                                 text: model.name || "Unknown"
-                                font.pixelSize: 16
+                                font.pixelSize: 15
                                 font.family: "sans-serif"
-                                font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
+                                font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                width: parent.width
+                                elide: Text.ElideRight
                             }
-                            
                             Text {
                                 text: model.description || ""
-                                font.pixelSize: 16
+                                font.pixelSize: 12
                                 font.family: "sans-serif"
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                opacity: selectedIndex === index ? 0.85 : (installSourceItemMouseArea.containsMouse ? 0.75 : 0.6)
+                                opacity: 0.7
+                                width: parent.width
+                                elide: Text.ElideRight
                             }
                         }
                     }
@@ -2411,7 +2459,7 @@ PanelWindow {
             Item {
                 id: pacmanSearchMode
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
                 visible: currentMode === 1 && currentPackageMode === 1
                 
                 Column {
@@ -2502,71 +2550,82 @@ PanelWindow {
                         }
                     }
                     
-                    // Lista pakietów
+                    // Lista pakietów – ten sam wygląd co strona główna
                     ListView {
                         id: pacmanPackagesList
                         width: parent.width
                         height: parent.height - pacmanSearchBox.height - parent.spacing
                         clip: true
+                        spacing: 8
                         
                         model: filteredPackages
                         
                         delegate: Rectangle {
                             id: packageItem
                             width: pacmanPackagesList.width
-                            height: 36
-                            color: "transparent"
+                            height: 50
                             radius: 0
-                            scale: (selectedIndex === index || packageItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                            // Bottom accent line for selected items
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 2
-                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                radius: 1.5
-
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
+                            color: (selectedIndex === index || packageItemMouseArea.containsMouse) ?
+                                ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                "transparent"
+                            
+                            Behavior on color {
+                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                             }
-                    
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
+                            
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: selectedIndex === index ? 3 : 0
+                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                Behavior on width {
+                                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                }
                             }
                             
                             property string packageName: model.name || "Unknown"
                             property string packageDescription: model.description || ""
                             
-                            Column {
+                            Row {
                                 anchors.left: parent.left
-                                anchors.leftMargin: 20
+                                anchors.right: parent.right
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
+                                spacing: 12
                                 
                                 Text {
-                                    text: packageItem.packageName
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
-                                    font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                    color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
-                                }
-                                
-                                Text {
-                                    text: packageItem.packageDescription
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
+                                    text: "󰏖"
+                                    font.pixelSize: 20
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                    opacity: selectedIndex === index ? 0.85 : (packageItemMouseArea.containsMouse ? 0.75 : 0.6)
-                                    visible: packageItem.packageDescription && packageItem.packageDescription.length > 0
+                                    width: 24
+                                    horizontalAlignment: Text.AlignLeft
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+                                    width: parent.width - 36
+                                    Text {
+                                        text: packageItem.packageName
+                                        font.pixelSize: 15
+                                        font.family: "sans-serif"
+                                        font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        text: packageItem.packageDescription
+                                        font.pixelSize: 12
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        opacity: 0.7
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        visible: packageItem.packageDescription && packageItem.packageDescription.length > 0
+                                    }
                                 }
                             }
                             
@@ -2599,7 +2658,7 @@ PanelWindow {
             Item {
                 id: aurSearchMode
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
                 visible: currentMode === 1 && currentPackageMode === 2
                 
                 Column {
@@ -2690,78 +2749,81 @@ PanelWindow {
                         }
                     }
                     
-                    // Lista pakietów AUR
+                    // Lista pakietów AUR – ten sam wygląd co strona główna
                     ListView {
                         id: aurPackagesList
                         width: parent.width
                         height: parent.height - aurSearchBox.height - parent.spacing
                         clip: true
+                        spacing: 8
                         
                         model: filteredPackages
                         
                         delegate: Rectangle {
                             id: aurPackageItem
                             width: aurPackagesList.width
-                            height: 36
-                            color: "transparent"
+                            height: 50
                             radius: 0
-                            scale: (selectedIndex === index || aurPackageItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                            // Bottom accent line for selected items
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 2
-                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                radius: 1.5
-
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                            }
+                            color: (selectedIndex === index || aurPackageItemMouseArea.containsMouse) ?
+                                ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                "transparent"
                             
                             Behavior on color {
-                        ColorAnimation { 
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
+                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                            }
+                            
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: selectedIndex === index ? 3 : 0
+                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                Behavior on width {
+                                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                }
                             }
                             
                             property string packageName: model.name || "Unknown"
                             property string packageDescription: model.description || ""
                             
-                            Column {
+                            Row {
                                 anchors.left: parent.left
-                                anchors.leftMargin: 20
+                                anchors.right: parent.right
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
-                                
+                                spacing: 12
                                 Text {
-                                    text: aurPackageItem.packageName
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
-                                    font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                    color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
-                                }
-                                
-                                Text {
-                                    text: aurPackageItem.packageDescription
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
+                                    text: "󰣇"
+                                    font.pixelSize: 20
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                    opacity: selectedIndex === index ? 0.85 : (aurPackageItemMouseArea.containsMouse ? 0.75 : 0.6)
-                                    visible: aurPackageItem.packageDescription && aurPackageItem.packageDescription.length > 0
+                                    width: 24
+                                    horizontalAlignment: Text.AlignLeft
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+                                    width: parent.width - 36
+                                    Text {
+                                        text: aurPackageItem.packageName
+                                        font.pixelSize: 15
+                                        font.family: "sans-serif"
+                                        font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        text: aurPackageItem.packageDescription
+                                        font.pixelSize: 12
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        opacity: 0.7
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        visible: aurPackageItem.packageDescription && aurPackageItem.packageDescription.length > 0
+                                    }
                                 }
                             }
                             
@@ -2790,11 +2852,12 @@ PanelWindow {
                 }
             }
             
-            // Wybór źródła usuwania (Pacman/AUR) - gdy currentPackageMode === 3
+            // Wybór źródła usuwania (Pacman/AUR) – ten sam wygląd co strona główna
             ListView {
                 id: removeSourceList
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
+                spacing: 8
                 visible: currentMode === 1 && currentPackageMode === 3
                 clip: true
                 z: 1
@@ -2807,73 +2870,63 @@ PanelWindow {
                 delegate: Rectangle {
                     id: removeSourceItem
                     width: removeSourceList.width
-                    height: 36
-                    color: "transparent"
+                    height: 50
                     radius: 0
-                    scale: (selectedIndex === index || removeSourceItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                    // Bottom accent line for selected items
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                        height: 2
-                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                        radius: 1.5
-
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: 300
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
+                    color: (selectedIndex === index || removeSourceItemMouseArea.containsMouse) ?
+                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                        "transparent"
                     
                     Behavior on color {
-                        ColorAnimation { 
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                     }
                     
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: selectedIndex === index ? 3 : 0
+                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                        Behavior on width {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
                         }
                     }
                     
                     Row {
                         anchors.left: parent.left
-                        anchors.leftMargin: 20
+                        anchors.right: parent.right
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 9
-                        
+                        spacing: 12
                         Text {
                             text: model.icon || ""
-                            font.pixelSize: 16
+                            font.pixelSize: 20
                             color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                            width: 24
+                            horizontalAlignment: Text.AlignLeft
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
-                            
+                            spacing: 2
+                            width: parent.width - 36
                             Text {
                                 text: model.name || "Unknown"
-                                font.pixelSize: 16
+                                font.pixelSize: 15
                                 font.family: "sans-serif"
-                                font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
+                                font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                width: parent.width
+                                elide: Text.ElideRight
                             }
-                            
                             Text {
                                 text: model.description || ""
-                                font.pixelSize: 16
+                                font.pixelSize: 12
                                 font.family: "sans-serif"
                                 color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                opacity: selectedIndex === index ? 0.85 : (removeSourceItemMouseArea.containsMouse ? 0.75 : 0.6)
+                                opacity: 0.7
+                                width: parent.width
+                                elide: Text.ElideRight
                             }
                         }
                     }
@@ -2912,9 +2965,8 @@ PanelWindow {
                 }
                 
                 highlight: Rectangle {
-                    color: colorPrimary
+                    color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : colorPrimary
                     radius: 0
-                    
                     Behavior on color {
                         ColorAnimation { duration: 180; easing.type: Easing.OutQuart }
                     }
@@ -2925,7 +2977,7 @@ PanelWindow {
             Item {
                 id: removeSearchMode
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
                 visible: currentMode === 1 && currentPackageMode === 4
                 
                 Column {
@@ -3016,71 +3068,81 @@ PanelWindow {
                         }
                     }
                     
-                    // Lista zainstalowanych pakietów
+                    // Lista zainstalowanych pakietów – ten sam wygląd co strona główna
                     ListView {
                         id: removePackagesList
                         width: parent.width
                         height: parent.height - removeSearchBox.height - parent.spacing
                         clip: true
+                        spacing: 8
                         
                         model: filteredInstalledPackages
                         
                         delegate: Rectangle {
                             id: installedPackageItem
                             width: removePackagesList.width
-                            height: 36
-                            color: "transparent"
+                            height: 50
                             radius: 0
-                            scale: (selectedIndex === index || installedPackageItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                            // Bottom accent line for selected items
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 2
-                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                radius: 1.5
-
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
+                            color: (selectedIndex === index || installedPackageItemMouseArea.containsMouse) ?
+                                ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                "transparent"
+                            
+                            Behavior on color {
+                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                             }
-                    
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
+                            
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: selectedIndex === index ? 3 : 0
+                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                Behavior on width {
+                                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                }
                             }
                             
                             property string packageName: model.name || "Unknown"
                             property string packageVersion: model.version || ""
                             
-                            Column {
+                            Row {
                                 anchors.left: parent.left
-                                anchors.leftMargin: 20
+                                anchors.right: parent.right
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
-                                
+                                spacing: 12
                                 Text {
-                                    text: installedPackageItem.packageName
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
-                                    font.weight: selectedIndex === index ? Font.Bold : Font.Medium
-                                    color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
-                                }
-                                
-                                Text {
-                                    text: installedPackageItem.packageVersion
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
+                                    text: "󰏖"
+                                    font.pixelSize: 20
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                    opacity: selectedIndex === index ? 0.85 : (installedPackageItemMouseArea.containsMouse ? 0.75 : 0.6)
-                                    visible: installedPackageItem.packageVersion && installedPackageItem.packageVersion.length > 0
+                                    width: 24
+                                    horizontalAlignment: Text.AlignLeft
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+                                    width: parent.width - 36
+                                    Text {
+                                        text: installedPackageItem.packageName
+                                        font.pixelSize: 15
+                                        font.family: "sans-serif"
+                                        font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        text: installedPackageItem.packageVersion
+                                        font.pixelSize: 12
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        opacity: 0.7
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        visible: installedPackageItem.packageVersion && installedPackageItem.packageVersion.length > 0
+                                    }
                                 }
                             }
                             
@@ -3117,7 +3179,7 @@ PanelWindow {
             Item {
                 id: removeAurSearchMode
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
                 visible: currentMode === 1 && currentPackageMode === 5
                 
                 Column {
@@ -3204,77 +3266,81 @@ PanelWindow {
                         }
                     }
                     
-                    // Lista zainstalowanych pakietów AUR
+                    // Lista zainstalowanych pakietów AUR – ten sam wygląd co strona główna
                     ListView {
                         id: removeAurPackagesList
                         width: parent.width
                         height: parent.height - removeAurSearchBox.height - parent.spacing
                         clip: true
+                        spacing: 8
                         
                         model: filteredInstalledPackages
                         
                         delegate: Rectangle {
                             id: installedAurPackageItem
                             width: removeAurPackagesList.width
-                            height: 36
-                            color: "transparent"
+                            height: 50
                             radius: 0
-                            scale: (selectedIndex === index || installedAurPackageItemMouseArea.containsMouse) ? 1.02 : 1.0
-
-                            // Bottom accent line for selected items
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: (selectedIndex === index && parent) ? parent.width * 0.8 : 0
-                                height: 2
-                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                radius: 1.5
-
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                            }
+                            color: (selectedIndex === index || installedAurPackageItemMouseArea.containsMouse) ?
+                                ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                "transparent"
                             
                             Behavior on color {
-                        ColorAnimation { 
-                            duration: 180
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-                    
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 180
-                            easing.type: Easing.OutQuart
-                        }
+                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                            }
+                            
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: selectedIndex === index ? 3 : 0
+                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                Behavior on width {
+                                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                }
                             }
                             
                             property string packageName: model.name || "Unknown"
                             property string packageVersion: model.version || ""
                             
-                            Column {
+                            Row {
                                 anchors.left: parent.left
-                                anchors.leftMargin: 20
+                                anchors.right: parent.right
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
-                                
+                                spacing: 12
                                 Text {
-                                    text: installedAurPackageItem.packageName
-                                    font.pixelSize: 18
-                                    font.family: "sans-serif"
-                                    font.weight: Font.Medium
-                                    color: selectedIndex === index ? colorText : ((sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.3) : "#cccccc")
-                                }
-                                
-                                Text {
-                                    text: installedAurPackageItem.packageVersion
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
+                                    text: "󰣇"
+                                    font.pixelSize: 20
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                    visible: installedAurPackageItem.packageVersion && installedAurPackageItem.packageVersion.length > 0
+                                    width: 24
+                                    horizontalAlignment: Text.AlignLeft
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+                                    width: parent.width - 36
+                                    Text {
+                                        text: installedAurPackageItem.packageName
+                                        font.pixelSize: 15
+                                        font.family: "sans-serif"
+                                        font.weight: selectedIndex === index ? Font.Bold : Font.Normal
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        text: installedAurPackageItem.packageVersion
+                                        font.pixelSize: 12
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        opacity: 0.7
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        visible: installedAurPackageItem.packageVersion && installedAurPackageItem.packageVersion.length > 0
+                                    }
                                 }
                             }
                             
@@ -3319,7 +3385,7 @@ PanelWindow {
 
                     Flickable {
                         anchors.fill: parent
-                        anchors.margins: 16
+                        anchors.margins: 20
                         contentHeight: notesMenuColumn.height
                         clip: true
 
@@ -3337,29 +3403,54 @@ PanelWindow {
                                 color: colorText
                             }
 
-                            // New note button
+                            // New note button – ten sam wygląd co strona główna
                             Rectangle {
                                 id: newNoteButton
                                 width: parent.width
-                                height: 48
-                                color: "transparent"
+                                height: 50
                                 radius: 0
-                                scale: (notesMenuIndex === 0 || newNoteButtonMouseArea.containsMouse) ? 1.02 : 1.0
+                                color: (notesMenuIndex === 0 || newNoteButtonMouseArea.containsMouse) ?
+                                    ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                    "transparent"
+                                
+                                Behavior on color {
+                                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                }
 
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: 150
-                                        easing.type: Easing.OutQuart
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    width: notesMenuIndex === 0 ? 3 : 0
+                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                    Behavior on width {
+                                        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
                                     }
                                 }
 
-                                Text {
-                                    text: "➕ Nowa notatka"
-                                    font.pixelSize: 16
-                                    font.family: "sans-serif"
-                                    font.weight: Font.Bold
-                                    color: colorText
-                                    anchors.centerIn: parent
+                                Row {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.leftMargin: 16
+                                    anchors.rightMargin: 16
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 12
+                                    Text {
+                                        text: "➕"
+                                        font.pixelSize: 20
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        width: 24
+                                        horizontalAlignment: Text.AlignLeft
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Text {
+                                        text: "Nowa notatka"
+                                        font.pixelSize: 15
+                                        font.family: "sans-serif"
+                                        font.weight: notesMenuIndex === 0 ? Font.Bold : Font.Normal
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
 
                                 MouseArea {
@@ -3371,23 +3462,6 @@ PanelWindow {
                                         currentNotesMode = 0
                                         notesEditText.text = ""
                                         notesFileName = ""
-                                    }
-                                }
-
-                                // Bottom accent line for selected items
-                                Rectangle {
-                                    anchors.bottom: parent.bottom
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    width: notesMenuIndex === 0 ? parent.width * 0.8 : 0
-                                    height: 2
-                                    color: colorAccent
-                                    radius: 1.5
-
-                                    Behavior on width {
-                                        NumberAnimation {
-                                            duration: 300
-                                            easing.type: Easing.OutCubic
-                                        }
                                     }
                                 }
                             }
@@ -3402,31 +3476,64 @@ PanelWindow {
                                 visible: notesList.count > 0
                             }
 
-                            // List of saved notes
+                            // List of saved notes – ten sam wygląd co strona główna
                             ListView {
                                 id: notesList
                                 width: parent.width
                                 height: 340
                                 model: ListModel { id: notesModel }
-                                spacing: 9
+                                spacing: 8
                                 clip: true
 
                                 delegate: Rectangle {
                                     id: noteItem
                                     width: notesList.width
-                                    height: 36
-                                    color: (notesMenuIndex === index + 1) ? colorAccent : (notesItemMouseArea.containsMouse ? colorPrimary : "transparent")
+                                    height: 50
                                     radius: 0
+                                    color: (notesMenuIndex === index + 1 || notesItemMouseArea.containsMouse) ?
+                                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
+                                        "transparent"
+                                    
+                                    Behavior on color {
+                                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                    }
 
-                                    Text {
-                                        text: model.name
-                                        font.pixelSize: 18
-                                        font.family: "sans-serif"
-                                        color: colorText
-                                        anchors.verticalCenter: parent.verticalCenter
+                                    Rectangle {
                                         anchors.left: parent.left
-                                        anchors.leftMargin: 20
-                                        elide: Text.ElideRight
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        width: (notesMenuIndex === index + 1) ? 3 : 0
+                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        Behavior on width {
+                                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                        }
+                                    }
+
+                                    Row {
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.leftMargin: 16
+                                        anchors.rightMargin: 16
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 12
+                                        Text {
+                                            text: "󰎞"
+                                            font.pixelSize: 20
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                            width: 24
+                                            horizontalAlignment: Text.AlignLeft
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: model.name
+                                            font.pixelSize: 15
+                                            font.family: "sans-serif"
+                                            font.weight: (notesMenuIndex === index + 1) ? Font.Bold : Font.Normal
+                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                            width: noteItem.width - 68
+                                            elide: Text.ElideRight
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
                                     }
 
                                     MouseArea {
@@ -3439,22 +3546,6 @@ PanelWindow {
                                                 currentNotesMode = 1
                                                 notesFileName = model.file
                                                 loadNoteContent(model.file)
-                                            }
-                                        }
-                                    }
-
-                                    // Bottom accent line for selected items
-                                    Rectangle {
-                                        anchors.bottom: parent.bottom
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: selectedIndex === index ? notesList.width * 0.8 : 0
-                                        height: 2
-                                        color: colorAccent
-                                        radius: 1.5
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: 300
-                                                easing.type: Easing.OutCubic
                                             }
                                         }
                                     }
@@ -3476,7 +3567,7 @@ PanelWindow {
 
                     Flickable {
                         anchors.fill: parent
-                        anchors.margins: 16
+                        anchors.margins: 20
                         contentHeight: notesEditorColumn.height
                         clip: true
 
@@ -3514,7 +3605,7 @@ PanelWindow {
                                 color: colorPrimary
                                 border.width: 2
                                 border.color: colorSecondary
-                                radius: 8
+                                radius: 0
 
                                 TextEdit {
                                     id: notesEditText

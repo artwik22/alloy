@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::path::PathBuf;
 use std::fs;
 use dirs;
@@ -97,16 +98,37 @@ impl ColorConfig {
 
         match fs::read_to_string(&path) {
             Ok(content) => {
-                match serde_json::from_str::<ColorConfig>(&content) {
-                    Ok(config) => config,
-                    Err(e) => {
-                        Self::default()
+                let mut config = match serde_json::from_str::<ColorConfig>(&content) {
+                    Ok(c) => c,
+                    Err(_) => return Self::default(),
+                };
+                // Resolve preset from presets[...] when colorPreset is set – same logic as Quickshell shell.qml
+                if let Some(ref preset_name) = config.color_preset {
+                    if let Ok(root) = serde_json::from_str::<Value>(&content) {
+                        if let Some(preset) = root
+                            .get("presets")
+                            .and_then(|p| p.get(preset_name))
+                            .and_then(|p| p.as_object())
+                        {
+                            if let (Some(bg), Some(pr), Some(sec), Some(txt), Some(acc)) = (
+                                preset.get("background").and_then(|v| v.as_str()),
+                                preset.get("primary").and_then(|v| v.as_str()),
+                                preset.get("secondary").and_then(|v| v.as_str()),
+                                preset.get("text").and_then(|v| v.as_str()),
+                                preset.get("accent").and_then(|v| v.as_str()),
+                            ) {
+                                config.background = bg.to_string();
+                                config.primary = pr.to_string();
+                                config.secondary = sec.to_string();
+                                config.text = txt.to_string();
+                                config.accent = acc.to_string();
+                            }
+                        }
                     }
                 }
+                config
             }
-            Err(e) => {
-                Self::default()
-            }
+            Err(_) => Self::default(),
         }
     }
 

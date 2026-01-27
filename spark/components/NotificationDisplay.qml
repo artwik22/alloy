@@ -7,28 +7,25 @@ import "."
 PanelWindow {
     id: notificationDisplayRoot
 
-    anchors { 
-        top: true
-        right: true
-    }
-    
+    required property var screen  // ekran z Variants (screen: modelData) – PanelWindow go używa do outputu
+    property var sharedData: null
+
+    anchors.top: true
+    anchors.right: true
+
     implicitWidth: notifications.length > 0 ? 343 : 0
     implicitHeight: notifications.length > 0 ? 640 : 0
-    
+
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "qsnotifications"
+    WlrLayershell.namespace: "qsnotifications" + (screen && screen.name ? "-" + screen.name : "")
     exclusiveZone: 0
-    
-    property var sharedData: null
-    
+
     visible: notifications.length > 0
     color: "transparent"
-    
+
     margins {
         top: 0
-        right: 0
-        bottom: 0
-        left: 0
+        right: 50  // 50 px od prawej krawędzi ekranu
     }
     
     // NotificationServer - receives notifications
@@ -127,14 +124,9 @@ PanelWindow {
         }
     }
     
-    // Column to stack notifications - positioned at top-right corner
     Column {
         id: notificationColumn
-        anchors.top: parent.top
-        anchors.topMargin: 0
-        anchors.right: parent.right
-        anchors.rightMargin: 0
-        width: parent.width
+        anchors.fill: parent
         spacing: 7
 
         // Premium smooth animation for notification repositioning

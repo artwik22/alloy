@@ -28,6 +28,7 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
 }
 
 const PRESETS: &[(&str, &str, &str, &str, &str, &str)] = &[
+    ("Monochrome", "#000000", "#1a1a1a", "#0d0d0d", "#ffffff", "#b0b0b0"),
     ("Professional Modern", "#0a0a0a", "#1a1a1a", "#151515", "#ffffff", "#4a9eff"),
     ("Dark Warm", "#0d0d0d", "#1f1f1f", "#181818", "#f5f5f5", "#ff6b35"),
     ("Cool Blue", "#080d14", "#0f1419", "#0a1016", "#e1e5e9", "#00d4ff"),

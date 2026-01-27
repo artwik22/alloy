@@ -23,6 +23,7 @@ ShellRoot {
         property bool settingsVisible: false
         property bool lockScreenVisible: false  // Własny lock screen (zamiast swaylock/loginctl)
         property bool sidebarVisible: true  // Sidebar visibility toggle
+        property bool sidebarHiddenByFullscreen: false  // Gdy okno jest fullscreen – sidebar się chowa (Hyprland event "fullscreen")
         property string sidebarPosition: "left"  // Sidebar position: "left" or "top"
         property bool notificationsEnabled: true  // Enable/disable notifications
         property bool notificationSoundsEnabled: true  // Enable/disable notification sounds
@@ -49,6 +50,17 @@ ShellRoot {
     property bool commandHandlerBusy: false
     property string lastCommandHandled: ""
     property int lastCommandTime: 0
+
+    // Hyprland fullscreen: gdy okno wchodzi w fullscreen, chowaj sidebar; przy wyjściu – przywróć
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event && event.name === "fullscreen") {
+                var data = (event.data || "").toString().trim()
+                sharedData.sidebarHiddenByFullscreen = (data === "1")
+            }
+        }
+    }
     
     // Single startup: one Process writes HOME and QUICKSHELL_PROJECT_PATH, then one read + loadColors + readLowPerf
     function initializeColorPath() {
@@ -68,9 +80,9 @@ ShellRoot {
             root.projectPath = projPath
 
             function applyAndFinish(path) {
-                colorConfigPath = path
-                loadColors()
-                readLowPerf()
+                root.colorConfigPath = path
+                root.loadColors()
+                root.readLowPerf()
             }
             function tryProjectThenFallback() {
                 if (projPath && projPath.length > 0) {
@@ -123,41 +135,74 @@ ShellRoot {
         xhr.send()
     }
 
-    // Load colors on startup
+    // Load colors on startup: 1) early load z pliku zapisanego przez run.sh (alley colors), 2) zwykły init
     Component.onCompleted: {
+        tryEarlyColorLoad()
         initializeColorPath()
     }
+
+    // Szybkie ładowanie kolorów ze ścieżki zapisanej przez run.sh (~/.config/alloy/colors.json) – kolory = preset z Fuse
+    function tryEarlyColorLoad() {
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", "file:///tmp/quickshell_colors_path?_=" + Date.now())
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return
+            var path = (xhr.responseText || "").trim()
+            if (path && path.length > 1 && (path.indexOf("colors.json") >= 0 || path.indexOf("/") >= 0)) {
+                root.colorConfigPath = path
+                root.loadColors(false, path)
+            }
+        }
+        xhr.send()
+    }
+
+    // Ta sama logika co Fuse ColorConfig.load(): gdy jest colorPreset i presets[name], kolory bierz z presetu; inaczej z głównych pól.
+    // Dzięki temu Spark zawsze ma te same kolory co zaznaczony preset w Fuse.
+    // Używamy tylko json + stałych domyślnych – bez odwołań do sharedData (kontekst wywołania z XHR mógłby być inny).
+    function getResolvedColors(json) {
+        if (!json) return null
+        var def = { background: "#0a0a0a", primary: "#1a1a1a", secondary: "#141414", text: "#ffffff", accent: "#4a9eff" }
+        if (json.colorPreset && json.presets && json.presets[json.colorPreset]) {
+            var p = json.presets[json.colorPreset]
+            return {
+                background: (p.background && String(p.background)) ? String(p.background) : (json.background || def.background),
+                primary: (p.primary && String(p.primary)) ? String(p.primary) : (json.primary || def.primary),
+                secondary: (p.secondary && String(p.secondary)) ? String(p.secondary) : (json.secondary || def.secondary),
+                text: (p.text && String(p.text)) ? String(p.text) : (json.text || def.text),
+                accent: (p.accent && String(p.accent)) ? String(p.accent) : (json.accent || def.accent)
+            }
+        }
+        return {
+            background: (json.background && String(json.background)) ? String(json.background) : def.background,
+            primary: (json.primary && String(json.primary)) ? String(json.primary) : def.primary,
+            secondary: (json.secondary && String(json.secondary)) ? String(json.secondary) : def.secondary,
+            text: (json.text && String(json.text)) ? String(json.text) : def.text,
+            accent: (json.accent && String(json.accent)) ? String(json.accent) : def.accent
+        }
+    }
     
-    // skipSidebarPrefs: when true (np. przy Fuse notify_color_change) nie nadpisujemy sidebarVisible/sidebarPosition,
-    // żeby powtarzające się powiadomienia nie powodowały migotania panelu
-    function loadColors(skipSidebarPrefs) {
-        if (!colorConfigPath) {
+    // skipSidebarPrefs: when true (np. przy Fuse notify_color_change) nie nadpisujemy sidebarVisible/sidebarPosition.
+    // pathOverride: gdy z sygnału Fuse – ścieżka do colors.json zapisana w pliku sygnałowym (Quickshell czyta ten sam plik co Fuse).
+    function loadColors(skipSidebarPrefs, pathOverride) {
+        var path = (pathOverride && String(pathOverride).length > 0) ? String(pathOverride).trim() : (root.colorConfigPath || "")
+        if (!path) {
             return
         }
         var skip = !!skipSidebarPrefs
         var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file://" + colorConfigPath)
+        xhr.open("GET", "file://" + path + "?_=" + Date.now())
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200 || xhr.status === 0) {
                     try {
                         var json = JSON.parse(xhr.responseText)
-
-                        // Check if a preset is selected and load its colors
-                        if (json.colorPreset && json.presets && json.presets[json.colorPreset]) {
-                            var preset = json.presets[json.colorPreset]
-                            sharedData.colorBackground = preset.background
-                            sharedData.colorPrimary = preset.primary
-                            sharedData.colorSecondary = preset.secondary
-                            sharedData.colorText = preset.text
-                            sharedData.colorAccent = preset.accent
-                        } else {
-                            // Fall back to direct color values
-                            if (json.background) sharedData.colorBackground = json.background
-                            if (json.primary) sharedData.colorPrimary = json.primary
-                            if (json.secondary) sharedData.colorSecondary = json.secondary
-                            if (json.text) sharedData.colorText = json.text
-                            if (json.accent) sharedData.colorAccent = json.accent
+                        var c = root.getResolvedColors(json)
+                        if (c) {
+                            sharedData.colorBackground = c.background
+                            sharedData.colorPrimary = c.primary
+                            sharedData.colorSecondary = c.secondary
+                            sharedData.colorText = c.text
+                            sharedData.colorAccent = c.accent
                         }
                         
                         // Load last wallpaper if available
@@ -318,19 +363,26 @@ ShellRoot {
     }
     
     // Szybszy timer tylko dla sygnału Fuse – kolory odświeżane w ~500 ms po zmianie w Fuse
+    // Fuse zapisuje w pliku: pierwszą linię = ścieżka do colors.json, potem "reload_TIMESTAMP"
     Timer {
         id: fuseNotifyTimer
         interval: (sharedData && sharedData.lowPerformanceMode) ? 800 : 500
         running: true
         repeat: true
         onTriggered: {
-            if (!root.colorConfigPath) return
             var xhr = new XMLHttpRequest()
             xhr.open("GET", "file:///tmp/quickshell_color_change?_=" + Date.now())
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === XMLHttpRequest.DONE && (xhr.status === 200 || xhr.status === 0)) {
-                    var cmd = (xhr.responseText || "").trim()
-                    if (cmd.length > 0) root.loadColors(true)
+                    var raw = (xhr.responseText || "").trim()
+                    if (raw.length > 0) {
+                        var line0 = (raw.split("\n")[0] || "").trim()
+                        var pathFromTrigger = (line0.length > 0 && (line0.indexOf("colors.json") >= 0 || line0[0] === "/")) ? line0 : ""
+                        var loadPath = pathFromTrigger || root.colorConfigPath || ""
+                        if (loadPath) root.loadColors(true, loadPath)
+                        if (sharedData && sharedData.runCommand)
+                            sharedData.runCommand(['sh', '-c', ': > /tmp/quickshell_color_change'])
+                    }
                 }
             }
             xhr.send()
@@ -346,27 +398,23 @@ ShellRoot {
         
         onTriggered: {
             // Sprawdź czy colors.json się zmienił
-            if (colorConfigPath) {
+            if (root.colorConfigPath) {
                 var xhr = new XMLHttpRequest()
-                xhr.open("GET", "file://" + colorConfigPath)
+                xhr.open("GET", "file://" + root.colorConfigPath + "?_=" + Date.now())
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         if (xhr.status === 200 || xhr.status === 0) {
                             try {
                                 var json = JSON.parse(xhr.responseText)
                                 var changed = false
-                                var bg, prim, sec, txt, acc
-                                if (json.colorPreset && json.presets && json.presets[json.colorPreset]) {
-                                    var p = json.presets[json.colorPreset]
-                                    bg = p.background; prim = p.primary; sec = p.secondary; txt = p.text; acc = p.accent
-                                } else {
-                                    bg = json.background; prim = json.primary; sec = json.secondary; txt = json.text; acc = json.accent
+                                var c = root.getResolvedColors(json)
+                                if (c) {
+                                    if (c.background && c.background !== sharedData.colorBackground) { sharedData.colorBackground = c.background; changed = true }
+                                    if (c.primary && c.primary !== sharedData.colorPrimary) { sharedData.colorPrimary = c.primary; changed = true }
+                                    if (c.secondary && c.secondary !== sharedData.colorSecondary) { sharedData.colorSecondary = c.secondary; changed = true }
+                                    if (c.text && c.text !== sharedData.colorText) { sharedData.colorText = c.text; changed = true }
+                                    if (c.accent && c.accent !== sharedData.colorAccent) { sharedData.colorAccent = c.accent; changed = true }
                                 }
-                                if (bg && bg !== sharedData.colorBackground) { sharedData.colorBackground = bg; changed = true }
-                                if (prim && prim !== sharedData.colorPrimary) { sharedData.colorPrimary = prim; changed = true }
-                                if (sec && sec !== sharedData.colorSecondary) { sharedData.colorSecondary = sec; changed = true }
-                                if (txt && txt !== sharedData.colorText) { sharedData.colorText = txt; changed = true }
-                                if (acc && acc !== sharedData.colorAccent) { sharedData.colorAccent = acc; changed = true }
                                 
                                 // sidebarPosition/sidebarVisible tylko przy starcie (loadColors); periodiczne odświeżanie kolorów ich nie nadpisuje
                                 if (json.dashboardTileLeft === "battery" || json.dashboardTileLeft === "network") {
@@ -395,13 +443,13 @@ ShellRoot {
             var cmdXhr = new XMLHttpRequest()
             cmdXhr.open("GET", "file:///tmp/quickshell_color_change?_=" + Date.now())
             cmdXhr.onreadystatechange = function() {
-                if (cmdXhr.readyState === XMLHttpRequest.DONE) {
-                    if (cmdXhr.status === 200 || cmdXhr.status === 0) {
-                        var cmd = (cmdXhr.responseText || "").trim()
-                        if (cmd.length > 0) {
-                            // Przeładuj kolory z colors.json (skipSidebarPrefs=true – bez migotania panelu)
-                            root.loadColors(true)
-                        }
+                if (cmdXhr.readyState === XMLHttpRequest.DONE && (cmdXhr.status === 200 || cmdXhr.status === 0)) {
+                    var raw = (cmdXhr.responseText || "").trim()
+                    if (raw.length > 0) {
+                        var line0 = (raw.split("\n")[0] || "").trim()
+                        var pathFromTrigger = (line0.length > 0 && (line0.indexOf("colors.json") >= 0 || line0[0] === "/")) ? line0 : ""
+                        var loadPath = pathFromTrigger || root.colorConfigPath || ""
+                        if (loadPath) root.loadColors(true, loadPath)
                     }
                 }
             }
@@ -498,10 +546,16 @@ ShellRoot {
         sharedData: root.sharedData
     }
 
-    // NotificationDisplay - wyświetlanie powiadomień w prawym górnym rogu
-    NotificationDisplay {
-        id: notificationDisplayInstance
-        sharedData: root.sharedData
+    // NotificationDisplay – jeden na pierwszym ekranie, przy prawej krawędzi
+    Variants {
+        model: Quickshell.screens.length > 0 ? [Quickshell.screens[0]] : []
+        delegate: Component {
+            NotificationDisplay {
+                required property var modelData
+                screen: modelData
+                sharedData: root.sharedData
+            }
+        }
     }
 }
 

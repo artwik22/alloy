@@ -1,15 +1,94 @@
 {
-  "background": "#0a0a0a",
-  "primary": "#1a1a1a",
-  "secondary": "#151515",
-  "text": "#e8e8e8",
-  "accent": "#a0a0a0",
+  "background": "#030303",
+  "primary": "#0a0a0a",
+  "secondary": "#060606",
+  "text": "#ffffff",
+  "accent": "#c0c0c0",
   "lastWallpaper": "/home/iartwik/Pictures/Wallpapers/wallhaven-qdz995.jpg",
-  "colorPreset": "Monochrome",
+  "colorPreset": "Pure Black",
   "sidebarPosition": "left",
   "sidebarVisible": true,
   "rounding": "rounded",
   "showHiddenFiles": true,
+  "presets": {
+    "Monochrome": {
+      "background": "#000000",
+      "primary": "#1a1a1a",
+      "secondary": "#0d0d0d",
+      "text": "#ffffff",
+      "accent": "#b0b0b0"
+    },
+    "Professional Modern": {
+      "background": "#0a0a0a",
+      "primary": "#1a1a1a",
+      "secondary": "#151515",
+      "text": "#ffffff",
+      "accent": "#4a9eff"
+    },
+    "Dark Warm": {
+      "background": "#0d0d0d",
+      "primary": "#1f1f1f",
+      "secondary": "#181818",
+      "text": "#f5f5f5",
+      "accent": "#ff6b35"
+    },
+    "Cool Blue": {
+      "background": "#080d14",
+      "primary": "#0f1419",
+      "secondary": "#0a1016",
+      "text": "#e1e5e9",
+      "accent": "#00d4ff"
+    },
+    "Minimal Gray": {
+      "background": "#0c0c0c",
+      "primary": "#161616",
+      "secondary": "#121212",
+      "text": "#f0f0f0",
+      "accent": "#a0a0a0"
+    },
+    "Forest Green": {
+      "background": "#0a0f0a",
+      "primary": "#141914",
+      "secondary": "#0e120e",
+      "text": "#e8f5e8",
+      "accent": "#4ade80"
+    },
+    "Sunset Orange": {
+      "background": "#0f0a05",
+      "primary": "#1a140d",
+      "secondary": "#140f09",
+      "text": "#f5e8d8",
+      "accent": "#ff9500"
+    },
+    "Ocean Blue": {
+      "background": "#050a0f",
+      "primary": "#0d1419",
+      "secondary": "#091116",
+      "text": "#d8e8f5",
+      "accent": "#3b82f6"
+    },
+    "Deep Purple": {
+      "background": "#0a0514",
+      "primary": "#140d1f",
+      "secondary": "#0f0916",
+      "text": "#e8d8f5",
+      "accent": "#8b5cf6"
+    },
+    "GNOME Monochrome": {
+      "background": "#242424",
+      "primary": "#303030",
+      "secondary": "#2a2a2a",
+      "text": "#ffffff",
+      "accent": "#3584e4"
+    },
+    "Pure Black": {
+      "background": "#030303",
+      "primary": "#0a0a0a",
+      "secondary": "#060606",
+      "text": "#ffffff",
+      "accent": "#c0c0c0"
+    }
+  },
   "uiScale": 100,
-  "dashboardTileLeft": "network"
+  "dashboardTileLeft": "battery"
 }

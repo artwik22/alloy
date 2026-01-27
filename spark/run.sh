@@ -23,4 +23,7 @@ fi
 # Tryb low-perf: touch ~/.config/alloy/low-perf i zrestartuj shella
 [ -f "${HOME}/.config/alloy/low-perf" ] && echo 1 > /tmp/quickshell_low_perf || echo 0 > /tmp/quickshell_low_perf
 
+# Ścieżka do colors.json (Alloy) – Spark ładuje stąd kolory = preset z Fuse
+[ -f "${HOME}/.config/alloy/colors.json" ] && echo "${HOME}/.config/alloy/colors.json" > /tmp/quickshell_colors_path
+
 exec quickshell --path "$QUICKSHELL_PROJECT_PATH"

@@ -26,7 +26,8 @@ PanelWindow {
     property var sharedData: null
 
     // --- Animacja wejścia/wyjścia (bez glitchy) ---
-    property bool panelActive: !!(sharedData && (sharedData.sidebarVisible === undefined || sharedData.sidebarVisible) && sharedData.sidebarPosition === panelPosition)
+    // Gdy okno jest fullscreen (Hyprland), sidebar się chowa – sidebarHiddenByFullscreen ustawiane w shell.qml
+    property bool panelActive: !!(sharedData && (sharedData.sidebarVisible === undefined || sharedData.sidebarVisible) && sharedData.sidebarPosition === panelPosition && !(sharedData.sidebarHiddenByFullscreen === true))
     property real panelProgress: panelActive ? 1.0 : 0.0
     Behavior on panelProgress {
         NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
