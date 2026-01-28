@@ -8,7 +8,7 @@ if command -v python3 >/dev/null 2>&1; then
 import os, sys
 try:
     import pam
-    p = sys.stdin.read().rstrip('\n')
+    p = sys.stdin.readline().rstrip('\n')
     u = os.environ.get('USER', '')
     sys.exit(0 if u and pam.authenticate(u, p) else 1)
 except Exception:

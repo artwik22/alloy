@@ -3,7 +3,7 @@ import json
 import sys
 import os
 
-# Load existing colors.json if it exists to preserve lastWallpaper
+# Load existing colors.json if it exists to preserve additional settings
 existing_data = {}
 if len(sys.argv) > 6 and os.path.exists(sys.argv[6]):
     try:
@@ -29,6 +29,10 @@ if "sidebarPosition" in existing_data:
     colors["sidebarPosition"] = existing_data["sidebarPosition"]
 if "sidebarVisible" in existing_data:
     colors["sidebarVisible"] = existing_data["sidebarVisible"]
+if "sidepanelContent" in existing_data:
+    colors["sidepanelContent"] = existing_data["sidepanelContent"]
+if "githubUsername" in existing_data:
+    colors["githubUsername"] = existing_data["githubUsername"]
 
 # Override with provided values if they exist
 # Argument 7: lastWallpaper
@@ -90,6 +94,15 @@ if len(sys.argv) > 15 and sys.argv[15]:
 # Argument 16: dashboardTileLeft ("battery" or "network")
 if len(sys.argv) > 16 and sys.argv[16] and sys.argv[16] in ("battery", "network"):
     colors["dashboardTileLeft"] = sys.argv[16]
+
+# Argument 17: sidepanelContent ("calendar" or "github")
+if len(sys.argv) > 17 and sys.argv[17]:
+    if sys.argv[17] in ("calendar", "github"):
+        colors["sidepanelContent"] = sys.argv[17]
+
+# Argument 18: githubUsername (string)
+if len(sys.argv) > 18 and sys.argv[18]:
+    colors["githubUsername"] = sys.argv[18]
 
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)

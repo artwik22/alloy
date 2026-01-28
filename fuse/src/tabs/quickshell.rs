@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Button};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Button, Entry};
 use std::sync::{Arc, Mutex};
 
 use crate::core::config::ColorConfig;
@@ -60,6 +60,11 @@ impl QuickshellTab {
         let dashboard_tile_section = create_dashboard_tile_section(Arc::clone(&config));
         dashboard_tile_section.set_hexpand(true);
         content.append(&dashboard_tile_section);
+
+        // Sidepanel content section: Calendar vs GitHub activity + username
+        let sidepanel_content_section = create_sidepanel_content_section(Arc::clone(&config));
+        sidepanel_content_section.set_hexpand(true);
+        content.append(&sidepanel_content_section);
 
         // Notifications section
         let notifications_section = create_notifications_section(Arc::clone(&config));
@@ -415,6 +420,141 @@ fn create_dashboard_tile_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
 
     section.append(&header);
     section.append(&desc);
+
+    section
+}
+
+fn create_sidepanel_content_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let section = GtkBox::new(Orientation::Vertical, 0);
+    section.add_css_class("settings-section");
+
+    let header = GtkBox::new(Orientation::Horizontal, 12);
+    header.set_margin_start(18);
+    header.set_margin_end(18);
+    header.set_margin_top(18);
+    header.set_margin_bottom(12);
+    header.set_valign(gtk4::Align::Center);
+
+    let section_title = Label::new(Some("Panel boczny – zawartość"));
+    section_title.add_css_class("section-title");
+    section_title.set_xalign(0.0);
+    section_title.set_halign(gtk4::Align::Start);
+    section_title.set_hexpand(true);
+    header.append(&section_title);
+
+    let button_box = GtkBox::new(Orientation::Horizontal, 8);
+    button_box.set_halign(gtk4::Align::End);
+    button_box.set_hexpand(false);
+
+    let current = config
+        .lock()
+        .unwrap()
+        .sidepanel_content
+        .clone()
+        .unwrap_or_else(|| "calendar".to_string());
+    // Be tolerant to old/typo values so one tile is always selected.
+    // (Otherwise both buttons can look "unselected" when the stored value doesn't match exactly.)
+    let current_norm = current.trim().to_lowercase();
+    let is_calendar = matches!(current_norm.as_str(), "calendar" | "cal" | "date" | "kalendarz");
+    let is_github = matches!(
+        current_norm.as_str(),
+        "github" | "github_activity" | "github-activity" | "githubactivity"
+    );
+
+    let btn_calendar = Button::with_label("Kalendarz");
+    if is_calendar {
+        btn_calendar.add_css_class("suggested-action");
+    }
+    let btn_github = Button::with_label("GitHub activity");
+    if is_github {
+        btn_github.add_css_class("suggested-action");
+    }
+
+    {
+        let config = Arc::clone(&config);
+        let btn_github_clone = btn_github.clone();
+        btn_calendar.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_sidepanel_content("calendar");
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                btn_github_clone.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_calendar);
+
+    {
+        let config = Arc::clone(&config);
+        let btn_calendar_clone = btn_calendar.clone();
+        btn_github.connect_clicked(move |btn| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_sidepanel_content("github");
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                btn.add_css_class("suggested-action");
+                btn_calendar_clone.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+    button_box.append(&btn_github);
+
+    header.append(&button_box);
+
+    let desc = Label::new(Some(
+        "Wybierz, czy w panelu bocznym pokazywać kalendarz czy aktywność GitHuba.",
+    ));
+    desc.add_css_class("section-description");
+    desc.set_xalign(0.0);
+    desc.set_margin_start(18);
+    desc.set_margin_end(18);
+    desc.set_margin_bottom(8);
+
+    section.append(&header);
+    section.append(&desc);
+
+    // GitHub username row
+    let username_row = GtkBox::new(Orientation::Horizontal, 8);
+    username_row.set_margin_start(18);
+    username_row.set_margin_end(18);
+    username_row.set_margin_bottom(18);
+
+    let username_label = Label::new(Some("GitHub username"));
+    username_label.add_css_class("row-title");
+    username_label.set_xalign(0.0);
+    username_label.set_halign(gtk4::Align::Start);
+    username_label.set_hexpand(true);
+    username_row.append(&username_label);
+
+    let username_entry = Entry::new();
+    let current_username = config
+        .lock()
+        .unwrap()
+        .github_username
+        .clone()
+        .unwrap_or_default();
+    username_entry.set_text(&current_username);
+    username_entry.set_placeholder_text(Some("nazwa użytkownika GitHub"));
+    username_entry.set_hexpand(true);
+
+    {
+        let config = Arc::clone(&config);
+        username_entry.connect_changed(move |entry| {
+            let text = entry.text().to_string();
+            let mut cfg = ColorConfig::load();
+            cfg.set_github_username(&text);
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    username_row.append(&username_entry);
+    section.append(&username_row);
 
     section
 }

@@ -31,6 +31,10 @@ pub struct ColorConfig {
     pub ui_scale: Option<u8>,
     #[serde(rename = "dashboardTileLeft", skip_serializing_if = "Option::is_none")]
     pub dashboard_tile_left: Option<String>,
+    #[serde(rename = "sidepanelContent", skip_serializing_if = "Option::is_none")]
+    pub sidepanel_content: Option<String>,
+    #[serde(rename = "githubUsername", skip_serializing_if = "Option::is_none")]
+    pub github_username: Option<String>,
 }
 
 impl Default for ColorConfig {
@@ -51,6 +55,8 @@ impl Default for ColorConfig {
             show_hidden_files: Some(false),
             ui_scale: Some(100),
             dashboard_tile_left: Some("battery".to_string()),
+            sidepanel_content: Some("calendar".to_string()),
+            github_username: None,
         }
     }
 }
@@ -259,6 +265,20 @@ impl ColorConfig {
             cmd.arg("");
         }
         
+        // Argument 17: sidepanelContent ("calendar" or "github")
+        if let Some(ref sidepanel) = self.sidepanel_content {
+            cmd.arg(sidepanel);
+        } else {
+            cmd.arg("");
+        }
+        
+        // Argument 18: githubUsername (string)
+        if let Some(ref username) = self.github_username {
+            cmd.arg(username);
+        } else {
+            cmd.arg("");
+        }
+        
         let output = cmd.output()?;
         if !output.status.success() {
             // Fallback to direct save on error
@@ -333,6 +353,18 @@ impl ColorConfig {
 
     pub fn set_dashboard_tile_left(&mut self, value: &str) {
         self.dashboard_tile_left = Some(value.to_string());
+    }
+
+    pub fn set_sidepanel_content(&mut self, value: &str) {
+        self.sidepanel_content = Some(value.to_string());
+    }
+
+    pub fn set_github_username(&mut self, value: &str) {
+        self.github_username = if value.is_empty() {
+            None
+        } else {
+            Some(value.to_string())
+        };
     }
 
     /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.

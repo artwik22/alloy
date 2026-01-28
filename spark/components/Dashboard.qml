@@ -643,7 +643,7 @@ PanelWindow {
                             }
                         }
                         
-                        // Date/Calendar Card – rozciąga się
+                        // Date/Calendar or GitHub Activity Card – pełny kafelek
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -651,50 +651,33 @@ PanelWindow {
                             Layout.minimumHeight: 192
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                            
-                            RowLayout {
+
+                            Loader {
+                                id: dashboardCalendarGithubLoader
                                 anchors.fill: parent
                                 anchors.margins: 16
-                                spacing: 13
-                                
-                                // Clock Display (left side)
+                                active: true
+                                sourceComponent: (sharedData && sharedData.sidepanelContent === "github")
+                                                 ? githubActivityDashboardComponent
+                                                 : calendarDashboardComponent
+                            }
+                        }
+
+                        Component {
+                            id: calendarDashboardComponent
+                            Item {
+                                anchors.fill: parent
+
                                 Column {
-                                    Layout.preferredWidth: 112
-                                    Layout.alignment: Qt.AlignVCenter
-                                    spacing: -10
-                                    
-                                    Text {
-                                        id: calendarHoursDisplay
-                                        text: "00"
-                                        font.pixelSize: 42
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
-                                    
-                                    Text {
-                                        id: calendarMinutesDisplay
-                                        text: "00"
-                                        font.pixelSize: 42
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
-                                }
-                                
-                                // Calendar Grid (right side)
-                                Column {
-                                    Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter
+                                    anchors.fill: parent
+                                    anchors.margins: 0
                                     spacing: 5
-                                    
+
                                     // Day headers
                                     Row {
                                         spacing: 5
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        
+
                                         Repeater {
                                             model: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
                                             Text {
@@ -707,39 +690,46 @@ PanelWindow {
                                             }
                                         }
                                     }
-                                    
+
                                     // Calendar grid
                                     Grid {
                                         columns: 7
                                         spacing: 5
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        
+
                                         Repeater {
                                             model: calendarDays
-                                            
+
                                             Rectangle {
                                                 width: 22
                                                 height: 22
                                                 radius: 0
-                                                color: modelData.isToday ? 
-                                                    ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
-                                                    "transparent"
-                                                
+                                                color: modelData.isToday ?
+                                                           ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
+                                                           "transparent"
+
                                                 Text {
                                                     text: modelData.day
                                                     font.pixelSize: 10
                                                     font.family: "sans-serif"
-                                                    color: modelData.isToday ? 
-                                                        ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                        (modelData.isCurrentMonth ? 
-                                                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
-                                                            ((sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#888888"))
+                                                    color: modelData.isToday ?
+                                                               ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") :
+                                                               (modelData.isCurrentMonth ?
+                                                                    ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") :
+                                                                    ((sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#888888"))
                                                     anchors.centerIn: parent
                                                 }
                                             }
                                         }
                                     }
                                 }
+                            }
+                        }
+
+                        Component {
+                            id: githubActivityDashboardComponent
+                            GithubActivity {
+                                sharedData: dashboardRoot.sharedData
                             }
                         }
                         
@@ -2306,7 +2296,7 @@ PanelWindow {
     }
     
     function updateDate() {
-        // Calendar grid and clock are updated by updateCalendar() and calendarClockTimer.
+        // Calendar grid is updated by updateCalendar().
         // dayNumber/monthNumber elements were removed; no separate date display to update.
     }
     
@@ -2575,31 +2565,6 @@ PanelWindow {
     }
 
     // ============ TIMERS ============
-    Timer {
-        id: calendarClockTimer
-        interval: 1000
-        repeat: true
-        running: (sharedData && sharedData.menuVisible)
-        onTriggered: {
-            var now = new Date()
-            var h = now.getHours()
-            var m = now.getMinutes()
-            var hStr = h < 10 ? "0" + h : h.toString()
-            var mStr = m < 10 ? "0" + m : m.toString()
-            calendarHoursDisplay.text = hStr
-            calendarMinutesDisplay.text = mStr
-        }
-        Component.onCompleted: {
-            var now = new Date()
-            var h = now.getHours()
-            var m = now.getMinutes()
-            var hStr = h < 10 ? "0" + h : h.toString()
-            var mStr = m < 10 ? "0" + m : m.toString()
-            calendarHoursDisplay.text = hStr
-            calendarMinutesDisplay.text = mStr
-        }
-    }
-    
     Timer {
         id: dateTimer
         interval: 1000

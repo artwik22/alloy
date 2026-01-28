@@ -27,6 +27,8 @@ ShellRoot {
         property string sidebarPosition: "left"  // Sidebar position: "left" or "top"
         property bool notificationsEnabled: true  // Enable/disable notifications
         property bool notificationSoundsEnabled: true  // Enable/disable notification sounds
+        property string sidepanelContent: "calendar"   // "calendar" | "github"
+        property string githubUsername: ""             // GitHub username for activity view
         
         // Notification history for notification center
         property var notificationHistory: []
@@ -238,6 +240,14 @@ ShellRoot {
                         if (json.dashboardTileLeft === "battery" || json.dashboardTileLeft === "network") {
                             sharedData.dashboardTileLeft = json.dashboardTileLeft
                         }
+                        if (json.sidepanelContent === "calendar" || json.sidepanelContent === "github") {
+                            sharedData.sidepanelContent = json.sidepanelContent
+                        } else {
+                            sharedData.sidepanelContent = "calendar"
+                        }
+                        if (json.githubUsername && String(json.githubUsername).length > 0) {
+                            sharedData.githubUsername = String(json.githubUsername)
+                        }
                     } catch (e) {
                     }
                 }
@@ -423,6 +433,16 @@ ShellRoot {
                                         changed = true
                                     }
                                 }
+                                if (json.sidepanelContent === "calendar" || json.sidepanelContent === "github") {
+                                    if (json.sidepanelContent !== sharedData.sidepanelContent) {
+                                        sharedData.sidepanelContent = json.sidepanelContent
+                                        changed = true
+                                    }
+                                }
+                                if (json.githubUsername && String(json.githubUsername) !== sharedData.githubUsername) {
+                                    sharedData.githubUsername = String(json.githubUsername)
+                                    changed = true
+                                }
                                 
                                 // Note: We don't auto-reload sidebarVisible from file watcher
                                 // because user toggles it directly in the UI. Only load it on startup
@@ -510,6 +530,7 @@ ShellRoot {
                 required property var modelData
                 screen: modelData
                 sharedData: root.sharedData
+                projectPath: root.projectPath
             }
         }
     }

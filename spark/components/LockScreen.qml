@@ -9,6 +9,7 @@ PanelWindow {
 
     required property var screen
     required property var sharedData
+    property string projectPath: ""
 
     anchors {
         left: true
@@ -42,13 +43,29 @@ PanelWindow {
         passwordPending = passwordField.text
         verifying = true
         errorLabel.text = ""
-        // Sudo -S reads password from stdin. Works on most desktop setups.
-        verifyProcess.command = ["sh", "-c", "sudo -S true 2>/dev/null"]
+        verifyTimeout.start()
+        // sudo -S -k: -S read password from stdin, -k reset cache so password is always required
+        verifyProcess.command = ["sh", "-c", "sudo -S -k true 2>/dev/null"]
         verifyProcess.stdinEnabled = true
         verifyProcess.running = true
     }
 
+    Timer {
+        id: verifyTimeout
+        interval: 6000
+        repeat: false
+        onTriggered: {
+            if (lockScreenRoot.verifying) {
+                lockScreenRoot.verifying = false
+                passwordField.text = ""
+                lockScreenRoot.passwordPending = ""
+                errorLabel.text = "Try again"
+            }
+        }
+    }
+
     function onVerifyExited(exitCode) {
+        verifyTimeout.stop()
         verifying = false
         passwordField.text = ""
         passwordPending = ""
@@ -56,7 +73,7 @@ PanelWindow {
             if (sharedData) sharedData.lockScreenVisible = false
             errorLabel.text = ""
         } else {
-            errorLabel.text = "Wrong password. Try again."
+            errorLabel.text = "Try again"
         }
     }
 
@@ -102,7 +119,7 @@ PanelWindow {
             Rectangle {
                 width: parent.width - 0
                 height: 48
-                radius: 8
+                radius: 0
                 color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"
                 border.width: 1
                 border.color: errorLabel.text ? "#c05050" : (Qt.inputMethod.keyboardVisible ? ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : "transparent")
@@ -163,7 +180,7 @@ PanelWindow {
                 }
 
                 background: Rectangle {
-                    radius: 8
+                    radius: 0
                     color: parent.pressed ? "#2a3a4a" : (parent.enabled && (parent.hovered || parent.activeFocus) ? ((lockScreenRoot.sharedData && lockScreenRoot.sharedData.colorAccent) ? lockScreenRoot.sharedData.colorAccent : "#4a9eff") : "#2a2a2a")
                 }
 
