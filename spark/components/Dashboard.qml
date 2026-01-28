@@ -278,6 +278,29 @@ PanelWindow {
                             Layout.preferredHeight: 90
                             spacing: 5
                             
+                            opacity: showProgress > 0.01 ? 1.0 : 0.0
+                            scale: showProgress > 0.01 ? 1.0 : 0.9
+                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 50 }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 50 }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 50 }
+                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
+
                             // Left tile container: Battery or Network (Pobieranie i wysyłanie)
                             Item {
                                 width: (parent.width - 12) / 2
@@ -654,6 +677,29 @@ PanelWindow {
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
 
+                            opacity: showProgress > 0.01 ? 1.0 : 0.0
+                            scale: showProgress > 0.01 ? 1.0 : 0.9
+                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 100 }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 100 }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 100 }
+                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
+
                             Loader {
                                 id: dashboardCalendarGithubLoader
                                 anchors.fill: parent
@@ -743,6 +789,29 @@ PanelWindow {
                             Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                                    
+                            opacity: showProgress > 0.01 ? 1.0 : 0.0
+                            scale: showProgress > 0.01 ? 1.0 : 0.9
+                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 150 }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 150 }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 150 }
+                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
                                     
                                     Column {
                                 anchors.fill: parent
@@ -880,6 +949,29 @@ PanelWindow {
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                             
+                            opacity: showProgress > 0.01 ? 1.0 : 0.0
+                            scale: showProgress > 0.01 ? 1.0 : 0.9
+                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 200 }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 200 }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 200 }
+                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
+                            
                             Column {
                                 anchors.fill: parent
                                 anchors.margins: 12
@@ -1015,6 +1107,29 @@ PanelWindow {
                             Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
+                            opacity: showProgress > 0.01 ? 1.0 : 0.0
+                            scale: showProgress > 0.01 ? 1.0 : 0.9
+                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 250 }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 250 }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 250 }
+                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
                             
                             RowLayout {
                                 anchors.fill: parent

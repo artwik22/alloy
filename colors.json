@@ -1,94 +1,52 @@
 {
-  "background": "#030303",
-  "primary": "#0a0a0a",
-  "secondary": "#060606",
+  "background": "#000000",
+  "primary": "#121212",
+  "secondary": "#080808",
   "text": "#ffffff",
-  "accent": "#c0c0c0",
+  "accent": "#ffffff",
   "lastWallpaper": "/home/iartwik/Pictures/Wallpapers/wallhaven-qdz995.jpg",
-  "colorPreset": "Pure Black",
+  "colorPreset": "Midnight (Mono)",
   "sidebarPosition": "left",
   "sidebarVisible": true,
   "sidepanelContent": "github",
   "githubUsername": "artwik22",
-  "rounding": "rounded",
+  "rounding": "sharp",
   "showHiddenFiles": true,
   "presets": {
-    "Monochrome": {
+    "Midnight (Mono)": {
       "background": "#000000",
-      "primary": "#1a1a1a",
-      "secondary": "#0d0d0d",
+      "primary": "#121212",
+      "secondary": "#080808",
       "text": "#ffffff",
-      "accent": "#b0b0b0"
+      "accent": "#ffffff"
     },
-    "Professional Modern": {
-      "background": "#0a0a0a",
-      "primary": "#1a1a1a",
-      "secondary": "#151515",
-      "text": "#ffffff",
-      "accent": "#4a9eff"
-    },
-    "Dark Warm": {
-      "background": "#0d0d0d",
-      "primary": "#1f1f1f",
-      "secondary": "#181818",
-      "text": "#f5f5f5",
-      "accent": "#ff6b35"
-    },
-    "Cool Blue": {
-      "background": "#080d14",
-      "primary": "#0f1419",
-      "secondary": "#0a1016",
-      "text": "#e1e5e9",
-      "accent": "#00d4ff"
-    },
-    "Minimal Gray": {
-      "background": "#0c0c0c",
-      "primary": "#161616",
-      "secondary": "#121212",
-      "text": "#f0f0f0",
-      "accent": "#a0a0a0"
-    },
-    "Forest Green": {
-      "background": "#0a0f0a",
-      "primary": "#141914",
-      "secondary": "#0e120e",
-      "text": "#e8f5e8",
-      "accent": "#4ade80"
-    },
-    "Sunset Orange": {
-      "background": "#0f0a05",
-      "primary": "#1a140d",
-      "secondary": "#140f09",
-      "text": "#f5e8d8",
-      "accent": "#ff9500"
-    },
-    "Ocean Blue": {
-      "background": "#050a0f",
+    "Ocean Deep": {
+      "background": "#05080a",
       "primary": "#0d1419",
       "secondary": "#091116",
       "text": "#d8e8f5",
       "accent": "#3b82f6"
     },
-    "Deep Purple": {
-      "background": "#0a0514",
-      "primary": "#140d1f",
-      "secondary": "#0f0916",
-      "text": "#e8d8f5",
-      "accent": "#8b5cf6"
+    "Cyberpunk": {
+      "background": "#0b0514",
+      "primary": "#1a0d2f",
+      "secondary": "#11091e",
+      "text": "#f5e8ff",
+      "accent": "#ff00ff"
     },
-    "GNOME Monochrome": {
-      "background": "#242424",
-      "primary": "#303030",
-      "secondary": "#2a2a2a",
-      "text": "#ffffff",
-      "accent": "#3584e4"
+    "Matcha Tea": {
+      "background": "#0a0f0a",
+      "primary": "#141d14",
+      "secondary": "#0e150e",
+      "text": "#e8f5e8",
+      "accent": "#4ade80"
     },
-    "Pure Black": {
-      "background": "#030303",
-      "primary": "#0a0a0a",
-      "secondary": "#060606",
-      "text": "#ffffff",
-      "accent": "#c0c0c0"
+    "Solar Flare": {
+      "background": "#0f0705",
+      "primary": "#1f0f0d",
+      "secondary": "#150a09",
+      "text": "#f5e8d8",
+      "accent": "#ff9500"
     }
   },
   "uiScale": 100,

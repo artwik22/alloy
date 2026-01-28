@@ -58,33 +58,21 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
 // 8 new color presets, each with light and dark variants
 // Format: (name, theme, background, primary, secondary, text, accent)
 const COLOR_PRESETS: &[(&str, &str, &str, &str, &str, &str, &str)] = &[
-    // Preset 1: Ocean Breeze - Cool blue tones
-    ("Ocean Breeze", "light", "#f0f8ff", "#e0f0ff", "#d0e8ff", "#1a1a2e", "#0066cc"),
-    ("Ocean Breeze", "dark", "#0a0a1a", "#1a1a2e", "#151525", "#e0f0ff", "#4da6ff"),
-    // Preset 2: Forest Mist - Natural green
-    ("Forest Mist", "light", "#f5faf5", "#e8f5e8", "#daf0da", "#1a2e1a", "#2d8659"),
-    ("Forest Mist", "dark", "#0a1a0a", "#1a2e1a", "#152515", "#e8f5e8", "#4ade80"),
-    // Preset 3: Sunset Glow - Warm orange/red
-    ("Sunset Glow", "light", "#fff5e8", "#ffe8d0", "#ffdbc0", "#2e1a0a", "#ff6b35"),
-    ("Sunset Glow", "dark", "#1a0a05", "#2e1a0a", "#251510", "#ffe8d0", "#ff8c5a"),
-    // Preset 4: Monochrome - Classic black/white
-    ("Monochrome", "light", "#f5f5f5", "#e8e8e8", "#d0d0d0", "#1a1a1a", "#808080"),
-    ("Monochrome", "dark", "#0a0a0a", "#1a1a1a", "#151515", "#e8e8e8", "#a0a0a0"),
-    // Preset: Pure Black - Deeper black, brighter white (monochrome)
-    ("Pure Black", "light", "#fafafa", "#f0f0f0", "#e5e5e5", "#0a0a0a", "#505050"),
-    ("Pure Black", "dark", "#030303", "#0a0a0a", "#060606", "#ffffff", "#c0c0c0"),
-    // Preset 5: Midnight Blue - Deep blue
-    ("Midnight Blue", "light", "#e8f0ff", "#d0e0ff", "#c0d8ff", "#0a0a2e", "#3b82f6"),
-    ("Midnight Blue", "dark", "#050a1a", "#0a0a2e", "#091025", "#d0e0ff", "#60a5fa"),
-    // Preset 6: Lavender Dream - Purple tones
-    ("Lavender Dream", "light", "#f5f0ff", "#e8d8ff", "#dbc0ff", "#2e1a3e", "#8b5cf6"),
-    ("Lavender Dream", "dark", "#0a0514", "#1a0a2e", "#150920", "#e8d8ff", "#a78bfa"),
-    // Preset 7: Cherry Blossom - Pink/rose
-    ("Cherry Blossom", "light", "#fff0f5", "#ffe0eb", "#ffd0e0", "#2e0a1a", "#ec4899"),
-    ("Cherry Blossom", "dark", "#1a050a", "#2e0a1a", "#250815", "#ffe0eb", "#f472b6"),
-    // Preset 8: Golden Hour - Warm yellow/gold
-    ("Golden Hour", "light", "#fffef0", "#fffce0", "#fffad0", "#2e2a0a", "#f59e0b"),
-    ("Golden Hour", "dark", "#1a1805", "#2e2a0a", "#252010", "#fffce0", "#fbbf24"),
+    // Preset 1: Midnight (Mono)
+    ("Midnight (Mono)", "light", "#ffffff", "#f5f5f5", "#e5e5e5", "#000000", "#000000"),
+    ("Midnight (Mono)", "dark", "#000000", "#121212", "#080808", "#ffffff", "#ffffff"),
+    // Preset 2: Ocean Deep
+    ("Ocean Deep", "light", "#f0f8ff", "#e0f0ff", "#d5e8ff", "#050a1a", "#0077ff"),
+    ("Ocean Deep", "dark", "#05080a", "#0d1419", "#091116", "#d8e8f5", "#3b82f6"),
+    // Preset 3: Cyberpunk
+    ("Cyberpunk", "light", "#fdf0ff", "#f5dfff", "#ecd0ff", "#2e054a", "#ff00ff"),
+    ("Cyberpunk", "dark", "#0b0514", "#1a0d2f", "#11091e", "#f5e8ff", "#ff00ff"),
+    // Preset 4: Matcha Tea
+    ("Matcha Tea", "light", "#f5faf5", "#e8f5e8", "#daf0da", "#0a1a0f", "#2d8659"),
+    ("Matcha Tea", "dark", "#0a0f0a", "#141d14", "#0e150e", "#e8f5e8", "#4ade80"),
+    // Preset 5: Solar Flare
+    ("Solar Flare", "light", "#fff5e8", "#ffe8d0", "#ffdbc0", "#2e1a0a", "#ff9500"),
+    ("Solar Flare", "dark", "#0f0705", "#1f0f0d", "#150a09", "#f5e8d8", "#ff9500"),
 ];
 
 pub struct AppearanceTab {
@@ -659,7 +647,7 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     flowbox.set_halign(gtk4::Align::Fill);
     flowbox.set_hexpand(true);
     flowbox.set_vexpand(true);
-    flowbox.set_max_children_per_line(3);
+    flowbox.set_max_children_per_line(4);
     flowbox.set_min_children_per_line(1);
     flowbox.set_selection_mode(gtk4::SelectionMode::None);
     flowbox.set_homogeneous(true);
@@ -670,7 +658,7 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     expanded_flowbox.set_halign(gtk4::Align::Fill);
     expanded_flowbox.set_hexpand(true);
     expanded_flowbox.set_vexpand(true);
-    expanded_flowbox.set_max_children_per_line(3);
+    expanded_flowbox.set_max_children_per_line(4);
     expanded_flowbox.set_min_children_per_line(1);
     expanded_flowbox.set_selection_mode(gtk4::SelectionMode::None);
     expanded_flowbox.set_homogeneous(true);
@@ -689,7 +677,7 @@ fn create_background_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
         })
         .await
         .expect("spawn_blocking");
-        for wallpaper_path in all_wallpapers.iter().take(6) {
+        for wallpaper_path in all_wallpapers.iter().take(16) {
             let is_selected = current_wallpaper
                 .as_ref()
                 .map(|w| w == wallpaper_path.to_string_lossy().as_ref())
