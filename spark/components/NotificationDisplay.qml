@@ -13,7 +13,7 @@ PanelWindow {
     anchors.top: true
     anchors.right: true
 
-    implicitWidth: notifications.length > 0 ? 343 : 0
+    implicitWidth: notifications.length > 0 ? 304 : 0
     implicitHeight: notifications.length > 0 ? 640 : 0
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -25,7 +25,7 @@ PanelWindow {
 
     margins {
         top: 0
-        right: 50  // 50 px od prawej krawędzi ekranu
+        right: 0
     }
     
     // NotificationServer - receives notifications

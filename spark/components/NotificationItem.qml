@@ -396,7 +396,7 @@ Rectangle {
     }
     
     // Animation states
-    property real slideOffset: 450  // Start further off-screen
+    property real slideOffset: 304  // Start exactly at the width of the item
     property real fadeOpacity: 0.0  // Start invisible
     property real itemScale: 0.95   // Slight scale start
     
@@ -470,7 +470,7 @@ Rectangle {
         NumberAnimation {
             target: notificationItem
             property: "slideOffset"
-            from: 450
+            from: 304
             to: 0
             duration: 600
             easing.type: Easing.OutExpo
@@ -507,7 +507,7 @@ Rectangle {
             NumberAnimation {
                 target: notificationItem
                 property: "slideOffset"
-                to: 450
+                to: 304
                 duration: 500
                 easing.type: Easing.InExpo
             }
