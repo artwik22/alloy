@@ -10,6 +10,8 @@ import "."
 PanelWindow {
     id: dashboardRoot
 
+    signal perfUpdated()
+
     anchors.right: true
     anchors.top: true
     anchors.bottom: true
@@ -85,7 +87,7 @@ PanelWindow {
             Rectangle {
                 id: navBar
                 width: parent.width
-                height: 44
+                height: 50
                 color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
                 
                 RowLayout {
@@ -136,7 +138,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: modelData.icon
-                                    font.pixelSize: 12
+                                    font.pixelSize: 15
                                     color: tabRect.isActive ? 
                                         ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
                                         (tabRect.isHovered ? 
@@ -162,7 +164,7 @@ PanelWindow {
                                 
                                 Text {
                                     text: modelData.label
-                                    font.pixelSize: 10
+                                    font.pixelSize: 12
                                     font.family: "sans-serif"
                                     font.weight: tabRect.isActive ? Font.Bold : Font.Normal
                                     color: tabRect.isActive ? 
@@ -806,23 +808,30 @@ PanelWindow {
                                             ctx.stroke()
                                         }
                                         
-                                        // Draw line chart
+                                        // Draw line chart using Bezier curves for maximum smoothness
                                         ctx.strokeStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         ctx.lineWidth = 2
                                         ctx.beginPath()
                                         
                                         var stepX = chartWidth / (cpuHistory.length - 1)
-                                        for (var j = 0; j < cpuHistory.length; j++) {
-                                            var x = j * stepX
-                                            var value = cpuHistory[j]
-                                            var y = chartHeight - (value / maxValue) * chartHeight
-                                            
-                                            if (j === 0) {
-                                                ctx.moveTo(x, y)
-                                            } else {
-                                                ctx.lineTo(x, y)
-                                            }
+                                        
+                                        // Helper for calculating Y
+                                        function getY(val) { return chartHeight - (val / maxValue) * chartHeight }
+                                        
+                                        ctx.moveTo(0, getY(cpuHistory[0]))
+                                        
+                                        for (var j = 1; j < cpuHistory.length - 2; j++) {
+                                            var xc = (j * stepX + (j + 1) * stepX) / 2
+                                            var yc = (getY(cpuHistory[j]) + getY(cpuHistory[j+1])) / 2
+                                            ctx.quadraticCurveTo(j * stepX, getY(cpuHistory[j]), xc, yc)
                                         }
+                                        
+                                        // For the last two points
+                                        if (cpuHistory.length > 2) {
+                                            var lastIdx = cpuHistory.length - 2
+                                            ctx.quadraticCurveTo(lastIdx * stepX, getY(cpuHistory[lastIdx]), (lastIdx+1) * stepX, getY(cpuHistory[lastIdx+1]))
+                                        }
+                                        
                                         ctx.stroke()
                                         
                                         // Fill area under line
@@ -830,13 +839,14 @@ PanelWindow {
                                         ctx.lineTo(0, chartHeight)
                                         ctx.closePath()
                                         ctx.fillStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        ctx.globalAlpha = 0.2
+                                        ctx.globalAlpha = 0.15
                                         ctx.fill()
                                         ctx.globalAlpha = 1.0
                                     }
                                     
                                     function updateHistory() {
-                                        cpuHistory.push(cpuUsageValue)
+                                        cpuUsageEMA = (cpuUsageValue * smoothingFactor) + (cpuUsageEMA * (1.0 - smoothingFactor))
+                                        cpuHistory.push(cpuUsageEMA)
                                         if (cpuHistory.length > maxHistoryLength) {
                                             cpuHistory.shift()
                                         }
@@ -845,7 +855,7 @@ PanelWindow {
                                     
                                     Connections {
                                         target: dashboardRoot
-                                        function onCpuUsageValueChanged() {
+                                        function onPerfUpdated() {
                                             cpuChart.updateHistory()
                                         }
                                     }
@@ -934,23 +944,30 @@ PanelWindow {
                                             ctx.stroke()
                                         }
                                         
-                                        // Draw line chart
+                                        // Draw line chart using Bezier curves for maximum smoothness
                                         ctx.strokeStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         ctx.lineWidth = 2
                                         ctx.beginPath()
                                         
                                         var stepX = chartWidth / (ramHistory.length - 1)
-                                        for (var j = 0; j < ramHistory.length; j++) {
-                                            var x = j * stepX
-                                            var value = ramHistory[j]
-                                            var y = chartHeight - (value / maxValue) * chartHeight
-                                            
-                                            if (j === 0) {
-                                                ctx.moveTo(x, y)
-                                            } else {
-                                                ctx.lineTo(x, y)
-                                            }
+                                        
+                                        // Helper for calculating Y
+                                        function getY(val) { return chartHeight - (val / maxValue) * chartHeight }
+                                        
+                                        ctx.moveTo(0, getY(ramHistory[0]))
+                                        
+                                        for (var j = 1; j < ramHistory.length - 2; j++) {
+                                            var xc = (j * stepX + (j + 1) * stepX) / 2
+                                            var yc = (getY(ramHistory[j]) + getY(ramHistory[j+1])) / 2
+                                            ctx.quadraticCurveTo(j * stepX, getY(ramHistory[j]), xc, yc)
                                         }
+                                        
+                                        // For the last two points
+                                        if (ramHistory.length > 2) {
+                                            var lastIdx = ramHistory.length - 2
+                                            ctx.quadraticCurveTo(lastIdx * stepX, getY(ramHistory[lastIdx]), (lastIdx+1) * stepX, getY(ramHistory[lastIdx+1]))
+                                        }
+                                        
                                         ctx.stroke()
                                         
                                         // Fill area under line
@@ -958,13 +975,14 @@ PanelWindow {
                                         ctx.lineTo(0, chartHeight)
                                         ctx.closePath()
                                         ctx.fillStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        ctx.globalAlpha = 0.2
+                                        ctx.globalAlpha = 0.15
                                         ctx.fill()
                                         ctx.globalAlpha = 1.0
                                     }
                                     
                                     function updateHistory() {
-                                        ramHistory.push(ramUsageValue)
+                                        ramUsageEMA = (ramUsageValue * smoothingFactor) + (ramUsageEMA * (1.0 - smoothingFactor))
+                                        ramHistory.push(ramUsageEMA)
                                         if (ramHistory.length > maxHistoryLength) {
                                             ramHistory.shift()
                                         }
@@ -973,7 +991,7 @@ PanelWindow {
                                     
                                     Connections {
                                         target: dashboardRoot
-                                        function onRamUsageValueChanged() {
+                                        function onPerfUpdated() {
                                             ramChart.updateHistory()
                                         }
                                     }
@@ -2081,10 +2099,13 @@ PanelWindow {
     }
 
     // ============ PROPERTIES ============
-    property int ramUsageValue: 0
-    property int ramTotalGB: 16  // Will be calculated
     property int cpuUsageValue: 0
+    Behavior on cpuUsageValue { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+    property int ramUsageValue: 0
+    Behavior on ramUsageValue { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+    property int ramTotalGB: 16  // Will be calculated
     property int gpuUsageValue: 0
+    Behavior on gpuUsageValue { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
     property int cpuTempValue: 0
     property int gpuTempValue: 0
     
@@ -2092,7 +2113,11 @@ PanelWindow {
     property var cpuHistory: []
     property var ramHistory: []
     property var gpuHistory: []
-    property int maxHistoryLength: 50  // Number of data points to show
+    property real cpuUsageEMA: 0
+    property real ramUsageEMA: 0
+    property real gpuUsageEMA: 0
+    property real smoothingFactor: 0.15  // Lower = smoother
+    property int maxHistoryLength: 100  // Number of data points to show
     property string mpTitle: ""
     property string mpArtist: ""
     property string mpAlbum: ""
@@ -2612,7 +2637,7 @@ PanelWindow {
 
     Timer {
         id: ramTimer
-        interval: 2000
+        interval: 500
         repeat: true
         running: (sharedData && sharedData.menuVisible)
         function readRam() {
@@ -2631,6 +2656,7 @@ PanelWindow {
                         ramUsageValue = 100 - Math.round((memAvailable / memTotal) * 100)
                         ramTotalGB = Math.round(memTotal / 1024 / 1024)  // Convert from KB to GB
                     }
+                    dashboardRoot.perfUpdated()
                 }
             }
             xhr.send()
@@ -2641,7 +2667,7 @@ PanelWindow {
 
     Timer {
         id: cpuTimer
-        interval: 2000
+        interval: 500
         repeat: true
         running: (sharedData && sharedData.menuVisible)
 
@@ -2667,6 +2693,7 @@ PanelWindow {
                             }
                             cpuTimer.lastTotal = total
                             cpuTimer.lastIdle = idle
+                            dashboardRoot.perfUpdated()
                             break
                         }
                     }
@@ -2680,7 +2707,7 @@ PanelWindow {
 
     Timer {
         id: gpuTimer
-        interval: 2000
+        interval: 500
         repeat: true
         running: (sharedData && sharedData.menuVisible)
         onTriggered: readGpu()
@@ -2712,6 +2739,7 @@ PanelWindow {
                 } else {
                     gpuUsageValue = 0
                 }
+                dashboardRoot.perfUpdated()
             }
         }
         xhr.send()
