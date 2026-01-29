@@ -35,6 +35,8 @@ pub struct ColorConfig {
     pub sidepanel_content: Option<String>,
     #[serde(rename = "githubUsername", skip_serializing_if = "Option::is_none")]
     pub github_username: Option<String>,
+    #[serde(rename = "dashboardPosition", skip_serializing_if = "Option::is_none")]
+    pub dashboard_position: Option<String>,
 }
 
 impl Default for ColorConfig {
@@ -57,6 +59,7 @@ impl Default for ColorConfig {
             dashboard_tile_left: Some("battery".to_string()),
             sidepanel_content: Some("calendar".to_string()),
             github_username: None,
+            dashboard_position: Some("right".to_string()), // Default to right like sidebar
         }
     }
 }
@@ -278,6 +281,13 @@ impl ColorConfig {
         } else {
             cmd.arg("");
         }
+
+        // Argument 19: dashboardPosition (string)
+        if let Some(ref pos) = self.dashboard_position {
+            cmd.arg(pos);
+        } else {
+            cmd.arg("");
+        }
         
         let output = cmd.output()?;
         if !output.status.success() {
@@ -365,6 +375,10 @@ impl ColorConfig {
         } else {
             Some(value.to_string())
         };
+    }
+
+    pub fn set_dashboard_position(&mut self, value: &str) {
+        self.dashboard_position = Some(value.to_string());
     }
 
     /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.

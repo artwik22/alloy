@@ -61,7 +61,10 @@ if "presets" in existing_data:
 if "uiScale" in existing_data:
     colors["uiScale"] = existing_data["uiScale"]
 if "dashboardTileLeft" in existing_data:
+if "dashboardTileLeft" in existing_data:
     colors["dashboardTileLeft"] = existing_data["dashboardTileLeft"]
+if "dashboardPosition" in existing_data:
+    colors["dashboardPosition"] = existing_data["dashboardPosition"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled
@@ -103,6 +106,10 @@ if len(sys.argv) > 17 and sys.argv[17]:
 # Argument 18: githubUsername (string)
 if len(sys.argv) > 18 and sys.argv[18]:
     colors["githubUsername"] = sys.argv[18]
+
+# Argument 19: dashboardPosition ("right", "left", "top", "bottom")
+if len(sys.argv) > 19 and sys.argv[19]:
+    colors["dashboardPosition"] = sys.argv[19]
 
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)

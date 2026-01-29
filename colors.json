@@ -6,49 +6,13 @@
   "accent": "#ffffff",
   "lastWallpaper": "/home/iartwik/Pictures/Wallpapers/wallhaven-qdz995.jpg",
   "colorPreset": "Midnight (Mono)",
-  "sidebarPosition": "left",
+  "sidebarPosition": "right",
   "sidebarVisible": true,
-  "sidepanelContent": "github",
-  "githubUsername": "artwik22",
   "rounding": "rounded",
   "showHiddenFiles": true,
-  "presets": {
-    "Midnight (Mono)": {
-      "background": "#000000",
-      "primary": "#121212",
-      "secondary": "#080808",
-      "text": "#ffffff",
-      "accent": "#ffffff"
-    },
-    "Ocean Deep": {
-      "background": "#05080a",
-      "primary": "#0d1419",
-      "secondary": "#091116",
-      "text": "#d8e8f5",
-      "accent": "#3b82f6"
-    },
-    "Cyberpunk": {
-      "background": "#0b0514",
-      "primary": "#1a0d2f",
-      "secondary": "#11091e",
-      "text": "#f5e8ff",
-      "accent": "#ff00ff"
-    },
-    "Matcha Tea": {
-      "background": "#0a0f0a",
-      "primary": "#141d14",
-      "secondary": "#0e150e",
-      "text": "#e8f5e8",
-      "accent": "#4ade80"
-    },
-    "Solar Flare": {
-      "background": "#0f0705",
-      "primary": "#1f0f0d",
-      "secondary": "#150a09",
-      "text": "#f5e8d8",
-      "accent": "#ff9500"
-    }
-  },
   "uiScale": 100,
-  "dashboardTileLeft": "battery"
+  "dashboardTileLeft": "battery",
+  "sidepanelContent": "github",
+  "githubUsername": "artwik22",
+  "dashboardPosition": "left"
 }

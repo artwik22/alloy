@@ -42,6 +42,7 @@ ShellRoot {
         property real uiScale: 1.0
         property bool lowPerformanceMode: false  // true gdy ~/.config/alloy/low-perf istnieje – mniejsze zacinki na słabszym PC
         property string dashboardTileLeft: "battery"  // "battery" | "network" – co pokazywać na lewym kafelku dashboardu
+        property string dashboardPosition: "right"  // "right", "left", "top", "bottom"
     }
     
     // Color config file path - dynamically determined
@@ -214,7 +215,7 @@ ShellRoot {
                         
                         if (!skip) {
                             // Sidebar prefs tylko przy starcie / init – przy Fuse notify nie nadpisujemy, żeby nie migotało
-                            if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top")) {
+                            if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top" || json.sidebarPosition === "right" || json.sidebarPosition === "bottom")) {
                                 sharedData.sidebarPosition = json.sidebarPosition
                             }
                             if (json.sidebarVisible !== undefined) {
@@ -239,6 +240,9 @@ ShellRoot {
                         }
                         if (json.dashboardTileLeft === "battery" || json.dashboardTileLeft === "network") {
                             sharedData.dashboardTileLeft = json.dashboardTileLeft
+                        }
+                        if (json.dashboardPosition && (json.dashboardPosition === "left" || json.dashboardPosition === "top" || json.dashboardPosition === "right" || json.dashboardPosition === "bottom")) {
+                            sharedData.dashboardPosition = json.dashboardPosition
                         }
                         if (json.sidepanelContent === "calendar" || json.sidepanelContent === "github") {
                             sharedData.sidepanelContent = json.sidepanelContent
@@ -389,7 +393,7 @@ ShellRoot {
                         var line0 = (raw.split("\n")[0] || "").trim()
                         var pathFromTrigger = (line0.length > 0 && (line0.indexOf("colors.json") >= 0 || line0[0] === "/")) ? line0 : ""
                         var loadPath = pathFromTrigger || root.colorConfigPath || ""
-                        if (loadPath) root.loadColors(true, loadPath)
+                        if (loadPath) root.loadColors(false, loadPath)
                         if (sharedData && sharedData.runCommand)
                             sharedData.runCommand(['sh', '-c', ': > /tmp/quickshell_color_change'])
                     }
@@ -426,10 +430,23 @@ ShellRoot {
                                     if (c.accent && c.accent !== sharedData.colorAccent) { sharedData.colorAccent = c.accent; changed = true }
                                 }
                                 
-                                // sidebarPosition/sidebarVisible tylko przy starcie (loadColors); periodiczne odświeżanie kolorów ich nie nadpisuje
+                                // Enable live reloading for sidebar position to support Fuse changes immediately
+                                if (json.sidebarPosition && (json.sidebarPosition === "left" || json.sidebarPosition === "top" || json.sidebarPosition === "right" || json.sidebarPosition === "bottom")) {
+                                    if (json.sidebarPosition !== sharedData.sidebarPosition) {
+                                        sharedData.sidebarPosition = json.sidebarPosition
+                                        changed = true
+                                    }
+                                }
+                                
                                 if (json.dashboardTileLeft === "battery" || json.dashboardTileLeft === "network") {
                                     if (json.dashboardTileLeft !== sharedData.dashboardTileLeft) {
                                         sharedData.dashboardTileLeft = json.dashboardTileLeft
+                                        changed = true
+                                    }
+                                }
+                                if (json.dashboardPosition && (json.dashboardPosition === "left" || json.dashboardPosition === "top" || json.dashboardPosition === "right" || json.dashboardPosition === "bottom")) {
+                                    if (json.dashboardPosition !== sharedData.dashboardPosition) {
+                                        sharedData.dashboardPosition = json.dashboardPosition
                                         changed = true
                                     }
                                 }

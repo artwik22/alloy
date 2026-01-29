@@ -111,7 +111,10 @@ impl AppearanceTab {
         let rounding_section = create_rounding_section(Arc::clone(&config));
         rounding_section.set_hexpand(true);
         rounding_section.set_margin_top(24);
+        rounding_section.set_margin_top(24);
         content.append(&rounding_section);
+
+
 
         let colors_section = create_colors_section(Arc::clone(&config));
         colors_section.set_hexpand(true);
@@ -224,7 +227,7 @@ fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 let mut cfg = ColorConfig::load();
                 cfg.update_colors(light_preset.2, light_preset.3, light_preset.4, light_preset.5, light_preset.6);
                 cfg.set_preset(light_preset.0);
-                if let Err(e) = cfg.save() {
+                if let Err(_e) = cfg.save() {
                 } else {
                     *config_clone.lock().unwrap() = cfg.clone();
                     schedule_notify_color_change_ms(300);
@@ -256,7 +259,7 @@ fn create_theme_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
                 let mut cfg = ColorConfig::load();
                 cfg.update_colors(dark_preset.2, dark_preset.3, dark_preset.4, dark_preset.5, dark_preset.6);
                 cfg.set_preset(dark_preset.0);
-                if let Err(e) = cfg.save() {
+                if let Err(_e) = cfg.save() {
                 } else {
                     *config_clone.lock().unwrap() = cfg.clone();
                     schedule_notify_color_change_ms(300);
@@ -597,7 +600,7 @@ fn create_preset_card_single(
     let text = text.to_string();
     let accent = accent.to_string();
     let name = name.to_string();
-    let theme = theme.to_string();
+    let _theme = theme.to_string();
 
     button.connect_clicked(move |_| {
         let mut cfg = ColorConfig::load();
@@ -771,7 +774,7 @@ fn create_wallpaper_tile(path: &PathBuf, is_selected: bool, config: Arc<Mutex<Co
 
     let path_str = path.to_string_lossy().to_string();
     button.connect_clicked(move |_| {
-        if let Err(e) = quickshell::set_wallpaper(&path_str) {
+        if let Err(_e) = quickshell::set_wallpaper(&path_str) {
         } else {
             // Update config
             let mut cfg = config.lock().unwrap();
@@ -898,3 +901,6 @@ fn create_rounding_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
 
     section
 }
+
+
+

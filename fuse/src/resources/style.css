@@ -4,16 +4,17 @@
    ==================================================================== */
 
 /* ===== Color Definitions ===== */
-@define-color window_bg_color #242424;
-@define-color window_fg_color #ffffff;
-@define-color headerbar_bg_color #303030;
-@define-color headerbar_fg_color #ffffff;
-@define-color card_bg_color #383838;
-@define-color card_fg_color #ffffff;
-@define-color accent_bg_color #3584e4;
-@define-color accent_color #3584e4;
-@define-color view_bg_color #1e1e1e;
-@define-color sidebar_bg_color #2a2a2a;
+/* Dynamic colors injected by app.rs */
+/* @define-color window_bg_color #242424; */
+/* @define-color window_fg_color #ffffff; */
+/* @define-color headerbar_bg_color #303030; */
+/* @define-color headerbar_fg_color #ffffff; */
+/* @define-color card_bg_color #383838; */
+/* @define-color card_fg_color #ffffff; */
+/* @define-color accent_bg_color #3584e4; */
+/* @define-color accent_color #3584e4; */
+/* @define-color view_bg_color #1e1e1e; */
+/* @define-color sidebar_bg_color #2a2a2a; */
 
 /* ===== Animations ===== */
 @keyframes fadeIn {

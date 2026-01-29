@@ -61,18 +61,32 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>, conf
     // Load base CSS
     let base_css = include_str!("resources/style.css");
     
-    // Replace Adwaita CSS variables with colors from colors.json
-    let mut dynamic_css = base_css
-        .replace("@define-color window_bg_color #242424", &format!("@define-color window_bg_color {}", config.background))
-        .replace("@define-color window_fg_color #ffffff", &format!("@define-color window_fg_color {}", config.text))
-        .replace("@define-color headerbar_bg_color #303030", &format!("@define-color headerbar_bg_color {}", config.background))
-        .replace("@define-color headerbar_fg_color #ffffff", &format!("@define-color headerbar_fg_color {}", config.text))
-        .replace("@define-color card_bg_color #383838", &format!("@define-color card_bg_color {}", config.secondary))
-        .replace("@define-color card_fg_color #ffffff", &format!("@define-color card_fg_color {}", config.text))
-        .replace("@define-color accent_bg_color #3584e4", &format!("@define-color accent_bg_color {}", config.accent))
-        .replace("@define-color accent_color #3584e4", &format!("@define-color accent_color {}", config.accent))
-        .replace("@define-color sidebar_bg_color #2a2a2a", &format!("@define-color sidebar_bg_color {}", config.secondary))
-        .replace("@define-color view_bg_color #1e1e1e", &format!("@define-color view_bg_color {}", config.background));
+    // Construct dynamic color definitions
+    let mut dynamic_css = format!(
+        "@define-color window_bg_color {};\n\
+         @define-color window_fg_color {};\n\
+         @define-color headerbar_bg_color {};\n\
+         @define-color headerbar_fg_color {};\n\
+         @define-color card_bg_color {};\n\
+         @define-color card_fg_color {};\n\
+         @define-color accent_bg_color {};\n\
+         @define-color accent_color {};\n\
+         @define-color sidebar_bg_color {};\n\
+         @define-color view_bg_color {};\n\n",
+        config.background,
+        config.text,
+        config.background, // header matches window
+        config.text,
+        config.secondary,
+        config.text,
+        config.accent,
+        config.accent,
+        config.secondary,
+        config.background // view matches window
+    );
+
+    // Append base CSS
+    dynamic_css.push_str(base_css);
     
     // Apply rounding setting (simple replace to avoid regex on large CSS at startup)
     let rounding = config.rounding.as_deref().unwrap_or("rounded");

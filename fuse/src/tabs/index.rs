@@ -86,7 +86,7 @@ fn create_file_manager_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             // Reload config from disk to preserve existing settings
             let mut cfg = ColorConfig::load();
             cfg.set_show_hidden_files(enabled);
-            if let Err(e) = cfg.save() {
+            if let Err(_e) = cfg.save() {
                 // Revert the toggle state on error
                 hidden_files_toggle_clone.set_active(!enabled);
             } else {
@@ -385,7 +385,7 @@ fn create_keybind_row(action: &str, keybinds: Arc<Mutex<HashMap<String, (String,
             } else {
                 kb.insert(action_str.clone(), (key, vec![]));
             }
-            if let Err(e) = save_keybinds(&kb) {
+            if let Err(_e) = save_keybinds(&kb) {
             } else {
             }
         });
@@ -423,7 +423,7 @@ fn create_keybind_row(action: &str, keybinds: Arc<Mutex<HashMap<String, (String,
                 }
                 kb.insert(action_str.clone(), (key, new_mods));
                 
-                if let Err(e) = save_keybinds(&kb) {
+                if let Err(_e) = save_keybinds(&kb) {
                 } else {
                 }
             });

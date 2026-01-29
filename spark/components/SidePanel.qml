@@ -13,15 +13,18 @@ PanelWindow {
     property string projectPath: ""  // Set from root (shell) or via loadProjectPath
     onProjectPathChanged: { if (projectPath && projectPath.length > 0 && isPrimaryPanel && !cavaRunning && !(sharedData && sharedData.lowPerformanceMode)) startCava() }
 
+    // Helper property to determine orientation
+    property bool isHorizontal: panelPosition === "top" || panelPosition === "bottom"
+    
     // Anchors based on panel position
-    anchors.left: panelPosition === "left" ? true : false
-    anchors.right: panelPosition === "top" ? true : false
-    anchors.top: true
-    anchors.bottom: panelPosition === "left" ? true : false
+    anchors.left: panelPosition === "right" ? false : true
+    anchors.right: panelPosition === "left" ? false : true
+    anchors.top: panelPosition === "bottom" ? false : true
+    anchors.bottom: panelPosition === "top" ? false : true
     
     // Dimensions based on panel position (33px – 70% scale)
-    implicitWidth: panelPosition === "left" ? 33 : (panelPosition === "top" ? (screen ? screen.width : 2160) : 0)
-    implicitHeight: panelPosition === "top" ? 33 : (panelPosition === "left" ? (screen ? screen.height : 1440) : 0)
+    implicitWidth: !isHorizontal ? 33 : (screen ? screen.width : 2160)
+    implicitHeight: isHorizontal ? 33 : (screen ? screen.height : 1440)
     color: "transparent"
     property var sharedData: null
 
@@ -33,7 +36,7 @@ PanelWindow {
         NumberAnimation { duration: 350; easing.type: Easing.OutBack }
     }
     visible: panelProgress > 0.01
-    exclusiveZone: panelProgress * ((panelPosition === "top") ? implicitHeight : implicitWidth)
+    exclusiveZone: panelProgress * (isHorizontal ? implicitHeight : implicitWidth)
 
     property bool isPrimaryPanel: (primaryScreen === null || primaryScreen === undefined || (screen && primaryScreen && screen.name === primaryScreen.name)) && panelActive
 
@@ -44,8 +47,8 @@ PanelWindow {
     margins {
         left: 0
         top: 0
-        bottom: panelPosition === "left" ? 0 : 0
-        right: panelPosition === "top" ? 0 : 0
+        bottom: 0
+        right: 0
 
         // Smooth animation when switching panel positions
         Behavior on bottom {
@@ -67,25 +70,42 @@ PanelWindow {
     Rectangle {
         id: sidePanelRect
         anchors.fill: parent
-        color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0d0d0d"
+        // Premium Gradient Background
+        gradient: Gradient {
+            orientation: !isHorizontal ? Gradient.Vertical : Gradient.Horizontal
+            GradientStop { 
+                position: 0.0
+                color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0d0d0d"
+            }
+            GradientStop { 
+                position: 1.0
+                color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#151515"
+            }
+        }
         radius: 0
-        enabled: false  // Don't capture mouse events - allows clicks to pass through
-        z: -1  // Put background behind everything to ensure buttons are clickable
+        enabled: false  // Don't capture mouse events
+        z: -1
         
-        // Material Design elevation shadow (simulated with border) - bardziej subtelny
+        // Subtle border line on the inner side
         Rectangle {
-            anchors.fill: parent
-            anchors.margins: -1
-            color: "transparent"
-            border.color: Qt.rgba(0, 0, 0, 0.3)  // Material shadow - bardziej widoczny
-            border.width: 1
-            z: -2
+            anchors.right: panelPosition === "left" ? parent.right : undefined
+            anchors.left: panelPosition === "right" ? parent.left : undefined
+            anchors.bottom: panelPosition === "top" ? parent.bottom : undefined
+            anchors.top: panelPosition === "bottom" ? parent.top : undefined
+            
+            width: !isHorizontal ? 1 : parent.width
+            height: isHorizontal ? 1 : parent.height
+            
+            color: Qt.rgba(1, 1, 1, 0.08)
+            z: 1
         }
         
         opacity: sidePanel.panelProgress
         transform: Translate {
-            x: panelPosition === "left" && !panelActive ? -implicitWidth : 0
-            y: panelPosition === "top" && !panelActive ? -implicitHeight : 0
+            x: panelPosition === "left" && !panelActive ? -implicitWidth : 
+               (panelPosition === "right" && !panelActive ? implicitWidth : 0)
+            y: panelPosition === "top" && !panelActive ? -implicitHeight : 
+               (panelPosition === "bottom" && !panelActive ? implicitHeight : 0)
         }
         
         Behavior on opacity {
@@ -112,14 +132,16 @@ PanelWindow {
             anchors.topMargin: 6
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 4
-            visible: panelPosition === "left"
+            visible: !isHorizontal
 
             // Smooth fade when switching panel positions
             opacity: visible && panelActive ? 1.0 : 0.0
             scale: panelActive ? 1.0 : 0.85
             transform: Translate {
-                x: panelPosition === "left" && !panelActive ? -40 : 0
-                y: panelPosition === "top" && !panelActive ? -40 : 0
+                x: panelPosition === "left" && !panelActive ? -40 :
+                   (panelPosition === "right" && !panelActive ? 40 : 0)
+                y: panelPosition === "top" && !panelActive ? -40 :
+                   (panelPosition === "bottom" && !panelActive ? 40 : 0)
             }
 
             Behavior on opacity {
@@ -186,14 +208,16 @@ PanelWindow {
             anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
-            visible: panelPosition === "top"
+            visible: isHorizontal
 
             // Smooth fade when switching panel positions
             opacity: visible && panelActive ? 1.0 : 0.0
             scale: panelActive ? 1.0 : 0.85
             transform: Translate {
-                x: panelPosition === "left" && !panelActive ? -40 : 0
-                y: panelPosition === "top" && !panelActive ? -40 : 0
+                x: panelPosition === "left" && !panelActive ? -40 :
+                   (panelPosition === "right" && !panelActive ? 40 : 0)
+                y: panelPosition === "top" && !panelActive ? -40 :
+                   (panelPosition === "bottom" && !panelActive ? 40 : 0)
             }
 
             Behavior on opacity {
@@ -296,7 +320,7 @@ PanelWindow {
             id: sidePanelWorkspaceColumnContainer
             width: parent.width
             height: parent.height
-            visible: panelPosition === "left"
+            visible: !isHorizontal
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
             z: 50  // Lower than buttons (z: 10000) to not block clicks
@@ -304,7 +328,8 @@ PanelWindow {
             opacity: panelActive ? 1.0 : 0.0
             scale: panelActive ? 1.0 : 0.85
             transform: Translate {
-                x: panelPosition === "left" && !panelActive ? -40 : 0
+                x: panelPosition === "left" && !panelActive ? -40 :
+                   (panelPosition === "right" && !panelActive ? 40 : 0)
             }
 
             Behavior on opacity {
@@ -370,7 +395,7 @@ PanelWindow {
                             workspaceItem.hasWindows ? 
                             ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                        radius: 2
+                        radius: 0
                         opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 0.9 : 0.7)
                         
                         Behavior on width {
@@ -496,7 +521,7 @@ PanelWindow {
             id: sidePanelWorkspaceRowContainer
             width: parent.width
             height: parent.height
-            visible: panelPosition === "top"
+            visible: isHorizontal
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
             z: 50  // Lower than buttons (z: 10000) to not block clicks
@@ -530,7 +555,8 @@ PanelWindow {
                 opacity: panelActive ? 1.0 : 0.0
                 scale: panelActive ? 1.0 : 0.85
                 transform: Translate {
-                    y: panelPosition === "top" && !panelActive ? -40 : 0
+                    y: panelPosition === "top" && !panelActive ? -40 :
+                       (panelPosition === "bottom" && !panelActive ? 40 : 0)
                 }
                 
                 Repeater {
@@ -570,7 +596,7 @@ PanelWindow {
                             workspaceItemTop.hasWindows ? 
                             ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
                             ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                        radius: 2
+                        radius: 0
                         opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 0.9 : 0.7)
                         
                         Behavior on width {
@@ -696,7 +722,7 @@ PanelWindow {
             id: musicVisualizerColumnContainer
             width: parent.width
             height: parent.height - 70
-            visible: panelPosition === "left"
+            visible: !isHorizontal
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 52
@@ -711,7 +737,8 @@ PanelWindow {
                 opacity: parent.visible && panelActive ? 1.0 : 0.0
                 scale: panelActive ? 1.0 : 0.85
                 transform: Translate {
-                    x: panelPosition === "left" && !panelActive ? -40 : 0
+                    x: panelPosition === "left" && !panelActive ? -40 :
+                       (panelPosition === "right" && !panelActive ? 40 : 0)
                 }
 
                 Behavior on opacity {
@@ -743,7 +770,7 @@ PanelWindow {
                         width: Math.max(3, visualizerBarValue)
                         x: (parent.width - width) / 2  // Wyśrodkuj bez anchors
                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                        radius: 1.5
+                        radius: 0
                         visible: true
                         
                         property real visualizerBarValue: 3
@@ -770,7 +797,7 @@ PanelWindow {
             id: musicVisualizerRowContainer
             width: parent.width
             height: 22
-            visible: panelPosition === "top"
+            visible: isHorizontal
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 40
@@ -786,7 +813,8 @@ PanelWindow {
                 opacity: parent.visible && panelActive ? 1.0 : 0.0
                 scale: panelActive ? 1.0 : 0.85
                 transform: Translate {
-                    y: panelPosition === "top" && !panelActive ? -40 : 0
+                    y: panelPosition === "top" && !panelActive ? -40 :
+                       (panelPosition === "bottom" && !panelActive ? 40 : 0)
                 }
 
                 Behavior on opacity {
@@ -818,7 +846,7 @@ PanelWindow {
                         height: Math.max(3, visualizerBarValueTop)
                         y: (parent.height - height) / 2  // Wyśrodkuj bez anchors
                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                        radius: 1.5
+                        radius: 0
                         visible: true
                         
                         property real visualizerBarValueTop: 3
@@ -848,11 +876,11 @@ PanelWindow {
         width: 32
         height: 32
 
-        anchors.horizontalCenter: panelPosition === "left" ? parent.horizontalCenter : undefined
-        anchors.right: panelPosition === "top" ? parent.right : undefined
-        anchors.rightMargin: panelPosition === "top" ? 6 : 0
-        anchors.bottom: panelPosition === "left" ? parent.bottom : undefined
-        anchors.bottomMargin: panelPosition === "left" ? 6 : 0
+        anchors.horizontalCenter: !isHorizontal ? parent.horizontalCenter : undefined
+        anchors.right: isHorizontal ? parent.right : undefined
+        anchors.rightMargin: isHorizontal ? 6 : 0
+        anchors.bottom: !isHorizontal ? parent.bottom : undefined
+        anchors.bottomMargin: !isHorizontal ? 6 : 0
         z: 100000
         visible: true
         enabled: true
@@ -860,8 +888,10 @@ PanelWindow {
         opacity: panelActive ? 1.0 : 0.0
         scale: panelActive ? 1.0 : 0.7
         transform: Translate {
-            x: panelPosition === "left" && !panelActive ? -40 : 0
-            y: panelPosition === "top" && !panelActive ? -40 : 0
+            x: panelPosition === "left" && !panelActive ? -40 :
+               (panelPosition === "right" && !panelActive ? 40 : 0)
+            y: panelPosition === "top" && !panelActive ? -40 :
+               (panelPosition === "bottom" && !panelActive ? 40 : 0)
         }
 
         Behavior on opacity {

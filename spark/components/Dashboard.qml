@@ -12,11 +12,17 @@ PanelWindow {
 
     signal perfUpdated()
 
-    anchors.right: true
-    anchors.top: true
-    anchors.bottom: true
-    implicitWidth: 449
-    implicitHeight: (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].height : 1440
+    property string panelPos: (sharedData && sharedData.dashboardPosition) ? sharedData.dashboardPosition : "right"
+    property bool isHorizontal: panelPos === "top" || panelPos === "bottom"
+    
+    // Configurable anchors based on panelPos
+    anchors.right: panelPos === "left" ? false : true 
+    anchors.left: panelPos === "right" ? false : true
+    anchors.top: panelPos === "bottom" ? false : true
+    anchors.bottom: panelPos === "top" ? false : true
+    
+    implicitWidth: !isHorizontal ? 449 : (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].width : 1920
+    implicitHeight: isHorizontal ? 449 : (Quickshell.screens.length > 0 && Quickshell.screens[0]) ? Quickshell.screens[0].height : 1440
     
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qsdashboard"
@@ -38,10 +44,10 @@ PanelWindow {
     visible: true
     color: "transparent"
     margins {
-        top: 0
-        bottom: 0
-        right: -implicitWidth * (1.0 - showProgress)
-        left: 0
+        top: panelPos === "top" ? -implicitHeight * (1.0 - showProgress) : 0
+        bottom: panelPos === "bottom" ? -implicitHeight * (1.0 - showProgress) : 0
+        right: panelPos === "right" ? -implicitWidth * (1.0 - showProgress) : 0
+        left: panelPos === "left" ? -implicitWidth * (1.0 - showProgress) : 0
     }
 
     Item {

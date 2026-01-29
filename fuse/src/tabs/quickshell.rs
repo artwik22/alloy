@@ -51,6 +51,16 @@ impl QuickshellTab {
         sidebar_position_section.set_hexpand(true);
         content.append(&sidebar_position_section);
 
+        let sep = gtk4::Separator::new(gtk4::Orientation::Horizontal);
+        sep.set_margin_top(12);
+        sep.set_margin_bottom(12);
+        content.append(&sep);
+
+        // Dashboard Position section
+        let dashboard_position_section = create_dashboard_position_section(Arc::clone(&config));
+        dashboard_position_section.set_hexpand(true);
+        content.append(&dashboard_position_section);
+
         // Scaling section
         let scaling_section = create_scaling_section(Arc::clone(&config));
         scaling_section.set_hexpand(true);
@@ -118,7 +128,7 @@ fn create_sidebar_visible_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             // Reload config from disk to preserve existing settings
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_visible(enabled);
-            if let Err(e) = cfg.save() {
+            if let Err(_e) = cfg.save() {
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -141,6 +151,152 @@ fn create_sidebar_visible_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     section
 }
 
+fn create_dashboard_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let container = GtkBox::new(gtk4::Orientation::Vertical, 0);
+    container.set_margin_bottom(24);
+
+    let header = GtkBox::new(gtk4::Orientation::Horizontal, 0);
+    header.set_margin_bottom(12);
+    header.set_valign(gtk4::Align::Center);
+
+    let section_title = Label::new(Some("Dashboard Position"));
+    section_title.add_css_class("section-title");
+    section_title.set_xalign(0.0);
+    section_title.set_halign(gtk4::Align::Start);
+    section_title.set_hexpand(true);
+
+    header.append(&section_title);
+    container.append(&header);
+
+    // Get current position
+    let current_pos = {
+        let guard = config.lock().unwrap();
+        guard.dashboard_position.clone().unwrap_or_else(|| "right".to_string())
+    };
+
+    let button_box = GtkBox::new(gtk4::Orientation::Horizontal, 10);
+    button_box.set_halign(gtk4::Align::End);
+
+    // Create buttons: Left, Bottom, Top, Right
+    let btn_left = Button::with_label("Left");
+    if current_pos == "left" { btn_left.add_css_class("suggested-action"); }
+
+    let btn_bottom = Button::with_label("Bottom");
+    if current_pos == "bottom" { btn_bottom.add_css_class("suggested-action"); }
+
+    let btn_top = Button::with_label("Top");
+    if current_pos == "top" { btn_top.add_css_class("suggested-action"); }
+
+    let btn_right = Button::with_label("Right");
+    if current_pos == "right" { btn_right.add_css_class("suggested-action"); }
+
+    // Connect Left
+    {
+        let config = Arc::clone(&config);
+        let b_l = btn_left.clone();
+        let b_r = btn_right.clone();
+        let b_t = btn_top.clone();
+        let b_b = btn_bottom.clone();
+        btn_left.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_position("left");
+            if let Err(_e) = cfg.save() {
+                // handle error
+            } else {
+                *config.lock().unwrap() = cfg.clone();
+                b_l.add_css_class("suggested-action");
+                b_r.remove_css_class("suggested-action");
+                b_t.remove_css_class("suggested-action");
+                b_b.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    // Connect Bottom
+    {
+        let config = Arc::clone(&config);
+        let b_l = btn_left.clone();
+        let b_r = btn_right.clone();
+        let b_t = btn_top.clone();
+        let b_b = btn_bottom.clone();
+        btn_bottom.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_position("bottom");
+            if let Err(_e) = cfg.save() {
+            } else {
+                *config.lock().unwrap() = cfg.clone();
+                b_b.add_css_class("suggested-action");
+                b_l.remove_css_class("suggested-action");
+                b_r.remove_css_class("suggested-action");
+                b_t.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    // Connect Top
+    {
+        let config = Arc::clone(&config);
+        let b_l = btn_left.clone();
+        let b_r = btn_right.clone();
+        let b_t = btn_top.clone();
+        let b_b = btn_bottom.clone();
+        btn_top.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_position("top");
+            if let Err(_e) = cfg.save() {
+            } else {
+                *config.lock().unwrap() = cfg.clone();
+                b_t.add_css_class("suggested-action");
+                b_l.remove_css_class("suggested-action");
+                b_r.remove_css_class("suggested-action");
+                b_b.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    // Connect Right
+    {
+        let config = Arc::clone(&config);
+        let b_l = btn_left.clone();
+        let b_r = btn_right.clone();
+        let b_t = btn_top.clone();
+        let b_b = btn_bottom.clone();
+        btn_right.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_position("right");
+            if let Err(_e) = cfg.save() {
+            } else {
+                *config.lock().unwrap() = cfg.clone();
+                b_r.add_css_class("suggested-action");
+                b_l.remove_css_class("suggested-action");
+                b_t.remove_css_class("suggested-action");
+                b_b.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    button_box.append(&btn_left);
+    button_box.append(&btn_bottom);
+    button_box.append(&btn_top);
+    button_box.append(&btn_right);
+
+    header.append(&button_box);
+
+    let desc = Label::new(Some("Choose dashboard position: Left, Bottom, Top, or Right"));
+    desc.add_css_class("section-description");
+    desc.set_xalign(0.0);
+    desc.set_margin_start(18);
+    desc.set_margin_bottom(12);
+
+    container.append(&desc);
+
+    container
+}
+
 fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     let section = GtkBox::new(Orientation::Vertical, 0);
     section.add_css_class("settings-section");
@@ -152,7 +308,7 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     header.set_margin_bottom(12);
     header.set_valign(gtk4::Align::Center);
 
-    let section_title = Label::new(Some("Sidebar Position"));
+    let section_title = Label::new(Some("SidePanel Position"));
     section_title.add_css_class("section-title");
     section_title.set_xalign(0.0);
     section_title.set_halign(gtk4::Align::Start);
@@ -165,61 +321,113 @@ fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     button_box.set_hexpand(false);
 
     let current_pos = config.lock().unwrap().sidebar_position.clone().unwrap_or_else(|| "left".to_string());
-    let is_left = current_pos == "left";
-    let is_top = current_pos == "top";
 
-    let left_button = Button::with_label("Left");
-    if is_left {
-        left_button.add_css_class("suggested-action");
-    }
-    let top_button = Button::with_label("Top");
-    if is_top {
-        top_button.add_css_class("suggested-action");
-    }
+    // Create buttons manually to handle closures properly
     
+    let btn_left = Button::with_label("Left");
+    if current_pos == "left" { btn_left.add_css_class("suggested-action"); }
+    
+    let btn_bottom = Button::with_label("Bottom");
+    if current_pos == "bottom" { btn_bottom.add_css_class("suggested-action"); }
+
+    let btn_top = Button::with_label("Top");
+    if current_pos == "top" { btn_top.add_css_class("suggested-action"); }
+
+    let btn_right = Button::with_label("Right");
+    if current_pos == "right" { btn_right.add_css_class("suggested-action"); }
+
+    // Connect Left
     {
         let config = Arc::clone(&config);
-        let top_btn = top_button.clone();
-        left_button.connect_clicked(move |btn| {
-            // Reload config from disk to preserve existing settings
+        let b_l = btn_left.clone();
+        let b_b = btn_bottom.clone();
+        let b_t = btn_top.clone();
+        let b_r = btn_right.clone();
+        btn_left.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
             cfg.set_sidebar_position("left");
-            if let Err(e) = cfg.save() {
-            } else {
-                // Update the shared config
+            if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
-                // Update button styles
-                btn.add_css_class("suggested-action");
-                top_btn.remove_css_class("suggested-action");
+                b_l.add_css_class("suggested-action");
+                b_b.remove_css_class("suggested-action");
+                b_t.remove_css_class("suggested-action");
+                b_r.remove_css_class("suggested-action");
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&left_button);
 
+    // Connect Bottom
     {
         let config = Arc::clone(&config);
-        let left_btn = left_button.clone();
-        top_button.connect_clicked(move |btn| {
-            // Reload config from disk to preserve existing settings
+        let b_l = btn_left.clone();
+        let b_b = btn_bottom.clone();
+        let b_t = btn_top.clone();
+        let b_r = btn_right.clone();
+        btn_bottom.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
-            cfg.set_sidebar_position("top");
-            if let Err(e) = cfg.save() {
-            } else {
-                // Update the shared config
+            cfg.set_sidebar_position("bottom");
+            if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
-                // Update button styles
-                btn.add_css_class("suggested-action");
-                left_btn.remove_css_class("suggested-action");
+                b_l.remove_css_class("suggested-action");
+                b_b.add_css_class("suggested-action");
+                b_t.remove_css_class("suggested-action");
+                b_r.remove_css_class("suggested-action");
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&top_button);
+
+    // Connect Top
+    {
+        let config = Arc::clone(&config);
+        let b_l = btn_left.clone();
+        let b_b = btn_bottom.clone();
+        let b_t = btn_top.clone();
+        let b_r = btn_right.clone();
+        btn_top.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_sidebar_position("top");
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                b_l.remove_css_class("suggested-action");
+                b_b.remove_css_class("suggested-action");
+                b_t.add_css_class("suggested-action");
+                b_r.remove_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    // Connect Right
+    {
+        let config = Arc::clone(&config);
+        let b_l = btn_left.clone();
+        let b_b = btn_bottom.clone();
+        let b_t = btn_top.clone();
+        let b_r = btn_right.clone();
+        btn_right.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_sidebar_position("right");
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                b_l.remove_css_class("suggested-action");
+                b_b.remove_css_class("suggested-action");
+                b_t.remove_css_class("suggested-action");
+                b_r.add_css_class("suggested-action");
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    button_box.append(&btn_left);
+    button_box.append(&btn_bottom);
+    button_box.append(&btn_top);
+    button_box.append(&btn_right);
 
     header.append(&button_box);
 
-    let desc = Label::new(Some("Choose sidebar position: Left or Top"));
+    let desc = Label::new(Some("Choose SidePanel position: Left, Bottom, Top, or Right"));
     desc.add_css_class("section-description");
     desc.set_xalign(0.0);
     desc.set_margin_start(18);
@@ -593,7 +801,7 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             // Reload config from disk to preserve existing settings
             let mut cfg = ColorConfig::load();
             cfg.set_notifications_enabled(enabled);
-            if let Err(e) = cfg.save() {
+            if let Err(_e) = cfg.save() {
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
@@ -651,7 +859,7 @@ fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
             // Reload config from disk to preserve existing settings
             let mut cfg = ColorConfig::load();
             cfg.set_notification_sounds_enabled(enabled);
-            if let Err(e) = cfg.save() {
+            if let Err(_e) = cfg.save() {
             } else {
                 // Update the shared config
                 *config.lock().unwrap() = cfg.clone();
