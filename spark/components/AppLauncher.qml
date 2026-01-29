@@ -121,109 +121,6 @@ PanelWindow {
         if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'echo "$HOME" > /tmp/quickshell_home 2>/dev/null || true'], readHomePath)
     }
 
-    function loadNotes() {
-        var notesPath = colorConfigPath.replace("colors.json", "notes.txt")
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file://" + notesPath)
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200 || xhr.status === 0) {
-                    notesText.text = xhr.responseText
-                } else {
-                    notesText.text = "No notes yet.\n\nClick 'Edit Notes' to add your first note!"
-                }
-            }
-        }
-        xhr.send()
-    }
-
-    function loadNotesList() {
-        // Clear and show loading
-        notesModel.clear()
-        notesModel.append({ name: "Ładowanie notatek...", file: "" })
-
-        // Use Process to list all .txt files in the directory
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['ls', '-1', '" + notesDir + "', '2>/dev/null', '|', 'grep', '\\.txt$']; running: true }", appLauncherRoot)
-
-        // Use timer to process results
-        Qt.createQmlObject("import QtQuick; Timer { interval: 200; running: true; repeat: false; onTriggered: appLauncherRoot.processNotesList() }", appLauncherRoot)
-    }
-
-    function processNotesList() {
-        // For now, manually add known existing files
-        // TODO: Implement proper directory reading
-        notesModel.clear()
-
-        var existingFiles = ["notes.txt", "test.txt", "wybickiego14c.txt", "12312321.txt"]
-
-        if (existingFiles.length === 0) {
-            notesModel.append({ name: "Brak zapisanych notatek", file: "" })
-        } else {
-            for (var i = 0; i < existingFiles.length; i++) {
-                var fileName = existingFiles[i].replace('.txt', '')
-                notesModel.append({ name: fileName, file: existingFiles[i] })
-            }
-        }
-    }
-
-    function saveNote() {
-        if (notesEditText.text.trim() === "") {
-            return
-        }
-
-        // Generate filename from first line or current filename
-        var fileName
-        if (currentNotesMode === 0) {
-            // New note - use first line as filename
-            var firstLine = notesEditText.text.split('\n')[0].trim()
-            if (firstLine === "") {
-                firstLine = "Bez tytułu"
-            }
-            fileName = firstLine.replace(/[^a-zA-Z0-9\-_\s]/g, "").replace(/\s+/g, "_") + ".txt"
-        } else {
-            // Edit existing note
-            fileName = notesFileName
-        }
-
-        var notesPath = notesDir + "/" + fileName
-        var content = notesEditText.text
-        var escapedContent = content.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`')
-
-        Qt.createQmlObject("import Quickshell.Io; import QtQuick; Process { command: ['sh', '-c', 'echo \"" + escapedContent + "\" > \"" + notesPath + "\"']; running: true }", appLauncherRoot)
-
-        // Reload notes list and go back to menu
-        loadNotesList()
-        currentNotesMode = -1
-        selectedIndex = 0
-    }
-
-    function loadNoteContent(fileName) {
-        var notesPath = notesDir + "/" + fileName
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file://" + notesPath)
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200 || xhr.status === 0) {
-                    pendingNoteContent = xhr.responseText
-                    // Use timer to set content after UI is ready
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: appLauncherRoot.applyPendingNoteContent() }", appLauncherRoot)
-                } else {
-                    pendingNoteContent = "Błąd ładowania notatki"
-                    Qt.createQmlObject("import QtQuick; Timer { interval: 100; running: true; repeat: false; onTriggered: appLauncherRoot.applyPendingNoteContent() }", appLauncherRoot)
-                }
-            }
-        }
-        xhr.send()
-    }
-
-    function applyPendingNoteContent() {
-        if (notesEditText && pendingNoteContent !== "") {
-            notesEditText.text = pendingNoteContent
-            pendingNoteContent = ""
-        } else {
-        }
-    }
-
     function readHomePath() {
         var xhr = new XMLHttpRequest()
         xhr.open("GET", "file:///tmp/quickshell_home")
@@ -242,14 +139,14 @@ PanelWindow {
                             } else {
                                 colorConfigPath = home + "/.config/sharpshell/colors.json"
                             }
-                            notesDir = home + "/Documents/Notes"
+                            notesDir = ""
                         }
                     }
                     checkXhr.send()
                 } else {
                     // Fallback to defaults
                     colorConfigPath = "/tmp/sharpshell/colors.json"
-                    notesDir = "/tmp/Documents/Notes"
+                    notesDir = ""
                 }
             }
         }
@@ -443,13 +340,8 @@ PanelWindow {
     property int baseHeight: 320
     
 
-    // Size when in notes mode (50% larger)
-    property bool isNotesMode: (currentMode === 3)
-    property int notesWidth: Math.floor(baseWidth * 1.5)
-    property int notesHeight: Math.floor(baseHeight * 1.5)
-    
-    implicitWidth: isNotesMode ? notesWidth : baseWidth
-    implicitHeight: isNotesMode ? notesHeight : baseHeight
+    implicitWidth: baseWidth
+    implicitHeight: baseHeight
     
     Behavior on implicitWidth {
         NumberAnimation {
@@ -482,14 +374,16 @@ PanelWindow {
         value: (sharedData && sharedData.launcherVisible) ? 1.0 : 0.0
     }
     Behavior on launcherShowProgress {
-        NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
     }
 
     visible: true
     color: "transparent"
     property int launcherSlideAmount: 400
-    margins.bottom: -launcherSlideAmount * (1.0 - launcherShowProgress)
-
+    // Fix: Use margins.bottom for window positioning (0 = flush with edge)
+    // Animation will be handled by the content Item transform
+    margins.bottom: 0
+    
     // Applications list
     property var apps: []
     property int selectedIndex: 0
@@ -498,12 +392,7 @@ PanelWindow {
     // Calculator properties
     property string calculatorResult: ""
     property bool isCalculatorMode: false
-    property int currentMode: -1  // -1 = mode selection, 0 = Launcher, 1 = Packages, 2 = Fuse, 3 = Notes
-    property int currentNotesMode: -1  // -1 = menu, 0 = new note, 1 = edit note
-    property string notesFileName: ""  // Current note file name
-    property string pendingNoteContent: ""  // Content to load into editor
-    property string notesDir: ""  // Notes directory path
-    property int notesMenuIndex: 0  // Selected index in notes menu (0 = new note button, 1+ = notes list)
+    property int currentMode: -1  // -1 = mode selection, 0 = Launcher, 1 = Packages, 2 = Fuse
     property int currentPackageMode: -1  // -1 = Packages option selection, 0 = install source selection (Pacman/AUR), 1 = Pacman search, 2 = AUR search, 3 = remove source selection (Pacman/AUR), 4 = Pacman remove search, 5 = AUR remove search
     property int installSourceMode: -1  // -1 = selection, 0 = Pacman, 1 = AUR
     property int removeSourceMode: -1  // -1 = selection, 0 = Pacman, 1 = AUR
@@ -1437,6 +1326,12 @@ PanelWindow {
         enabled: launcherShowProgress > 0.02
         focus: launcherShowProgress > 0.02
         scale: 0.95 + 0.05 * launcherShowProgress
+        transformOrigin: Item.Bottom
+        
+        // Slide animation via transform
+        transform: Translate {
+            y: launcherSlideAmount * (1.0 - launcherShowProgress)
+        }
 
         // Tło z gradientem
         // Material Design launcher background with elevation
@@ -1634,20 +1529,16 @@ PanelWindow {
                             event.accepted = true
                             return
                         }
-                        currentMode = mode.mode
-                        selectedIndex = 0
-                        modesList.currentIndex = -1
-                        appsList.currentIndex = -1
-                        packagesOptionsList.currentIndex = -1
-                        if (currentMode === 1) {
-                            currentPackageMode = -1
-                            installSourceMode = -1
-                            removeSourceMode = -1
-                        } else if (currentMode === 3) {
-                            currentNotesMode = -1
-                            notesMenuIndex = 0
-                            loadNotesList()
-                        }
+                            currentMode = mode.mode
+                            selectedIndex = 0
+                            modesList.currentIndex = -1
+                            appsList.currentIndex = -1
+                            packagesOptionsList.currentIndex = -1
+                            if (currentMode === 1) {
+                                currentPackageMode = -1
+                                installSourceMode = -1
+                                removeSourceMode = -1
+                            }
                     }
                     event.accepted = true
                 } else if (currentMode === 1 && currentPackageMode === -1) {
@@ -1750,51 +1641,6 @@ PanelWindow {
                     // W trybie AUR remove search - przekieruj do TextInput
                     if (removeAurSearchInput) removeAurSearchInput.forceActiveFocus()
                     event.accepted = false
-                } else if (currentMode === 3 && currentNotesMode === -1) {
-                    // W menu notes - nawigacja po menu (przycisk nowa + lista notatek)
-                    if (event.key === Qt.Key_Up) {
-                        if (notesMenuIndex > 0) {
-                            notesMenuIndex--
-                            if (notesMenuIndex > 0) {
-                                // W liście notatek
-                                selectedIndex = notesMenuIndex - 1
-                                notesList.positionViewAtIndex(selectedIndex, ListView.Center)
-                            }
-                        }
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Down) {
-                        var maxIndex = notesModel.count // 0 = new note button, 1+ = notes
-                        if (notesMenuIndex < maxIndex) {
-                            notesMenuIndex++
-                            if (notesMenuIndex > 0) {
-                                // W liście notatek
-                                selectedIndex = notesMenuIndex - 1
-                                notesList.positionViewAtIndex(selectedIndex, ListView.Center)
-                            }
-                        }
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (notesMenuIndex === 0) {
-                            // Nowa notatka
-                            currentNotesMode = 0
-                            notesEditText.text = ""
-                            notesFileName = ""
-                        } else {
-                            // Wybierz istniejącą notatkę
-                            var noteIndex = notesMenuIndex - 1
-                            var noteItem = notesModel.get(noteIndex)
-                            if (noteItem && noteItem.file !== "") {
-                                currentNotesMode = 1
-                                notesFileName = noteItem.file
-                                loadNoteContent(noteItem.file)
-                            }
-                        }
-                        event.accepted = true
-                    }
-                } else if (currentMode === 3 && (currentNotesMode === 0 || currentNotesMode === 1)) {
-                    // W edytorze notes - przekieruj do TextEdit
-                    notesEditText.forceActiveFocus()
-                    event.accepted = false
             }
         }
         
@@ -1804,6 +1650,7 @@ PanelWindow {
             anchors.fill: parent
             anchors.margins: 20
             visible: currentMode === -1
+            focus: currentMode === -1 // Ensure focus for keyboard navigation
             opacity: currentMode === -1 ? 1.0 : 0.0
             currentIndex: selectedIndex
             spacing: 8
@@ -1825,7 +1672,6 @@ PanelWindow {
                 ListElement { name: "Launcher"; description: "Launch applications"; mode: 0; icon: "󰈙" }
                 ListElement { name: "Packages"; description: "Manage packages"; mode: 1; icon: "󰏖" }
                 ListElement { name: "Fuse"; description: "Open settings application"; mode: 2; icon: "󰒓" }
-                ListElement { name: "Notes"; description: "Quick notes and reminders"; mode: 3; icon: "󰎞" }
             }
             
             delegate: Rectangle {
@@ -1837,6 +1683,34 @@ PanelWindow {
                     ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                     "transparent"
                 
+                opacity: (sharedData && sharedData.launcherVisible) ? 1 : 0
+                scale: (sharedData && sharedData.launcherVisible) ? 1 : 0.8
+                
+                transform: Translate {
+                    y: (sharedData && sharedData.launcherVisible) ? 0 : 40
+                }
+
+                Behavior on opacity {
+                    SequentialAnimation {
+                        PauseAnimation { duration: Math.min(index * 40, 400) }
+                        NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                    }
+                }
+                
+                Behavior on scale {
+                    SequentialAnimation {
+                        PauseAnimation { duration: Math.min(index * 40, 400) }
+                        NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                    }
+                }
+                
+                Behavior on transform {
+                    SequentialAnimation {
+                        PauseAnimation { duration: Math.min(index * 40, 400) }
+                        PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                    }
+                }
+
                 Behavior on color {
                     ColorAnimation { 
                         duration: 150
@@ -1969,11 +1843,21 @@ PanelWindow {
                                 color: searchInput.activeFocus ? colorPrimary : colorSecondary
                                 radius: 0
                                 
+                                opacity: (sharedData && sharedData.launcherVisible && currentMode === 0) ? 1 : 0
+                                scale: (sharedData && sharedData.launcherVisible && currentMode === 0) ? 1 : 0.9
+                                transform: Translate {
+                                    y: (sharedData && sharedData.launcherVisible && currentMode === 0) ? 0 : 20
+                                }
+
+                                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                                Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutBack } }
+                                Behavior on transform { PropertyAnimation { property: "y"; duration: 600; easing.type: Easing.OutBack } }
+
                                 Behavior on color {
                                     ColorAnimation { 
                                         duration: 180
                                         easing.type: Easing.OutQuart
-                                }
+                                    }
                                 }
                                 
                                 TextInput {
@@ -2094,16 +1978,51 @@ PanelWindow {
                                     }
                                 }
                                 
-                                // Brak animacji przejść – mniejsze zacinki
-                                add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 0 } }
-                                addDisplaced: Transition { NumberAnimation { properties: "y"; duration: 0 } }
-                                removeDisplaced: Transition { NumberAnimation { properties: "y"; duration: 0 } }
+                                // Animacje przejść dla wyników wyszukiwania
+                                add: Transition { 
+                                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250; easing.type: Easing.OutCubic }
+                                    NumberAnimation { property: "scale"; from: 0.95; to: 1; duration: 300; easing.type: Easing.OutBack }
+                                }
+                                addDisplaced: Transition { 
+                                    NumberAnimation { properties: "y"; duration: 300; easing.type: Easing.OutBack } 
+                                }
+                                removeDisplaced: Transition { 
+                                    NumberAnimation { properties: "y"; duration: 300; easing.type: Easing.OutBack } 
+                                }
                                 
                                 delegate: Rectangle {
                                     id: appItem
                                     width: appsList.width
                                     height: 50
                                     radius: 0
+                                    
+                                    opacity: (sharedData && sharedData.launcherVisible && currentMode === 0) ? 1 : 0
+                                    scale: (sharedData && sharedData.launcherVisible && currentMode === 0) ? 1 : 0.8
+                                    
+                                    transform: Translate {
+                                        y: (sharedData && sharedData.launcherVisible && currentMode === 0) ? 0 : 40
+                                    }
+
+                                    Behavior on opacity {
+                                        SequentialAnimation {
+                                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                                            NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                        }
+                                    }
+                                    
+                                    Behavior on scale {
+                                        SequentialAnimation {
+                                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                                            NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                        }
+                                    }
+                                    
+                                    Behavior on transform {
+                                        SequentialAnimation {
+                                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                                            PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                        }
+                                    }
                                     color: (selectedIndex === index || appItemMouseArea.containsMouse) ?
                                         ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                                         "transparent"
@@ -2202,7 +2121,6 @@ PanelWindow {
                                 }
                             }
                         }
-                    }
                 }
             }
             
@@ -2240,6 +2158,34 @@ PanelWindow {
                         ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                         "transparent"
                     
+                    opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === -1) ? 1 : 0
+                    scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === -1) ? 1 : 0.8
+                    
+                    transform: Translate {
+                        y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === -1) ? 0 : 40
+                    }
+
+                    Behavior on opacity {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                        }
+                    }
+                    
+                    Behavior on scale {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                        }
+                    }
+                    
+                    Behavior on transform {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                        }
+                    }
+
                     Behavior on color {
                         ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                     }
@@ -2356,6 +2302,34 @@ PanelWindow {
                         ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                         "transparent"
                     
+                    opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 0) ? 1 : 0
+                    scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 0) ? 1 : 0.8
+                    
+                    transform: Translate {
+                        y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 0) ? 0 : 40
+                    }
+
+                    Behavior on opacity {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                        }
+                    }
+                    
+                    Behavior on scale {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                        }
+                    }
+                    
+                    Behavior on transform {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                        }
+                    }
+
                     Behavior on color {
                         ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                     }
@@ -2475,6 +2449,16 @@ PanelWindow {
                         color: pacmanSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
+                        opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 1) ? 1 : 0
+                        scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 1) ? 1 : 0.9
+                        transform: Translate {
+                            y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 1) ? 0 : 20
+                        }
+
+                        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutBack } }
+                        Behavior on transform { PropertyAnimation { property: "y"; duration: 600; easing.type: Easing.OutBack } }
+
                         Behavior on color {
                             ColorAnimation { duration: 180; easing.type: Easing.OutQuart }
                         }
@@ -2569,6 +2553,34 @@ PanelWindow {
                                 ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                                 "transparent"
                             
+                            opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 1) ? 1 : 0
+                            scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 1) ? 1 : 0.8
+                            
+                            transform: Translate {
+                                y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 1) ? 0 : 40
+                            }
+
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
+
                             Behavior on color {
                                 ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                             }
@@ -2674,6 +2686,16 @@ PanelWindow {
                         color: aurSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
+                        opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 2) ? 1 : 0
+                        scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 2) ? 1 : 0.9
+                        transform: Translate {
+                            y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 2) ? 0 : 20
+                        }
+
+                        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutBack } }
+                        Behavior on transform { PropertyAnimation { property: "y"; duration: 600; easing.type: Easing.OutBack } }
+
                         Behavior on color {
                             ColorAnimation { duration: 180; easing.type: Easing.OutQuart }
                         }
@@ -2768,6 +2790,34 @@ PanelWindow {
                                 ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                                 "transparent"
                             
+                            opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 2) ? 1 : 0
+                            scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 2) ? 1 : 0.8
+                            
+                            transform: Translate {
+                                y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 2) ? 0 : 40
+                            }
+
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
+
                             Behavior on color {
                                 ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                             }
@@ -2876,6 +2926,34 @@ PanelWindow {
                         ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                         "transparent"
                     
+                    opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 3) ? 1 : 0
+                    scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 3) ? 1 : 0.8
+                    
+                    transform: Translate {
+                        y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 3) ? 0 : 40
+                    }
+
+                    Behavior on opacity {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                        }
+                    }
+                    
+                    Behavior on scale {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                        }
+                    }
+                    
+                    Behavior on transform {
+                        SequentialAnimation {
+                            PauseAnimation { duration: Math.min(index * 40, 400) }
+                            PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                        }
+                    }
+
                     Behavior on color {
                         ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                     }
@@ -2993,6 +3071,16 @@ PanelWindow {
                         color: removeSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
+                        opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 4) ? 1 : 0
+                        scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 4) ? 1 : 0.9
+                        transform: Translate {
+                            y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 4) ? 0 : 20
+                        }
+
+                        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutBack } }
+                        Behavior on transform { PropertyAnimation { property: "y"; duration: 600; easing.type: Easing.OutBack } }
+
                         Behavior on color {
                             ColorAnimation { duration: 180; easing.type: Easing.OutQuart }
                         }
@@ -3087,6 +3175,34 @@ PanelWindow {
                                 ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
                                 "transparent"
                             
+                            opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && (currentPackageMode === 4 || currentPackageMode === 5)) ? 1 : 0
+                            scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && (currentPackageMode === 4 || currentPackageMode === 5)) ? 1 : 0.8
+                            
+                            transform: Translate {
+                                y: (sharedData && sharedData.launcherVisible && currentMode === 1 && (currentPackageMode === 4 || currentPackageMode === 5)) ? 0 : 40
+                            }
+
+                            Behavior on opacity {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            
+                            Behavior on scale {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    NumberAnimation { duration: 600; easing.type: Easing.OutBack }
+                                }
+                            }
+                            
+                            Behavior on transform {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: Math.min(index * 40, 400) }
+                                    PropertyAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                                }
+                            }
+
                             Behavior on color {
                                 ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                             }
@@ -3195,6 +3311,16 @@ PanelWindow {
                         color: removeAurSearchInput.activeFocus ? colorPrimary : colorSecondary
                         radius: 0
                         
+                        opacity: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 5) ? 1 : 0
+                        scale: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 5) ? 1 : 0.9
+                        transform: Translate {
+                            y: (sharedData && sharedData.launcherVisible && currentMode === 1 && currentPackageMode === 5) ? 0 : 20
+                        }
+
+                        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutBack } }
+                        Behavior on transform { PropertyAnimation { property: "y"; duration: 600; easing.type: Easing.OutBack } }
+
                         Behavior on color {
                             ColorAnimation { duration: 180; easing.type: Easing.OutQuart }
                         }
@@ -3368,335 +3494,6 @@ PanelWindow {
                     }
                 }
             }
-            
-            // Tryb 3: Notes
-            Item {
-                id: notesMode
-                anchors.fill: parent
-                visible: currentMode === 3
-                enabled: true
-                z: 10
-
-                // Notes menu (-1) or editor (0=new, 1=edit)
-                Item {
-                    id: notesMenu
-                    anchors.fill: parent
-                    visible: currentNotesMode === -1
-
-                    Flickable {
-                        anchors.fill: parent
-                        anchors.margins: 20
-                        contentHeight: notesMenuColumn.height
-                        clip: true
-
-                        Column {
-                            id: notesMenuColumn
-                            width: parent.width
-                            spacing: 8
-
-                            // Title
-                            Text {
-                                text: "Notes Manager"
-                                font.pixelSize: 22
-                                font.family: "sans-serif"
-                                font.weight: Font.Bold
-                                color: colorText
-                            }
-
-                            // New note button – ten sam wygląd co strona główna
-                            Rectangle {
-                                id: newNoteButton
-                                width: parent.width
-                                height: 50
-                                radius: 0
-                                color: (notesMenuIndex === 0 || newNoteButtonMouseArea.containsMouse) ?
-                                    ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
-                                    "transparent"
-                                
-                                Behavior on color {
-                                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                                }
-
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    width: notesMenuIndex === 0 ? 3 : 0
-                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                    Behavior on width {
-                                        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-                                    }
-                                }
-
-                                Row {
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.leftMargin: 16
-                                    anchors.rightMargin: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 12
-                                    Text {
-                                        text: "➕"
-                                        font.pixelSize: 20
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                        width: 24
-                                        horizontalAlignment: Text.AlignLeft
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                    Text {
-                                        text: "Nowa notatka"
-                                        font.pixelSize: 15
-                                        font.family: "sans-serif"
-                                        font.weight: notesMenuIndex === 0 ? Font.Bold : Font.Normal
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: newNoteButtonMouseArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        currentNotesMode = 0
-                                        notesEditText.text = ""
-                                        notesFileName = ""
-                                    }
-                                }
-                            }
-
-                            // Saved notes title
-                            Text {
-                                text: "Zapisane notatki:"
-                                font.pixelSize: 18
-                                font.family: "sans-serif"
-                                font.weight: Font.Bold
-                                color: colorText
-                                visible: notesList.count > 0
-                            }
-
-                            // List of saved notes – ten sam wygląd co strona główna
-                            ListView {
-                                id: notesList
-                                width: parent.width
-                                height: 340
-                                model: ListModel { id: notesModel }
-                                spacing: 8
-                                clip: true
-
-                                delegate: Rectangle {
-                                    id: noteItem
-                                    width: notesList.width
-                                    height: 50
-                                    radius: 0
-                                    color: (notesMenuIndex === index + 1 || notesItemMouseArea.containsMouse) ?
-                                        ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a") :
-                                        "transparent"
-                                    
-                                    Behavior on color {
-                                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                                    }
-
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.top: parent.top
-                                        anchors.bottom: parent.bottom
-                                        width: (notesMenuIndex === index + 1) ? 3 : 0
-                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                        Behavior on width {
-                                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-                                        }
-                                    }
-
-                                    Row {
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.leftMargin: 16
-                                        anchors.rightMargin: 16
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: 12
-                                        Text {
-                                            text: "󰎞"
-                                            font.pixelSize: 20
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                            width: 24
-                                            horizontalAlignment: Text.AlignLeft
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        Text {
-                                            text: model.name
-                                            font.pixelSize: 15
-                                            font.family: "sans-serif"
-                                            font.weight: (notesMenuIndex === index + 1) ? Font.Bold : Font.Normal
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                            width: noteItem.width - 68
-                                            elide: Text.ElideRight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: notesItemMouseArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            if (model.file !== "") {
-                                                selectedIndex = index
-                                                currentNotesMode = 1
-                                                notesFileName = model.file
-                                                loadNoteContent(model.file)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Component.onCompleted: {
-                                    loadNotesList()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Note editor (new or edit)
-                Item {
-                    id: notesEditor
-                    anchors.fill: parent
-                    visible: currentNotesMode === 0 || currentNotesMode === 1
-
-                    Flickable {
-                        anchors.fill: parent
-                        anchors.margins: 20
-                        contentHeight: notesEditorColumn.height
-                        clip: true
-
-                        Column {
-                            id: notesEditorColumn
-                            width: parent.width
-                            spacing: 8
-
-                            // Title
-                            Text {
-                                text: currentNotesMode === 0 ? "Nowa notatka" : "Edytuj notatkę"
-                                font.pixelSize: 22
-                                font.family: "sans-serif"
-                                font.weight: Font.Bold
-                                color: colorText
-                            }
-
-                            // Instructions for new notes
-                            Text {
-                                width: parent.width
-                                text: currentNotesMode === 0 ?
-                                    "Wpisz tytuł notatki w pierwszej linii, potem treść.\nNazwa pliku zostanie utworzona automatycznie." :
-                                    "Edytuj notatkę. Pierwsza linia to tytuł."
-                                font.pixelSize: 16
-                                font.family: "sans-serif"
-                                color: "#888888"
-                                wrapMode: Text.Wrap
-                                visible: currentNotesMode === 0 || currentNotesMode === 1
-                            }
-
-                            // Notes edit area
-                            Rectangle {
-                                width: parent.width
-                                height: 250
-                                color: colorPrimary
-                                border.width: 2
-                                border.color: colorSecondary
-                                radius: 0
-
-                                TextEdit {
-                                    id: notesEditText
-                                    anchors.fill: parent
-                                    anchors.margins: 14
-                                    font.pixelSize: 18
-                                    font.family: "sans-serif"
-                                    color: colorText
-                                    wrapMode: TextEdit.Wrap
-                                    selectByMouse: true
-                                    activeFocusOnPress: true
-                                    focus: true
-
-                                    Text {
-                                        text: "Wpisz swoją notatkę tutaj..."
-                                        font.pixelSize: 18
-                                        font.family: "sans-serif"
-                                        color: Qt.lighter(colorText, 1.5)
-                                        visible: parent.text.length === 0
-                                        anchors.fill: parent
-                                        anchors.margins: 14
-                                        verticalAlignment: Text.AlignTop
-                                    }
-                                }
-                            }
-
-                            // Buttons row
-                            Row {
-                                spacing: 9
-                                width: parent.width
-
-                                // Save button
-                                Rectangle {
-                                    width: (parent.width - parent.spacing) / 2
-                                    height: 36
-                                    color: saveNoteButtonMouseArea.containsMouse ? colorAccent : colorSecondary
-                                    radius: 0
-
-                                    Text {
-                                        text: "💾 Zapisz"
-                                        font.pixelSize: 18
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                        color: colorText
-                                        anchors.centerIn: parent
-                                    }
-
-                                    MouseArea {
-                                        id: saveNoteButtonMouseArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            saveNote()
-                                        }
-                                    }
-                                }
-
-                                // Cancel button
-                                Rectangle {
-                                    width: (parent.width - parent.spacing) / 2
-                                    height: 36
-                                    color: cancelNoteButtonMouseArea.containsMouse ? colorPrimary : "transparent"
-                                    border.width: 1
-                                    border.color: colorSecondary
-                                    radius: 0
-
-                                    Text {
-                                        text: "❌ Anuluj"
-                                        font.pixelSize: 18
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                        color: colorText
-                                        anchors.centerIn: parent
-                                    }
-
-                                    MouseArea {
-                                        id: cancelNoteButtonMouseArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            currentNotesMode = -1
-                                            selectedIndex = 0
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
+}
