@@ -71,6 +71,7 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>, conf
          @define-color card_fg_color {};\n\
          @define-color accent_bg_color {};\n\
          @define-color accent_color {};\n\
+         @define-color accent_fg_color {};\n\
          @define-color sidebar_bg_color {};\n\
          @define-color view_bg_color {};\n\n",
         config.background,
@@ -81,6 +82,7 @@ fn load_css_with_colors(css_provider_rc: &Rc<RefCell<Option<CssProvider>>>, conf
         config.text,
         config.accent,
         config.accent,
+        get_contrasting_text_color(&config.accent), // calculated accent fg
         config.secondary,
         config.background // view matches window
     );
@@ -151,4 +153,32 @@ fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>, con
     }
     
     monitors
+}
+
+fn get_contrasting_text_color(hex: &str) -> String {
+    let hex = hex.trim_start_matches('#');
+    
+    // Handle 3-digit hex
+    if hex.len() == 3 {
+        let r_char = &hex[0..1];
+        let g_char = &hex[1..2];
+        let b_char = &hex[2..3];
+        let full_hex = format!("{}{}{}{}{}{}", r_char, r_char, g_char, g_char, b_char, b_char);
+        return get_contrasting_text_color(&full_hex);
+    }
+
+    if hex.len() == 6 {
+        if let (Ok(r), Ok(g), Ok(b)) = (
+            u8::from_str_radix(&hex[0..2], 16),
+            u8::from_str_radix(&hex[2..4], 16),
+            u8::from_str_radix(&hex[4..6], 16),
+        ) {
+            // Calculate brightness using standard formula
+            let brightness = (r as f32 * 0.299 + g as f32 * 0.587 + b as f32 * 0.114) / 255.0;
+            if brightness > 0.5 { // Lowered threshold slightly to 0.5 for better white detection
+                return "#000000".to_string(); // Bright background -> Dark text
+            }
+        }
+    }
+    "#ffffff".to_string() // Default to white text
 }

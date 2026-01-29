@@ -21,9 +21,11 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
-        transform: none; /* Reset transform to prevent layout issues */
+        transform: none;
+        /* Reset transform to prevent layout issues */
     }
 }
 
@@ -32,6 +34,7 @@
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -43,6 +46,7 @@
         opacity: 0;
         transform: scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -50,9 +54,12 @@
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.02);
     }
@@ -112,12 +119,12 @@ window.background {
 }
 
 /* Fix sidebar background when window is out of focus */
-navigation-split-view > sidebar {
+navigation-split-view>sidebar {
     background-color: @sidebar_bg_color;
     border-right: none;
 }
 
-navigation-split-view > sidebar:backdrop {
+navigation-split-view>sidebar:backdrop {
     background-color: @sidebar_bg_color;
 }
 
@@ -149,11 +156,11 @@ navigation-page:backdrop {
 }
 
 /* Ensure sidebar content maintains background */
-navigation-split-view > sidebar > navigation-page {
+navigation-split-view>sidebar>navigation-page {
     background-color: @sidebar_bg_color;
 }
 
-navigation-split-view > sidebar > navigation-page:backdrop {
+navigation-split-view>sidebar>navigation-page:backdrop {
     background-color: @sidebar_bg_color;
 }
 
@@ -267,6 +274,7 @@ separator {
     border-radius: 0;
     transition: none;
 }
+
 .sidebar-listbox row.sidebar-separator:hover,
 .sidebar-listbox row.sidebar-separator:active {
     background-color: transparent;
@@ -403,7 +411,7 @@ separator {
     padding: 16px;
 }
 
-.nautilus-grid > child {
+.nautilus-grid>child {
     margin: 0;
 }
 
@@ -624,17 +632,15 @@ window {
     min-height: 0;
 }
 
-window > box {
+window>box {
     min-width: 0;
     min-height: 0;
 }
 
 /* Ensure main container is always visible */
-applicationwindow {
-}
+applicationwindow {}
 
-applicationwindow > box {
-}
+applicationwindow>box {}
 
 /* Make sidebar responsive; narrower min so content area usable at 1/4 screen */
 .sidebar {
@@ -664,7 +670,7 @@ stack scrolledwindow {
 }
 
 /* Ensure stack children get correct allocation; scrolling handled by scrolledwindow above */
-stack > child {
+stack>child {
     min-width: 0;
     min-height: 0;
 }
@@ -691,7 +697,7 @@ stack scrolledwindow scrollbar:hover,
 }
 
 /* Make main container responsive */
-window > box {
+window>box {
     min-width: 0;
     min-height: 0;
 }
@@ -703,12 +709,10 @@ box {
 }
 
 /* Ensure horizontal boxes don't clip content */
-box[orient="horizontal"] {
-}
+box[orient="horizontal"] {}
 
 /* Ensure vertical boxes don't clip content */
-box[orient="vertical"] {
-}
+box[orient="vertical"] {}
 
 /* Ensure buttons are always visible and responsive */
 button {
@@ -727,18 +731,18 @@ scrolledwindow {
 }
 
 /* ScrolledWindow content can shrink so scrollbars appear when needed */
-scrolledwindow > child {
+scrolledwindow>child {
     min-width: 0;
     min-height: 0;
 }
 
 /* Force responsive behavior */
-applicationwindow > box {
+applicationwindow>box {
     min-width: 0;
     min-height: 0;
 }
 
-applicationwindow > box > box {
+applicationwindow>box>box {
     min-width: 0;
     min-height: 0;
 }
@@ -825,7 +829,7 @@ button {
     font-size: 11pt;
     font-weight: 600;
     transition: background-color 150ms ease,
-                box-shadow 150ms ease;
+        box-shadow 150ms ease;
 }
 
 button.flat {
@@ -862,7 +866,7 @@ button:disabled {
 button.suggested-action {
     background-color: @accent_bg_color;
     border-color: @accent_bg_color;
-    color: white;
+    color: @accent_fg_color;
     font-weight: 600;
     box-shadow: 0 1px 3px alpha(@accent_bg_color, 0.3);
 }
@@ -989,7 +993,7 @@ messagedialog .dialog-action-area button {
 
 messagedialog .dialog-action-area button.suggested-action {
     background-color: @accent_bg_color;
-    color: white;
+    color: @accent_fg_color;
 }
 
 messagedialog .dialog-action-area button.destructive-action {
@@ -1157,7 +1161,7 @@ switch slider {
 }
 
 switch:checked slider {
-    background-color: white;
+    background-color: @accent_fg_color;
 }
 
 /* ===== Enhanced Entry Styles ===== */
@@ -1170,8 +1174,8 @@ entry {
     font-size: 11.5pt;
     color: @window_fg_color;
     transition: background-color 200ms ease,
-                box-shadow 200ms ease,
-                transform 200ms ease;
+        box-shadow 200ms ease,
+        transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 4px alpha(black, 0.1);
 }
@@ -1223,7 +1227,7 @@ checkbutton check {
     min-height: 18px;
     margin: 0;
     transition: background-color 200ms ease,
-                border-color 200ms ease;
+        border-color 200ms ease;
     /* Don't transition 'all' as it can break layout */
 }
 
@@ -1234,8 +1238,7 @@ checkbutton check:checked {
 }
 
 checkbutton check:checked:after {
-    content: "✓";
-    color: white;
+    color: @accent_fg_color;
     font-weight: bold;
     font-size: 12pt;
 }
@@ -1255,8 +1258,8 @@ checkbutton label {
     background-color: @card_bg_color;
     border: none;
     transition: background-color 200ms ease,
-                box-shadow 200ms ease,
-                transform 200ms ease;
+        box-shadow 200ms ease,
+        transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 1px 3px alpha(black, 0.08);
 }
@@ -1310,11 +1313,11 @@ checkbutton label {
 
 /* ===== Smooth Transitions ===== */
 * {
-    transition: background-color 200ms ease, 
-                border-color 200ms ease, 
-                color 200ms ease,
-                box-shadow 200ms ease,
-                opacity 200ms ease;
+    transition: background-color 200ms ease,
+        border-color 200ms ease,
+        color 200ms ease,
+        box-shadow 200ms ease,
+        opacity 200ms ease;
     /* Removed transform from global transition to prevent layout issues */
     /* Transform transitions only on specific elements that need them */
 }
@@ -1323,7 +1326,7 @@ checkbutton label {
 button:hover,
 .sidebar-listbox row:hover:not(:selected) {
     transition: background-color 200ms ease,
-                transform 150ms ease;
+        transform 150ms ease;
 }
 
 /* Disable expensive transitions during resize for better performance */
@@ -1341,12 +1344,12 @@ window.resizing label,
 .resizing button,
 .resizing entry,
 .resizing label {
-    transition: background-color 0ms ease, 
-                border-color 0ms ease, 
-                color 0ms ease,
-                transform 0ms ease,
-                box-shadow 0ms ease,
-                opacity 0ms ease;
+    transition: background-color 0ms ease,
+        border-color 0ms ease,
+        color 0ms ease,
+        transform 0ms ease,
+        box-shadow 0ms ease,
+        opacity 0ms ease;
     animation: none;
 }
 
@@ -1384,52 +1387,82 @@ window.resizing stack,
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
-        transform: translateY(0); /* Reset to prevent layout issues */
+        transform: translateY(0);
+        /* Reset to prevent layout issues */
     }
 }
 
 /* Theme cards - improved styling */
 .theme-card {
-    min-width: 0;
-    min-height: 140px;
-    border-radius: 12px;
-    transition: box-shadow 250ms cubic-bezier(0.4, 0.0, 0.2, 1),
-                transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
-    /* Don't transition 'all' as it can break layout */
+    background-color: @view_bg_color;
+    border: 1px solid alpha(@window_fg_color, 0.08);
+    border-radius: 16px;
+    padding: 0;
+    min-width: 140px;
+    /* Reduced to fit side-by-side */
+    min-height: 120px;
+    transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 4px 12px alpha(black, 0.05);
 }
 
 .theme-card:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 12px alpha(@accent_color, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px alpha(@accent_color, 0.25);
+    border-color: alpha(@accent_color, 0.3);
 }
 
 .theme-card-selected {
-    border-width: 2px;
-    box-shadow: 0 0 0 3px alpha(@accent_color, 0.2);
+    border: 2px solid @accent_color;
+    box-shadow: 0 4px 16px alpha(@accent_color, 0.2);
+    background-color: alpha(@accent_color, 0.03);
+}
+
+.theme-preview {
+    border-radius: 14px 14px 0 0;
+    margin: 2px 2px 0 2px;
 }
 
 /* Preset buttons - improved styling (using main style below) */
 
 /* Rounding buttons */
+/* Rounding buttons */
 .rounding-button {
-    min-width: 0;
-    padding: 12px 24px;
-    border-radius: 8px;
-    transition: background-color 200ms ease,
-                box-shadow 200ms ease,
-                transform 200ms ease;
-    /* Don't transition 'all' as it can break layout */
+    min-width: 100px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    background-color: @view_bg_color;
+    border: 1px solid alpha(@window_fg_color, 0.08);
+    font-weight: 600;
+    font-size: 11pt;
+    transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 2px 8px alpha(black, 0.05);
+    margin: 4px;
 }
 
 .rounding-button:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    background-color: alpha(@window_fg_color, 0.05);
+    box-shadow: 0 4px 12px alpha(black, 0.1);
+}
+
+.rounding-button.suggested-action {
+    background-color: @accent_bg_color;
+    color: @accent_fg_color;
+    border-color: @accent_bg_color;
+    box-shadow: 0 4px 12px alpha(@accent_color, 0.3);
+}
+
+.rounding-button.suggested-action:hover {
+    background-color: alpha(@accent_bg_color, 0.9);
+    box-shadow: 0 6px 16px alpha(@accent_color, 0.4);
+    transform: translateY(-3px);
 }
 
 /* Responsive row - stacks vertically on small screens */
-.responsive-row {
-}
+.responsive-row {}
 
 /* Settings sections - responsive (merged with animation definition above) */
 
@@ -1477,12 +1510,13 @@ flowbox child {
     font-size: 24pt;
     color: @accent_bg_color;
 }
-    /* Very conservative approach to prevent overflow
+
+/* Very conservative approach to prevent overflow
        40px switch - 14px slider - 3px margins
        Position: 3px + 10px = 13px start
        End: 13px + 14px = 27px
        Remaining: 40px - 27px = 13px margin on right */
-    transform: translateX(10px);
+transform: translateX(10px);
 }
 
 switch:hover:not(:disabled) {
@@ -1589,9 +1623,9 @@ scale slider:hover {
     padding: 0;
     background: transparent;
     transition: border-color 200ms ease,
-                box-shadow 200ms ease,
-                transform 150ms ease,
-                border-width 200ms ease;
+        box-shadow 200ms ease,
+        transform 150ms ease,
+        border-width 200ms ease;
 }
 
 .color-button:hover {
@@ -1610,8 +1644,8 @@ scale slider:hover {
     min-width: 0;
     min-height: 200px;
     transition: background-color 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
-                box-shadow 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
-                transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
+        transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 8px alpha(black, 0.08);
 }
@@ -1674,7 +1708,7 @@ scale slider:hover {
     min-width: 180px;
     min-height: 160px;
     transition: box-shadow 250ms cubic-bezier(0.4, 0.0, 0.2, 1),
-                transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+        transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
     box-shadow: 0 2px 6px alpha(black, 0.08);
 }
@@ -1796,7 +1830,7 @@ stack {
     padding: 0;
 }
 
-stack > child {
+stack>child {
     animation: fadeIn 250ms ease-out forwards;
     /* Ensure children don't break layout */
     min-width: 0;
