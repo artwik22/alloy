@@ -133,7 +133,8 @@ Item {
         
         statusText = ""
         // Use Official GitHub HTML to get live data (API was stale)
-        var url = "https://github.com/users/" + username + "/contributions"
+        // Add timestamp to force refresh on restart (bypass cache)
+        var url = "https://github.com/users/" + username + "/contributions?t=" + new Date().getTime()
         var xhr = new XMLHttpRequest()
         xhr.open("GET", url)
         xhr.onreadystatechange = function() {
@@ -258,4 +259,7 @@ Item {
         target: sharedData
         function onGithubUsernameChanged() { root.loadActivity() }
     }
+    
+    // Ensure we load if sharedData arrives late
+    onSharedDataChanged: root.loadActivity()
 }

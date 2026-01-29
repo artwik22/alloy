@@ -10,7 +10,7 @@
   "sidebarVisible": true,
   "sidepanelContent": "github",
   "githubUsername": "artwik22",
-  "rounding": "sharp",
+  "rounding": "rounded",
   "showHiddenFiles": true,
   "presets": {
     "Midnight (Mono)": {
