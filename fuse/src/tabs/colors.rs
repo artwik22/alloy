@@ -28,11 +28,11 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
 }
 
 const PRESETS: &[(&str, &str, &str, &str, &str, &str)] = &[
-    ("Midnight (Mono)", "#000000", "#121212", "#080808", "#ffffff", "#ffffff"),
-    ("Ocean Deep", "#05080a", "#0d1419", "#091116", "#d8e8f5", "#3b82f6"),
-    ("Cyberpunk", "#0b0514", "#1a0d2f", "#11091e", "#f5e8ff", "#ff00ff"),
-    ("Matcha Tea", "#0a0f0a", "#141d14", "#0e150e", "#e8f5e8", "#4ade80"),
-    ("Solar Flare", "#0f0705", "#1f0f0d", "#150a09", "#f5e8d8", "#ff9500"),
+    ("Midnight (Mono)", "#000000", "#121212", "#080808", "#ffffff", "#c0c0c0"),
+    ("Gruvbox", "#282828", "#32302f", "#1d2021", "#ebdbb2", "#d65d0e"),
+    ("Catppuccin", "#24273a", "#363a4f", "#494d64", "#cad3f5", "#c6a0f6"),
+    ("Nord", "#2e3440", "#3b4252", "#434c5e", "#eceff4", "#88c0d0"),
+    ("Dracula", "#282a36", "#44475a", "#6272a4", "#f8f8f2", "#bd93f9"),
 ];
 
 pub struct ColorsTab {

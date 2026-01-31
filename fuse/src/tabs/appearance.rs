@@ -59,20 +59,20 @@ fn set_box_background_color(box_widget: &gtk4::Box, color: &str) {
 // Format: (name, theme, background, primary, secondary, text, accent)
 const COLOR_PRESETS: &[(&str, &str, &str, &str, &str, &str, &str)] = &[
     // Preset 1: Midnight (Mono)
-    ("Midnight (Mono)", "light", "#ffffff", "#f5f5f5", "#e5e5e5", "#000000", "#000000"),
-    ("Midnight (Mono)", "dark", "#000000", "#121212", "#080808", "#ffffff", "#ffffff"),
-    // Preset 2: Ocean Deep
-    ("Ocean Deep", "light", "#f0f8ff", "#e0f0ff", "#d5e8ff", "#050a1a", "#0077ff"),
-    ("Ocean Deep", "dark", "#05080a", "#0d1419", "#091116", "#d8e8f5", "#3b82f6"),
-    // Preset 3: Cyberpunk
-    ("Cyberpunk", "light", "#fdf0ff", "#f5dfff", "#ecd0ff", "#2e054a", "#ff00ff"),
-    ("Cyberpunk", "dark", "#0b0514", "#1a0d2f", "#11091e", "#f5e8ff", "#ff00ff"),
-    // Preset 4: Matcha Tea
-    ("Matcha Tea", "light", "#f5faf5", "#e8f5e8", "#daf0da", "#0a1a0f", "#2d8659"),
-    ("Matcha Tea", "dark", "#0a0f0a", "#141d14", "#0e150e", "#e8f5e8", "#4ade80"),
-    // Preset 5: Solar Flare
-    ("Solar Flare", "light", "#fff5e8", "#ffe8d0", "#ffdbc0", "#2e1a0a", "#ff9500"),
-    ("Solar Flare", "dark", "#0f0705", "#1f0f0d", "#150a09", "#f5e8d8", "#ff9500"),
+    ("Midnight (Mono)", "light", "#ffffff", "#f5f5f5", "#e5e5e5", "#000000", "#333333"),
+    ("Midnight (Mono)", "dark", "#000000", "#121212", "#080808", "#ffffff", "#c0c0c0"),
+    // Preset 2: Gruvbox
+    ("Gruvbox", "light", "#fbf1c7", "#f2e5bc", "#ebdbb2", "#3c3836", "#af3a03"),
+    ("Gruvbox", "dark", "#282828", "#32302f", "#1d2021", "#ebdbb2", "#d65d0e"),
+    // Preset 3: Catppuccin
+    ("Catppuccin", "light", "#eff1f5", "#e6e9ef", "#ccd0da", "#4c4f69", "#8839ef"),
+    ("Catppuccin", "dark", "#24273a", "#363a4f", "#494d64", "#cad3f5", "#c6a0f6"),
+    // Preset 4: Nord
+    ("Nord", "light", "#eceff4", "#e5e9f0", "#d8dee9", "#2e3440", "#5e81ac"),
+    ("Nord", "dark", "#2e3440", "#3b4252", "#434c5e", "#eceff4", "#88c0d0"),
+    // Preset 5: Dracula
+    ("Dracula", "light", "#f8f8f2", "#e2e2e2", "#dcdcdc", "#282a36", "#6272a4"),
+    ("Dracula", "dark", "#282a36", "#44475a", "#6272a4", "#f8f8f2", "#bd93f9"),
 ];
 
 pub struct AppearanceTab {

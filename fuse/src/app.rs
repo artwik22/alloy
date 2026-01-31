@@ -156,8 +156,16 @@ fn start_color_monitoring(css_provider_rc: Rc<RefCell<Option<CssProvider>>>, con
 }
 
 fn get_contrasting_text_color(hex: &str) -> String {
-    let hex = hex.trim_start_matches('#');
+    let hex = hex.trim().trim_start_matches('#');
     
+    // Explicit handle for common white/black (optimization and safety)
+    if hex.eq_ignore_ascii_case("ffffff") || hex.eq_ignore_ascii_case("fff") || hex.eq_ignore_ascii_case("white") {
+        return "#000000".to_string();
+    }
+    if hex.eq_ignore_ascii_case("000000") || hex.eq_ignore_ascii_case("000") || hex.eq_ignore_ascii_case("black") {
+        return "#ffffff".to_string();
+    }
+
     // Handle 3-digit hex
     if hex.len() == 3 {
         let r_char = &hex[0..1];
