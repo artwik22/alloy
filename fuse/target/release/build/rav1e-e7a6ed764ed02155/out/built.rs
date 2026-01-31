@@ -64,11 +64,11 @@ pub static PROFILE: &str = "release";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"The compiler that cargo resolved to use."#]
 #[allow(dead_code)]
-pub static RUSTC: &str = "/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc";
+pub static RUSTC: &str = "/home/iartwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"The documentation generator that cargo resolved to use."#]
 #[allow(dead_code)]
-pub static RUSTDOC: &str = "/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc";
+pub static RUSTDOC: &str = "/home/iartwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"Value of OPT_LEVEL for the profile used during compilation."#]
 #[allow(dead_code)]
@@ -76,7 +76,7 @@ pub static OPT_LEVEL: &str = "3";
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"The parallelism that was specified during compilation."#]
 #[allow(dead_code)]
-pub static NUM_JOBS: u32 = 12;
+pub static NUM_JOBS: u32 = 8;
 #[allow(clippy::needless_raw_string_hashes)]
 #[doc=r#"Value of DEBUG for the profile used during compilation."#]
 #[allow(dead_code)]
@@ -98,11 +98,11 @@ pub static FEATURES_LOWERCASE: [&str; 1] = ["threading"];
 #[allow(dead_code)]
 pub static FEATURES_LOWERCASE_STR: &str = "threading";
 #[allow(clippy::needless_raw_string_hashes)]
-#[doc=r#"The output of `/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -V`"#]
+#[doc=r#"The output of `/home/iartwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc -V`"#]
 #[allow(dead_code)]
 pub static RUSTC_VERSION: &str = "rustc 1.93.0 (254b59607 2026-01-19)";
 #[allow(clippy::needless_raw_string_hashes)]
-#[doc=r#"The output of `/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V`; empty string if `/root/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V` failed to execute"#]
+#[doc=r#"The output of `/home/iartwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V`; empty string if `/home/iartwik/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc -V` failed to execute"#]
 #[allow(dead_code)]
 pub static RUSTDOC_VERSION: &str = "rustdoc 1.93.0 (254b59607 2026-01-19)";
 #[allow(clippy::needless_raw_string_hashes)]

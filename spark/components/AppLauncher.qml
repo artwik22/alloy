@@ -377,12 +377,12 @@ PanelWindow {
         NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
     }
 
-    visible: true
+    visible: launcherShowProgress > 0.01
     color: "transparent"
     property int launcherSlideAmount: 400
     // Fix: Use margins.bottom for window positioning (0 = flush with edge)
-    // Animation will be handled by the content Item transform
-    margins.bottom: 0
+    // Animation will be handled by the margins to move the window surface
+    margins.bottom: -implicitHeight * (1.0 - launcherShowProgress)
     
     // Applications list
     property var apps: []
@@ -1328,10 +1328,8 @@ PanelWindow {
         scale: 0.95 + 0.05 * launcherShowProgress
         transformOrigin: Item.Bottom
         
-        // Slide animation via transform
-        transform: Translate {
-            y: launcherSlideAmount * (1.0 - launcherShowProgress)
-        }
+        // Window movement handles the slide animation
+
 
         // Tło z gradientem
         // Material Design launcher background with elevation

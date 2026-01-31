@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-PanelWindow {
+    PanelWindow {
     id: edgeDetector
     
     required property var screen
@@ -20,7 +20,9 @@ PanelWindow {
     color: "transparent"
     
     // TopEdgeDetector wyłączony - menu otwiera się tylko przez skrót klawiszowy
-    // MouseArea pozostaje dla kompatybilności, ale nie wykonuje żadnych akcji
+    // Zmieniamy na false aby nie blokowało kliknięć (bo visible=true mapuje okno)
+    visible: false 
+
     MouseArea {
         id: edgeMouseArea
         anchors.fill: parent

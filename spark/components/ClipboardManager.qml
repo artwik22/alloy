@@ -26,7 +26,14 @@ PanelWindow {
 
     property var sharedData: null
     
-    visible: true
+    // Fix: Unmap window when not visible to avoid blocking clicks
+    visible: (sharedData && sharedData.clipboardVisible) || opacityBinding > 0.01
+    
+    // Use an internal property to track animation state if needed, or rely on bind
+    property real opacityBinding: 0
+    Behavior on opacityBinding { NumberAnimation { duration: 300 } }
+    Binding on opacityBinding { value: (sharedData && sharedData.clipboardVisible) ? 1.0 : 0.0 }
+
     color: "transparent"
     
     // Marginesy dopasowane do sidebar 37px (80%)
