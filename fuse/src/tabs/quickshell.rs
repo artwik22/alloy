@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Button, Entry};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Button, Entry, Revealer, RevealerTransitionType};
 use std::sync::{Arc, Mutex};
 
 use crate::core::config::ColorConfig;
@@ -25,61 +25,86 @@ impl QuickshellTab {
         scrolled.set_hexpand(true);
         scrolled.set_vexpand(true);
         
-        // GNOME spacing: 24px section gap, 12px container margins
-        let content = GtkBox::new(Orientation::Vertical, 24);
-        content.set_margin_start(12);
-        content.set_margin_end(12);
-        content.set_margin_top(12);
-        content.set_margin_bottom(12);
+        let content = GtkBox::new(Orientation::Vertical, 0);
+        content.set_margin_start(24);
+        content.set_margin_end(24);
+        content.set_margin_top(24);
+        content.set_margin_bottom(48);
         content.set_hexpand(true);
         content.set_vexpand(true);
 
         // Title
-        let title = Label::new(Some("QuickShell"));
+        let title = Label::new(Some("QuickShell Settings"));
         title.add_css_class("title");
-        title.set_xalign(0.0);
         title.set_halign(gtk4::Align::Start);
+        title.set_margin_bottom(24);
         content.append(&title);
 
-        // Sidebar Visibility section
-        let sidebar_visible_section = create_sidebar_visible_section(Arc::clone(&config));
-        sidebar_visible_section.set_hexpand(true);
-        content.append(&sidebar_visible_section);
+        let add_group_header = |box_: &GtkBox, label: &str| {
+            let l = Label::new(Some(label));
+            l.add_css_class("group-header");
+            l.set_halign(gtk4::Align::Start);
+            box_.append(&l);
+        };
 
-        // Sidebar Position section
-        let sidebar_position_section = create_sidebar_position_section(Arc::clone(&config));
-        sidebar_position_section.set_hexpand(true);
-        content.append(&sidebar_position_section);
+        // --- System Group ---
+        add_group_header(&content, "System");
+        let system_card = GtkBox::new(Orientation::Vertical, 0);
+        system_card.add_css_class("card");
+        
+        // Scaling Row
+        let scaling_row = create_scaling_row(Arc::clone(&config));
+        system_card.append(&scaling_row);
 
-        let sep = gtk4::Separator::new(gtk4::Orientation::Horizontal);
-        sep.set_margin_top(12);
-        sep.set_margin_bottom(12);
-        content.append(&sep);
+        // Notifications Logic
+        let (notif_row, notif_switch) = create_notifications_row(Arc::clone(&config));
+        system_card.append(&notif_row);
 
-        // Dashboard Position section
-        let dashboard_position_section = create_dashboard_position_section(Arc::clone(&config));
-        dashboard_position_section.set_hexpand(true);
-        content.append(&dashboard_position_section);
+        // Notification Sounds Row (Conditional)
+        let sounds_row = create_notification_sounds_row(Arc::clone(&config));
+        
+        // Wrap sounds row in a Revealer
+        let revealer = Revealer::new();
+        revealer.set_transition_type(RevealerTransitionType::SlideDown);
+        revealer.set_transition_duration(250);
+        revealer.set_child(Some(&sounds_row));
+        
+        // Bind visibility
+        let is_active = notif_switch.is_active();
+        revealer.set_reveal_child(is_active);
+        
+        {
+            let revealer = revealer.clone();
+            notif_switch.connect_active_notify(move |sw| {
+                revealer.set_reveal_child(sw.is_active());
+            });
+        }
 
-        // Scaling section
-        let scaling_section = create_scaling_section(Arc::clone(&config));
-        scaling_section.set_hexpand(true);
-        content.append(&scaling_section);
+        system_card.append(&revealer);
+        content.append(&system_card);
 
-        // Dashboard tile (left) section: Battery vs Network
-        let dashboard_tile_section = create_dashboard_tile_section(Arc::clone(&config));
-        dashboard_tile_section.set_hexpand(true);
-        content.append(&dashboard_tile_section);
 
-        // Sidepanel content section: Calendar vs GitHub activity + username
-        let sidepanel_content_section = create_sidepanel_content_section(Arc::clone(&config));
-        sidepanel_content_section.set_hexpand(true);
-        content.append(&sidepanel_content_section);
+        // --- Sidebar Group ---
+        add_group_header(&content, "Sidebar");
+        let sidebar_card = GtkBox::new(Orientation::Vertical, 0);
+        sidebar_card.add_css_class("card");
 
-        // Notifications section
-        let notifications_section = create_notifications_section(Arc::clone(&config));
-        notifications_section.set_hexpand(true);
-        content.append(&notifications_section);
+        sidebar_card.append(&create_sidebar_visible_row(Arc::clone(&config)));
+        sidebar_card.append(&create_sidebar_position_row(Arc::clone(&config)));
+        sidebar_card.append(&create_sidepanel_content_row(Arc::clone(&config)));
+        sidebar_card.append(&create_github_username_row(Arc::clone(&config)));
+        
+        content.append(&sidebar_card);
+
+        // --- Dashboard Group ---
+        add_group_header(&content, "Dashboard");
+        let dashboard_card = GtkBox::new(Orientation::Vertical, 0);
+        dashboard_card.add_css_class("card");
+
+        dashboard_card.append(&create_dashboard_position_row(Arc::clone(&config)));
+        dashboard_card.append(&create_dashboard_tile_row(Arc::clone(&config)));
+
+        content.append(&dashboard_card);
 
         scrolled.set_child(Some(&content));
 
@@ -94,782 +119,432 @@ impl QuickshellTab {
     }
 }
 
-fn create_sidebar_visible_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 0);
-    section.add_css_class("settings-section");
+// --- Helper for consistent rows ---
+fn create_card_row(label: &str, widget: impl IsA<gtk4::Widget>) -> GtkBox {
+    let row = GtkBox::new(Orientation::Horizontal, 12);
+    row.add_css_class("card-row");
+    row.set_valign(gtk4::Align::Center);
 
-    let header = GtkBox::new(Orientation::Horizontal, 12);
-    header.set_margin_start(18);
-    header.set_margin_end(18);
-    header.set_margin_top(18);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
-
-    let section_title = Label::new(Some("Sidebar Visibility"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-    header.append(&section_title);
-
-    // Sidebar visibility toggle
-    let current_visible = config.lock().unwrap().sidebar_visible.unwrap_or(true);
-    let sidebar_toggle = Switch::new();
-    sidebar_toggle.set_active(current_visible);
-    sidebar_toggle.set_halign(gtk4::Align::End);
-    sidebar_toggle.set_valign(gtk4::Align::Center);
-    sidebar_toggle.set_hexpand(false);
-    sidebar_toggle.set_vexpand(false);
+    let l = Label::new(Some(label));
+    l.add_css_class("row-title");
+    l.set_hexpand(true);
+    l.set_halign(gtk4::Align::Start);
     
-    {
-        let config = Arc::clone(&config);
-        sidebar_toggle.connect_active_notify(move |toggle| {
-            let enabled = toggle.is_active();
-            // Reload config from disk to preserve existing settings
-            let mut cfg = ColorConfig::load();
-            cfg.set_sidebar_visible(enabled);
-            if let Err(_e) = cfg.save() {
-            } else {
-                // Update the shared config
-                *config.lock().unwrap() = cfg.clone();
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-    header.append(&sidebar_toggle);
-
-    let desc = Label::new(Some("Show or hide the sidebar panel"));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_end(18);
-    desc.set_margin_bottom(18);
-
-    section.append(&header);
-    section.append(&desc);
-
-    section
+    row.append(&l);
+    row.append(&widget);
+    row
 }
 
-fn create_dashboard_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let container = GtkBox::new(gtk4::Orientation::Vertical, 0);
-    container.set_margin_bottom(24);
+// --- Row Creators ---
 
-    let header = GtkBox::new(gtk4::Orientation::Horizontal, 0);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
-
-    let section_title = Label::new(Some("Dashboard Position"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-
-    header.append(&section_title);
-    container.append(&header);
-
-    // Get current position
-    let current_pos = {
-        let guard = config.lock().unwrap();
-        guard.dashboard_position.clone().unwrap_or_else(|| "right".to_string())
-    };
-
-    let button_box = GtkBox::new(gtk4::Orientation::Horizontal, 10);
-    button_box.set_halign(gtk4::Align::End);
-
-    // Create buttons: Left, Bottom, Top, Right
-    let btn_left = Button::with_label("Left");
-    if current_pos == "left" { btn_left.add_css_class("suggested-action"); }
-
-    let btn_bottom = Button::with_label("Bottom");
-    if current_pos == "bottom" { btn_bottom.add_css_class("suggested-action"); }
-
-    let btn_top = Button::with_label("Top");
-    if current_pos == "top" { btn_top.add_css_class("suggested-action"); }
-
-    let btn_right = Button::with_label("Right");
-    if current_pos == "right" { btn_right.add_css_class("suggested-action"); }
-
-    // Connect Left
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_r = btn_right.clone();
-        let b_t = btn_top.clone();
-        let b_b = btn_bottom.clone();
-        btn_left.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_dashboard_position("left");
-            if let Err(_e) = cfg.save() {
-                // handle error
-            } else {
-                *config.lock().unwrap() = cfg.clone();
-                b_l.add_css_class("suggested-action");
-                b_r.remove_css_class("suggested-action");
-                b_t.remove_css_class("suggested-action");
-                b_b.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    // Connect Bottom
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_r = btn_right.clone();
-        let b_t = btn_top.clone();
-        let b_b = btn_bottom.clone();
-        btn_bottom.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_dashboard_position("bottom");
-            if let Err(_e) = cfg.save() {
-            } else {
-                *config.lock().unwrap() = cfg.clone();
-                b_b.add_css_class("suggested-action");
-                b_l.remove_css_class("suggested-action");
-                b_r.remove_css_class("suggested-action");
-                b_t.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    // Connect Top
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_r = btn_right.clone();
-        let b_t = btn_top.clone();
-        let b_b = btn_bottom.clone();
-        btn_top.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_dashboard_position("top");
-            if let Err(_e) = cfg.save() {
-            } else {
-                *config.lock().unwrap() = cfg.clone();
-                b_t.add_css_class("suggested-action");
-                b_l.remove_css_class("suggested-action");
-                b_r.remove_css_class("suggested-action");
-                b_b.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    // Connect Right
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_r = btn_right.clone();
-        let b_t = btn_top.clone();
-        let b_b = btn_bottom.clone();
-        btn_right.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_dashboard_position("right");
-            if let Err(_e) = cfg.save() {
-            } else {
-                *config.lock().unwrap() = cfg.clone();
-                b_r.add_css_class("suggested-action");
-                b_l.remove_css_class("suggested-action");
-                b_t.remove_css_class("suggested-action");
-                b_b.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    button_box.append(&btn_left);
-    button_box.append(&btn_bottom);
-    button_box.append(&btn_top);
-    button_box.append(&btn_right);
-
-    header.append(&button_box);
-
-    let desc = Label::new(Some("Choose dashboard position: Left, Bottom, Top, or Right"));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_bottom(12);
-
-    container.append(&desc);
-
-    container
-}
-
-fn create_sidebar_position_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 0);
-    section.add_css_class("settings-section");
-
-    let header = GtkBox::new(Orientation::Horizontal, 12);
-    header.set_margin_start(18);
-    header.set_margin_end(18);
-    header.set_margin_top(18);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
-
-    let section_title = Label::new(Some("SidePanel Position"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-    header.append(&section_title);
-
-    // Button box for position selection
-    let button_box = GtkBox::new(Orientation::Horizontal, 8);
-    button_box.set_halign(gtk4::Align::End);
-    button_box.set_hexpand(false);
-
-    let current_pos = config.lock().unwrap().sidebar_position.clone().unwrap_or_else(|| "left".to_string());
-
-    // Create buttons manually to handle closures properly
+fn create_scaling_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let box_ = GtkBox::new(Orientation::Horizontal, 8);
     
-    let btn_left = Button::with_label("Left");
-    if current_pos == "left" { btn_left.add_css_class("suggested-action"); }
-    
-    let btn_bottom = Button::with_label("Bottom");
-    if current_pos == "bottom" { btn_bottom.add_css_class("suggested-action"); }
-
-    let btn_top = Button::with_label("Top");
-    if current_pos == "top" { btn_top.add_css_class("suggested-action"); }
-
-    let btn_right = Button::with_label("Right");
-    if current_pos == "right" { btn_right.add_css_class("suggested-action"); }
-
-    // Connect Left
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_b = btn_bottom.clone();
-        let b_t = btn_top.clone();
-        let b_r = btn_right.clone();
-        btn_left.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_sidebar_position("left");
-            if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                b_l.add_css_class("suggested-action");
-                b_b.remove_css_class("suggested-action");
-                b_t.remove_css_class("suggested-action");
-                b_r.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    // Connect Bottom
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_b = btn_bottom.clone();
-        let b_t = btn_top.clone();
-        let b_r = btn_right.clone();
-        btn_bottom.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_sidebar_position("bottom");
-            if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                b_l.remove_css_class("suggested-action");
-                b_b.add_css_class("suggested-action");
-                b_t.remove_css_class("suggested-action");
-                b_r.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    // Connect Top
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_b = btn_bottom.clone();
-        let b_t = btn_top.clone();
-        let b_r = btn_right.clone();
-        btn_top.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_sidebar_position("top");
-            if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                b_l.remove_css_class("suggested-action");
-                b_b.remove_css_class("suggested-action");
-                b_t.add_css_class("suggested-action");
-                b_r.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    // Connect Right
-    {
-        let config = Arc::clone(&config);
-        let b_l = btn_left.clone();
-        let b_b = btn_bottom.clone();
-        let b_t = btn_top.clone();
-        let b_r = btn_right.clone();
-        btn_right.connect_clicked(move |_| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_sidebar_position("right");
-            if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                b_l.remove_css_class("suggested-action");
-                b_b.remove_css_class("suggested-action");
-                b_t.remove_css_class("suggested-action");
-                b_r.add_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-
-    button_box.append(&btn_left);
-    button_box.append(&btn_bottom);
-    button_box.append(&btn_top);
-    button_box.append(&btn_right);
-
-    header.append(&button_box);
-
-    let desc = Label::new(Some("Choose SidePanel position: Left, Bottom, Top, or Right"));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_end(18);
-    desc.set_margin_bottom(18);
-
-    section.append(&header);
-    section.append(&desc);
-
-    section
-}
-
-fn create_scaling_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 0);
-    section.add_css_class("settings-section");
-
-    let header = GtkBox::new(Orientation::Horizontal, 12);
-    header.set_margin_start(18);
-    header.set_margin_end(18);
-    header.set_margin_top(18);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
-
-    let section_title = Label::new(Some("Scaling"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-    header.append(&section_title);
-
-    // Button box for scale selection: 75%, 100%, 125%
-    let button_box = GtkBox::new(Orientation::Horizontal, 8);
-    button_box.set_halign(gtk4::Align::End);
-    button_box.set_hexpand(false);
-
     let current_scale = config.lock().unwrap().ui_scale.unwrap_or(100);
-    let is_75 = current_scale == 75;
-    let is_100 = current_scale == 100;
-    let is_125 = current_scale == 125;
-
+    
     let btn_75 = Button::with_label("75%");
-    if is_75 {
-        btn_75.add_css_class("suggested-action");
-    }
     let btn_100 = Button::with_label("100%");
-    if is_100 {
-        btn_100.add_css_class("suggested-action");
-    }
     let btn_125 = Button::with_label("125%");
-    if is_125 {
-        btn_125.add_css_class("suggested-action");
-    }
+    
+    let update_btn_styles = {
+        let btn_75 = btn_75.clone();
+        let btn_100 = btn_100.clone();
+        let btn_125 = btn_125.clone();
+        
+        move |scale: u32| {
+            btn_75.remove_css_class("suggested-action");
+            btn_100.remove_css_class("suggested-action");
+            btn_125.remove_css_class("suggested-action");
+            
+            match scale {
+                75 => btn_75.add_css_class("suggested-action"),
+                100 => btn_100.add_css_class("suggested-action"),
+                125 => btn_125.add_css_class("suggested-action"),
+                _ => {}
+            }
+        }
+    };
+    
+    // Init styles
+    update_btn_styles(current_scale as u32);
 
+    // 75%
     {
-        let config = Arc::clone(&config);
-        let b100 = btn_100.clone();
-        let b125 = btn_125.clone();
-        btn_75.connect_clicked(move |btn| {
+        let config = config.clone();
+        let update_btn_styles = update_btn_styles.clone();
+        btn_75.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
             cfg.set_ui_scale(75);
             if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                b100.remove_css_class("suggested-action");
-                b125.remove_css_class("suggested-action");
+                update_btn_styles(75);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&btn_75);
 
+    // 100%
     {
-        let config = Arc::clone(&config);
-        let b75 = btn_75.clone();
-        let b125 = btn_125.clone();
-        btn_100.connect_clicked(move |btn| {
+        let config = config.clone();
+        let update_btn_styles = update_btn_styles.clone();
+        btn_100.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
             cfg.set_ui_scale(100);
             if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                b75.remove_css_class("suggested-action");
-                b125.remove_css_class("suggested-action");
+                update_btn_styles(100);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&btn_100);
 
+    // 125%
     {
-        let config = Arc::clone(&config);
-        let b75 = btn_75.clone();
-        let b100 = btn_100.clone();
-        btn_125.connect_clicked(move |btn| {
+        let config = config.clone();
+        let update_btn_styles = update_btn_styles.clone();
+        btn_125.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
             cfg.set_ui_scale(125);
             if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                b75.remove_css_class("suggested-action");
-                b100.remove_css_class("suggested-action");
+                update_btn_styles(125);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&btn_125);
 
-    header.append(&button_box);
+    box_.append(&btn_75);
+    box_.append(&btn_100);
+    box_.append(&btn_125);
 
-    let desc = Label::new(Some("UI scale (75%, 100%, 125%). Quickshell: restart via run.sh to apply. Fuse and GTK apps: use it on next launch. When opening Fuse from the shell it uses current scale."));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_end(18);
-    desc.set_margin_bottom(18);
-
-    section.append(&header);
-    section.append(&desc);
-
-    section
+    create_card_row("UI Scale", box_)
 }
 
-fn create_dashboard_tile_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 0);
-    section.add_css_class("settings-section");
-
-    let header = GtkBox::new(Orientation::Horizontal, 12);
-    header.set_margin_start(18);
-    header.set_margin_end(18);
-    header.set_margin_top(18);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
-
-    let section_title = Label::new(Some("Kafelek dashboardu (lewy)"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-    header.append(&section_title);
-
-    let button_box = GtkBox::new(Orientation::Horizontal, 8);
-    button_box.set_halign(gtk4::Align::End);
-    button_box.set_hexpand(false);
-
-    let current = config.lock().unwrap().dashboard_tile_left.clone().unwrap_or_else(|| "battery".to_string());
-    let is_battery = current == "battery";
-    let is_network = current == "network";
-
-    let btn_battery = Button::with_label("Bateria");
-    if is_battery {
-        btn_battery.add_css_class("suggested-action");
-    }
-    let btn_network = Button::with_label("Pobieranie i wysyłanie");
-    if is_network {
-        btn_network.add_css_class("suggested-action");
-    }
+fn create_notifications_row(config: Arc<Mutex<ColorConfig>>) -> (GtkBox, Switch) {
+    let switch = Switch::new();
+    let current = config.lock().unwrap().notifications_enabled.unwrap_or(true);
+    switch.set_active(current);
+    switch.set_valign(gtk4::Align::Center);
 
     {
-        let config = Arc::clone(&config);
-        let btn_net = btn_network.clone();
-        btn_battery.connect_clicked(move |btn| {
+        let config = config.clone();
+        switch.connect_active_notify(move |s| {
             let mut cfg = ColorConfig::load();
-            cfg.set_dashboard_tile_left("battery");
+            cfg.set_notifications_enabled(s.is_active());
             if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                btn_net.remove_css_class("suggested-action");
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&btn_battery);
 
-    {
-        let config = Arc::clone(&config);
-        let btn_bat = btn_battery.clone();
-        btn_network.connect_clicked(move |btn| {
-            let mut cfg = ColorConfig::load();
-            cfg.set_dashboard_tile_left("network");
-            if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                btn_bat.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-    button_box.append(&btn_network);
-
-    header.append(&button_box);
-
-    let desc = Label::new(Some("Co wyświetlać na lewym kafelku w dashboardzie: Bateria lub pobieranie/wysyłanie sieci"));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_end(18);
-    desc.set_margin_bottom(18);
-
-    section.append(&header);
-    section.append(&desc);
-
-    section
+    (create_card_row("Show Notifications", switch.clone()), switch)
 }
 
-fn create_sidepanel_content_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 0);
-    section.add_css_class("settings-section");
-
-    let header = GtkBox::new(Orientation::Horizontal, 12);
-    header.set_margin_start(18);
-    header.set_margin_end(18);
-    header.set_margin_top(18);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
-
-    let section_title = Label::new(Some("Panel boczny – zawartość"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-    header.append(&section_title);
-
-    let button_box = GtkBox::new(Orientation::Horizontal, 8);
-    button_box.set_halign(gtk4::Align::End);
-    button_box.set_hexpand(false);
-
-    let current = config
-        .lock()
-        .unwrap()
-        .sidepanel_content
-        .clone()
-        .unwrap_or_else(|| "calendar".to_string());
-    // Be tolerant to old/typo values so one tile is always selected.
-    // (Otherwise both buttons can look "unselected" when the stored value doesn't match exactly.)
-    let current_norm = current.trim().to_lowercase();
-    let is_calendar = matches!(current_norm.as_str(), "calendar" | "cal" | "date" | "kalendarz");
-    let is_github = matches!(
-        current_norm.as_str(),
-        "github" | "github_activity" | "github-activity" | "githubactivity"
-    );
-
-    let btn_calendar = Button::with_label("Kalendarz");
-    if is_calendar {
-        btn_calendar.add_css_class("suggested-action");
-    }
-    let btn_github = Button::with_label("GitHub activity");
-    if is_github {
-        btn_github.add_css_class("suggested-action");
-    }
+fn create_notification_sounds_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let switch = Switch::new();
+    let current = config.lock().unwrap().notification_sounds_enabled.unwrap_or(true);
+    switch.set_active(current);
+    switch.set_valign(gtk4::Align::Center);
 
     {
-        let config = Arc::clone(&config);
-        let btn_github_clone = btn_github.clone();
-        btn_calendar.connect_clicked(move |btn| {
+        let config = config.clone();
+        switch.connect_active_notify(move |s| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_notification_sounds_enabled(s.is_active());
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    create_card_row("Notification Sounds", switch)
+}
+
+fn create_sidebar_visible_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let switch = Switch::new();
+    let current = config.lock().unwrap().sidebar_visible.unwrap_or(true);
+    switch.set_active(current);
+    switch.set_valign(gtk4::Align::Center);
+
+    {
+        let config = config.clone();
+        switch.connect_active_notify(move |s| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_sidebar_visible(s.is_active());
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    }
+
+    create_card_row("Show Sidebar", switch)
+}
+
+fn create_sidebar_position_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let box_ = GtkBox::new(Orientation::Horizontal, 6);
+    let current = config.lock().unwrap().sidebar_position.clone().unwrap_or_else(|| "left".to_string());
+
+    let positions = vec!["Left", "Bottom", "Top", "Right"];
+    let mut buttons = Vec::new();
+
+    for pos in positions {
+        let btn = Button::with_label(pos);
+        if current.eq_ignore_ascii_case(pos) {
+            btn.add_css_class("suggested-action");
+        }
+        buttons.push(btn.clone());
+        box_.append(&btn);
+    }
+    
+    // Logic to update buttons (simple closure approach is tricky with vec, using a simpler pattern)
+    // We rebuild the buttons logic manually because it's easier than extensive cloning
+    
+    let btn_left = buttons[0].clone();
+    let btn_bottom = buttons[1].clone();
+    let btn_top = buttons[2].clone();
+    let btn_right = buttons[3].clone();
+
+    let update_visuals = {
+        let bl = btn_left.clone();
+        let bb = btn_bottom.clone();
+        let bt = btn_top.clone();
+        let br = btn_right.clone();
+        move |new_pos: &str| {
+            bl.remove_css_class("suggested-action");
+            bb.remove_css_class("suggested-action");
+            bt.remove_css_class("suggested-action");
+            br.remove_css_class("suggested-action");
+            match new_pos.to_lowercase().as_str() {
+                "left" => bl.add_css_class("suggested-action"),
+                "bottom" => bb.add_css_class("suggested-action"),
+                "top" => bt.add_css_class("suggested-action"),
+                "right" => br.add_css_class("suggested-action"),
+                _ => {}
+            }
+        }
+    };
+
+    let bind_click = |btn: &Button, val: &'static str, config: Arc<Mutex<ColorConfig>>, updater: Box<dyn Fn(&str)>| {
+        btn.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_sidebar_position(val.to_lowercase().as_str());
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                updater(val);
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    };
+
+    bind_click(&btn_left, "Left", config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_bottom, "Bottom", config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_top, "Top", config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_right, "Right", config.clone(), Box::new(update_visuals.clone()));
+
+    create_card_row("Position", box_)
+}
+
+fn create_sidepanel_content_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let box_ = GtkBox::new(Orientation::Horizontal, 6);
+    let current = config.lock().unwrap().sidepanel_content.clone().unwrap_or_else(|| "calendar".to_string());
+    
+    let is_cal = current == "calendar";
+    
+    let btn_cal = Button::with_label("Calendar");
+    let btn_gh = Button::with_label("GitHub");
+    
+    if is_cal { btn_cal.add_css_class("suggested-action"); }
+    else { btn_gh.add_css_class("suggested-action"); }
+
+    let update = {
+        let c = btn_cal.clone();
+        let g = btn_gh.clone();
+        move |cal: bool| {
+            if cal {
+                c.add_css_class("suggested-action");
+                g.remove_css_class("suggested-action");
+            } else {
+                g.add_css_class("suggested-action");
+                c.remove_css_class("suggested-action");
+            }
+        }
+    };
+
+    {
+        let cfg_ref = config.clone();
+        let up = update.clone();
+        btn_cal.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
             cfg.set_sidepanel_content("calendar");
             if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                btn_github_clone.remove_css_class("suggested-action");
+                *cfg_ref.lock().unwrap() = cfg.clone();
+                up(true);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    button_box.append(&btn_calendar);
 
     {
-        let config = Arc::clone(&config);
-        let btn_calendar_clone = btn_calendar.clone();
-        btn_github.connect_clicked(move |btn| {
+        let cfg_ref = config.clone();
+        let up = update.clone();
+        btn_gh.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
             cfg.set_sidepanel_content("github");
             if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
-                btn.add_css_class("suggested-action");
-                btn_calendar_clone.remove_css_class("suggested-action");
-                schedule_notify_color_change_ms(200);
-            }
-        });
-    }
-    button_box.append(&btn_github);
-
-    header.append(&button_box);
-
-    let desc = Label::new(Some(
-        "Wybierz, czy w panelu bocznym pokazywać kalendarz czy aktywność GitHuba.",
-    ));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_end(18);
-    desc.set_margin_bottom(8);
-
-    section.append(&header);
-    section.append(&desc);
-
-    // GitHub username row
-    let username_row = GtkBox::new(Orientation::Horizontal, 8);
-    username_row.set_margin_start(18);
-    username_row.set_margin_end(18);
-    username_row.set_margin_bottom(18);
-
-    let username_label = Label::new(Some("GitHub username"));
-    username_label.add_css_class("row-title");
-    username_label.set_xalign(0.0);
-    username_label.set_halign(gtk4::Align::Start);
-    username_label.set_hexpand(true);
-    username_row.append(&username_label);
-
-    let username_entry = Entry::new();
-    let current_username = config
-        .lock()
-        .unwrap()
-        .github_username
-        .clone()
-        .unwrap_or_default();
-    username_entry.set_text(&current_username);
-    username_entry.set_placeholder_text(Some("nazwa użytkownika GitHub"));
-    username_entry.set_hexpand(true);
-
-    {
-        let config = Arc::clone(&config);
-        username_entry.connect_changed(move |entry| {
-            let text = entry.text().to_string();
-            let mut cfg = ColorConfig::load();
-            cfg.set_github_username(&text);
-            if cfg.save().is_ok() {
-                *config.lock().unwrap() = cfg.clone();
+                *cfg_ref.lock().unwrap() = cfg.clone();
+                up(false);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
 
-    username_row.append(&username_entry);
-    section.append(&username_row);
+    box_.append(&btn_cal);
+    box_.append(&btn_gh);
 
-    section
+    create_card_row("Content", box_)
 }
 
-fn create_notifications_section(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
-    let section = GtkBox::new(Orientation::Vertical, 0);
-    section.add_css_class("settings-section");
+fn create_github_username_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let entry = Entry::new();
+    let current = config.lock().unwrap().github_username.clone().unwrap_or_default();
+    entry.set_text(&current);
+    entry.set_placeholder_text(Some("GitHub Username"));
+    entry.set_width_chars(15);
+    entry.set_valign(gtk4::Align::Center);
 
-    let header = GtkBox::new(Orientation::Horizontal, 12);
-    header.set_margin_start(18);
-    header.set_margin_end(18);
-    header.set_margin_top(18);
-    header.set_margin_bottom(12);
-    header.set_valign(gtk4::Align::Center);
+    entry.connect_changed(move |e| {
+        let mut cfg = ColorConfig::load();
+        cfg.set_github_username(&e.text());
+        if cfg.save().is_ok() {
+            *config.lock().unwrap() = cfg.clone();
+            schedule_notify_color_change_ms(500); // slightly longer delay for typing
+        }
+    });
 
-    let section_title = Label::new(Some("Notifications"));
-    section_title.add_css_class("section-title");
-    section_title.set_xalign(0.0);
-    section_title.set_halign(gtk4::Align::Start);
-    section_title.set_hexpand(true);
-    header.append(&section_title);
+    create_card_row("GitHub User", entry)
+}
 
-    // Notifications enabled toggle
-    let current_enabled = config.lock().unwrap().notifications_enabled.unwrap_or(true);
-    let notifications_toggle = Switch::new();
-    notifications_toggle.set_active(current_enabled);
-    notifications_toggle.set_halign(gtk4::Align::End);
-    notifications_toggle.set_valign(gtk4::Align::Center);
-    notifications_toggle.set_hexpand(false);
-    notifications_toggle.set_vexpand(false);
+fn create_dashboard_position_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    // Reuse sidebar position logic pattern for dashboard
+    let box_ = GtkBox::new(Orientation::Horizontal, 6);
+    let current = config.lock().unwrap().dashboard_position.clone().unwrap_or_else(|| "right".to_string());
+
+    let positions = vec!["Left", "Bottom", "Top", "Right"];
+    let mut buttons = Vec::new();
+
+    for pos in positions {
+        let btn = Button::with_label(pos);
+        if current.eq_ignore_ascii_case(pos) {
+            btn.add_css_class("suggested-action");
+        }
+        buttons.push(btn.clone());
+        box_.append(&btn);
+    }
     
-    {
-        let config = Arc::clone(&config);
-        notifications_toggle.connect_active_notify(move |toggle| {
-            let enabled = toggle.is_active();
-            // Reload config from disk to preserve existing settings
+    let btn_left = buttons[0].clone();
+    let btn_bottom = buttons[1].clone();
+    let btn_top = buttons[2].clone();
+    let btn_right = buttons[3].clone();
+
+    let update_visuals = {
+        let bl = btn_left.clone();
+        let bb = btn_bottom.clone();
+        let bt = btn_top.clone();
+        let br = btn_right.clone();
+        move |new_pos: &str| {
+            bl.remove_css_class("suggested-action");
+            bb.remove_css_class("suggested-action");
+            bt.remove_css_class("suggested-action");
+            br.remove_css_class("suggested-action");
+            match new_pos.to_lowercase().as_str() {
+                "left" => bl.add_css_class("suggested-action"),
+                "bottom" => bb.add_css_class("suggested-action"),
+                "top" => bt.add_css_class("suggested-action"),
+                "right" => br.add_css_class("suggested-action"),
+                _ => {}
+            }
+        }
+    };
+
+    let bind_click = |btn: &Button, val: &'static str, config: Arc<Mutex<ColorConfig>>, updater: Box<dyn Fn(&str)>| {
+        btn.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
-            cfg.set_notifications_enabled(enabled);
-            if let Err(_e) = cfg.save() {
-            } else {
-                // Update the shared config
+            cfg.set_dashboard_position(val.to_lowercase().as_str());
+            if cfg.save().is_ok() {
                 *config.lock().unwrap() = cfg.clone();
+                updater(val);
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    };
+
+    bind_click(&btn_left, "Left", config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_bottom, "Bottom", config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_top, "Top", config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_right, "Right", config.clone(), Box::new(update_visuals.clone()));
+
+    create_card_row("Position", box_)
+}
+
+fn create_dashboard_tile_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let box_ = GtkBox::new(Orientation::Horizontal, 6);
+    let current = config.lock().unwrap().dashboard_tile_left.clone().unwrap_or_else(|| "battery".to_string());
+    
+    let is_bat = current == "battery";
+    
+    let btn_bat = Button::with_label("Battery");
+    let btn_net = Button::with_label("Network");
+    
+    if is_bat { btn_bat.add_css_class("suggested-action"); }
+    else { btn_net.add_css_class("suggested-action"); }
+
+    let update = {
+        let b = btn_bat.clone();
+        let n = btn_net.clone();
+        move |bat: bool| {
+            if bat {
+                b.add_css_class("suggested-action");
+                n.remove_css_class("suggested-action");
+            } else {
+                n.add_css_class("suggested-action");
+                b.remove_css_class("suggested-action");
+            }
+        }
+    };
+
+    {
+        let cfg_ref = config.clone();
+        let up = update.clone();
+        btn_bat.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            cfg.set_dashboard_tile_left("battery");
+            if cfg.save().is_ok() {
+                *cfg_ref.lock().unwrap() = cfg.clone();
+                up(true);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    header.append(&notifications_toggle);
 
-    let desc = Label::new(Some("Enable or disable notifications"));
-    desc.add_css_class("section-description");
-    desc.set_xalign(0.0);
-    desc.set_margin_start(18);
-    desc.set_margin_end(18);
-    desc.set_margin_bottom(12);
-
-    section.append(&header);
-    section.append(&desc);
-
-    // Notification sounds row
-    let sounds_row = GtkBox::new(Orientation::Horizontal, 12);
-    sounds_row.add_css_class("settings-row");
-    sounds_row.set_margin_start(18);
-    sounds_row.set_margin_end(18);
-    sounds_row.set_margin_bottom(18);
-
-    let sounds_text = GtkBox::new(Orientation::Vertical, 2);
-    sounds_text.set_hexpand(true);
-
-    let sounds_title = Label::new(Some("Notification Sounds"));
-    sounds_title.add_css_class("row-title");
-    sounds_title.set_xalign(0.0);
-    sounds_text.append(&sounds_title);
-
-    let sounds_desc = Label::new(Some("Play sound when notification appears"));
-    sounds_desc.add_css_class("row-description");
-    sounds_desc.set_xalign(0.0);
-    sounds_text.append(&sounds_desc);
-
-    sounds_row.append(&sounds_text);
-
-    // Notification sounds toggle
-    let current_sounds_enabled = config.lock().unwrap().notification_sounds_enabled.unwrap_or(true);
-    let sounds_toggle = Switch::new();
-    sounds_toggle.set_active(current_sounds_enabled);
-    sounds_toggle.set_halign(gtk4::Align::End);
-    sounds_toggle.set_valign(gtk4::Align::Center);
-    sounds_toggle.set_hexpand(false);
-    sounds_toggle.set_vexpand(false);
-    
     {
-        let config = Arc::clone(&config);
-        sounds_toggle.connect_active_notify(move |toggle| {
-            let enabled = toggle.is_active();
-            // Reload config from disk to preserve existing settings
+        let cfg_ref = config.clone();
+        let up = update.clone();
+        btn_net.connect_clicked(move |_| {
             let mut cfg = ColorConfig::load();
-            cfg.set_notification_sounds_enabled(enabled);
-            if let Err(_e) = cfg.save() {
-            } else {
-                // Update the shared config
-                *config.lock().unwrap() = cfg.clone();
+            cfg.set_dashboard_tile_left("network");
+            if cfg.save().is_ok() {
+                *cfg_ref.lock().unwrap() = cfg.clone();
+                up(false);
                 schedule_notify_color_change_ms(200);
             }
         });
     }
-    sounds_row.append(&sounds_toggle);
 
-    section.append(&sounds_row);
+    box_.append(&btn_bat);
+    box_.append(&btn_net);
 
-    section
+    create_card_row("Info Tile", box_)
 }

@@ -213,7 +213,7 @@ separator {
 .sidebar {
     background-color: @sidebar_bg_color;
     border-right: none;
-    padding-top: 12px;
+    padding-top: 0px;
     padding-bottom: 0px;
 }
 
@@ -555,7 +555,7 @@ entry {
 }
 
 entry:focus {
-    box-shadow: 0 0 0 2px alpha(@accent_color, 0.25);
+    box-shadow: none;
 }
 
 entry text {
@@ -829,7 +829,7 @@ button {
     font-size: 11pt;
     font-weight: 600;
     transition: background-color 150ms ease,
-        box-shadow 150ms ease;
+
 }
 
 button.flat {
@@ -840,7 +840,7 @@ button.flat {
 
 button:hover {
     background-color: alpha(@window_fg_color, 0.1);
-    box-shadow: 0 1px 3px alpha(currentColor, 0.1);
+    box-shadow: none;
 }
 
 button.flat:hover {
@@ -850,7 +850,7 @@ button.flat:hover {
 button:active {
     background-color: alpha(@window_fg_color, 0.15);
     border-color: alpha(@window_fg_color, 0.25);
-    box-shadow: inset 0 1px 2px alpha(currentColor, 0.1);
+    box-shadow: none;
 }
 
 button.flat:active {
@@ -868,18 +868,18 @@ button.suggested-action {
     border-color: @accent_bg_color;
     color: @accent_fg_color;
     font-weight: 600;
-    box-shadow: 0 1px 3px alpha(@accent_bg_color, 0.3);
+    box-shadow: none;
 }
 
 button.suggested-action:hover {
     background-color: alpha(@accent_bg_color, 0.9);
     border-color: alpha(@accent_bg_color, 0.9);
-    box-shadow: 0 2px 6px alpha(@accent_bg_color, 0.4);
+    box-shadow: none;
 }
 
 button.suggested-action:active {
     background-color: alpha(@accent_bg_color, 0.85);
-    box-shadow: inset 0 1px 3px alpha(currentColor, 0.2);
+    box-shadow: none;
 }
 
 button.destructive-action {
@@ -887,18 +887,18 @@ button.destructive-action {
     border-color: #c01c28;
     color: white;
     font-weight: 600;
-    box-shadow: 0 1px 3px alpha(#c01c28, 0.3);
+    box-shadow: none;
 }
 
 button.destructive-action:hover {
     background-color: alpha(#c01c28, 0.9);
     border-color: alpha(#c01c28, 0.9);
-    box-shadow: 0 2px 6px alpha(#c01c28, 0.4);
+    box-shadow: none;
 }
 
 button.destructive-action:active {
     background-color: alpha(#c01c28, 0.85);
-    box-shadow: inset 0 1px 3px alpha(currentColor, 0.2);
+    box-shadow: none;
 }
 
 button image {
@@ -1177,19 +1177,19 @@ entry {
         box-shadow 200ms ease,
         transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
-    box-shadow: 0 2px 4px alpha(black, 0.1);
+    box-shadow: none;
 }
 
 entry:focus {
     background-color: @card_bg_color;
-    box-shadow: 0 0 0 3px alpha(@accent_bg_color, 0.25), 0 3px 8px alpha(black, 0.18);
+    box-shadow: none;
     outline: none;
     transform: translateY(-1px);
 }
 
 entry:hover:not(:focus) {
     background-color: @card_bg_color;
-    box-shadow: 0 2px 6px alpha(black, 0.12);
+    box-shadow: none;
 }
 
 entry:disabled {
@@ -1261,18 +1261,18 @@ checkbutton label {
         box-shadow 200ms ease,
         transform 200ms ease;
     /* Don't transition 'all' as it can break layout */
-    box-shadow: 0 1px 3px alpha(black, 0.08);
+    box-shadow: none;
 }
 
 .keybind-row:hover {
     background-color: @card_bg_color;
     transform: translateX(3px);
-    box-shadow: 0 2px 6px alpha(black, 0.12);
+    box-shadow: none;
 }
 
 .keybind-row:focus-within {
     background-color: @card_bg_color;
-    box-shadow: 0 0 0 2px alpha(@accent_bg_color, 0.25);
+    box-shadow: none;
     transform: translateY(-1px);
 }
 
@@ -1293,7 +1293,7 @@ checkbutton label {
     border-radius: 14px;
     background-color: @card_bg_color;
     border: none;
-    box-shadow: 0 3px 16px alpha(black, 0.15);
+    box-shadow: none;
 }
 
 /* ===== Content Section Spacing ===== */
@@ -1308,7 +1308,7 @@ checkbutton label {
     border-radius: 10px;
     background-color: @card_bg_color;
     border: none;
-    box-shadow: 0 1px 3px alpha(black, 0.08);
+    box-shadow: none;
 }
 
 /* ===== Smooth Transitions ===== */
@@ -1405,18 +1405,18 @@ window.resizing stack,
     /* Reduced to fit side-by-side */
     min-height: 120px;
     transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
-    box-shadow: 0 4px 12px alpha(black, 0.05);
+    box-shadow: none;
 }
 
 .theme-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px alpha(@accent_color, 0.25);
+    box-shadow: none;
     border-color: alpha(@accent_color, 0.3);
 }
 
 .theme-card-selected {
     border: 2px solid @accent_color;
-    box-shadow: 0 4px 16px alpha(@accent_color, 0.2);
+    box-shadow: none;
     background-color: alpha(@accent_color, 0.03);
 }
 
@@ -1438,26 +1438,26 @@ window.resizing stack,
     font-weight: 600;
     font-size: 11pt;
     transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
-    box-shadow: 0 2px 8px alpha(black, 0.05);
+    box-shadow: none;
     margin: 4px;
 }
 
 .rounding-button:hover {
     transform: translateY(-2px);
     background-color: alpha(@window_fg_color, 0.05);
-    box-shadow: 0 4px 12px alpha(black, 0.1);
+    box-shadow: none;
 }
 
 .rounding-button.suggested-action {
     background-color: @accent_bg_color;
     color: @accent_fg_color;
     border-color: @accent_bg_color;
-    box-shadow: 0 4px 12px alpha(@accent_color, 0.3);
+    box-shadow: none;
 }
 
 .rounding-button.suggested-action:hover {
     background-color: alpha(@accent_bg_color, 0.9);
-    box-shadow: 0 6px 16px alpha(@accent_color, 0.4);
+    box-shadow: none;
     transform: translateY(-3px);
 }
 
@@ -1607,7 +1607,7 @@ scale slider {
     border-radius: 50%;
     min-width: 20px;
     min-height: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: none;
 }
 
 scale slider:hover {
@@ -1631,7 +1631,7 @@ scale slider:hover {
 .color-button:hover {
     border-color: @accent_color;
     border-width: 3px;
-    box-shadow: 0 2px 8px alpha(@accent_color, 0.3);
+    box-shadow: none;
     transform: scale(1.1);
 }
 
@@ -1647,17 +1647,17 @@ scale slider:hover {
         box-shadow 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
         transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
-    box-shadow: 0 2px 8px alpha(black, 0.08);
+    box-shadow: none;
 }
 
 .preset-button:hover {
     background-color: alpha(@accent_color, 0.08);
-    box-shadow: 0 8px 20px alpha(@accent_color, 0.3);
+    box-shadow: none;
     transform: translateY(-4px) scale(1.04);
 }
 
 .preset-button:active {
-    box-shadow: 0 4px 12px alpha(@accent_color, 0.25);
+    box-shadow: none;
     transform: translateY(-2px) scale(1.02);
 }
 
@@ -1671,7 +1671,7 @@ scale slider:hover {
 .color-bar {
     border-radius: 6px;
     margin: 0;
-    box-shadow: 0 1px 3px alpha(black, 0.1);
+    box-shadow: none;
 }
 
 .color-bar-large {
@@ -1710,16 +1710,16 @@ scale slider:hover {
     transition: box-shadow 250ms cubic-bezier(0.4, 0.0, 0.2, 1),
         transform 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
     /* Don't transition 'all' as it can break layout */
-    box-shadow: 0 2px 6px alpha(black, 0.08);
+    box-shadow: none;
 }
 
 .theme-card:hover {
-    box-shadow: 0 4px 12px alpha(@accent_color, 0.3);
+    box-shadow: none;
     transform: translateY(-2px) scale(1.02);
 }
 
 .theme-card-selected {
-    box-shadow: 0 0 0 3px alpha(@accent_color, 0.3), 0 4px 12px alpha(@accent_color, 0.25);
+    box-shadow: none;
 }
 
 .theme-preview {
@@ -1874,4 +1874,38 @@ scrollbar.vertical slider {
 scrollbar trough {
     background: transparent;
     border: none;
+}
+
+/* ===== Card Layout Styles ===== */
+.card {
+    background-color: @card_bg_color;
+    border-radius: 12px;
+    padding: 0;
+    margin-bottom: 24px;
+}
+
+.card-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid alpha(@window_fg_color, 0.05);
+    min-height: 50px;
+}
+
+.card-row:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.card-row:first-child {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.group-header {
+    margin: 24px 4px 8px 4px;
+    font-weight: 800;
+    font-size: 11pt;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }

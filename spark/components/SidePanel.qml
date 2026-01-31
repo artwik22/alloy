@@ -205,7 +205,7 @@ PanelWindow {
         Row {
             id: sidePanelClockRow
             anchors.left: parent.left
-            anchors.leftMargin: 6
+            anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
             visible: isHorizontal
@@ -800,7 +800,7 @@ PanelWindow {
             visible: isHorizontal
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
-            anchors.rightMargin: 40
+            anchors.rightMargin: 60
             z: 1
 
             Row {
@@ -878,7 +878,8 @@ PanelWindow {
 
         anchors.horizontalCenter: !isHorizontal ? parent.horizontalCenter : undefined
         anchors.right: isHorizontal ? parent.right : undefined
-        anchors.rightMargin: isHorizontal ? 6 : 0
+        anchors.rightMargin: isHorizontal ? 12 : 0
+        anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
         anchors.bottom: !isHorizontal ? parent.bottom : undefined
         anchors.bottomMargin: !isHorizontal ? 6 : 0
         z: 100000

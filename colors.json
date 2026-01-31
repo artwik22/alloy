@@ -6,7 +6,8 @@
   "accent": "#c0c0c0",
   "lastWallpaper": "/home/iartwik/Pictures/Wallpapers/wallhaven-qdz995.jpg",
   "colorPreset": "Midnight (Mono)",
-  "sidebarPosition": "right",
+  "sidebarPosition": "left",
+  "notificationsEnabled": true,
   "sidebarVisible": true,
   "rounding": "rounded",
   "showHiddenFiles": true,
@@ -14,5 +15,5 @@
   "dashboardTileLeft": "battery",
   "sidepanelContent": "github",
   "githubUsername": "artwik22",
-  "dashboardPosition": "left"
+  "dashboardPosition": "right"
 }

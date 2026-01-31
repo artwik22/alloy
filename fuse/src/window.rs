@@ -290,7 +290,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     sidebar.add_css_class("sidebar");
     sidebar.set_margin_start(0);
     sidebar.set_margin_end(0);
-    sidebar.set_margin_top(12);
+    sidebar.set_margin_top(0);
     sidebar.set_margin_bottom(0);
 
     // Create ScrolledWindow for sidebar to enable scrolling in small windows
