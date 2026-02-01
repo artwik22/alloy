@@ -86,6 +86,7 @@ PanelWindow {
         enabled: false  // Don't capture mouse events
         z: -1
         
+
         
         opacity: sidePanel.panelProgress
         transform: Translate {
