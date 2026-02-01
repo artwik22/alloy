@@ -86,19 +86,6 @@ PanelWindow {
         enabled: false  // Don't capture mouse events
         z: -1
         
-        // Subtle border line on the inner side
-        Rectangle {
-            anchors.right: panelPosition === "left" ? parent.right : undefined
-            anchors.left: panelPosition === "right" ? parent.left : undefined
-            anchors.bottom: panelPosition === "top" ? parent.bottom : undefined
-            anchors.top: panelPosition === "bottom" ? parent.top : undefined
-            
-            width: !isHorizontal ? 1 : parent.width
-            height: isHorizontal ? 1 : parent.height
-            
-            color: Qt.rgba(1, 1, 1, 0.08)
-            z: 1
-        }
         
         opacity: sidePanel.panelProgress
         transform: Translate {
