@@ -106,7 +106,6 @@ PanelWindow {
                         id: navRepeater
                         model: [
                             { icon: "󰕮", label: "Dashboard" },
-                            { icon: "󰓃", label: "Audio" },
                             { icon: "󰨸", label: "Clipboard" },
                             { icon: "󰂚", label: "Notifications" }
                         ]
@@ -1394,378 +1393,16 @@ PanelWindow {
                     }
                 }
 
-                // ============ TAB 1: AUDIO ============
-                Item {
-                    id: audioTab
-                    anchors.fill: parent
-                    visible: currentTab === 1
-                    opacity: currentTab === 1 ? 1.0 : 0.0
-                    x: currentTab === 1 ? 0 : (currentTab < 1 ? -parent.width * 0.3 : parent.width * 0.3)
-                    scale: currentTab === 1 ? 1.0 : 0.95
-                    
-                    Behavior on opacity {
-                        NumberAnimation { 
-                            duration: 400
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: 400
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 400
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 16
-                        spacing: 13
-                        
-                        // Header
-                        Text {
-                            text: "󰕧 Audio"
-                            font.pixelSize: 10
-                            font.family: "sans-serif"
-                            font.weight: Font.Bold
-                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                        }
-                        
-                        // Music Player Section
-                        Rectangle {
-                            width: parent.width
-                            height: 144
-                            radius: 0
-                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                            visible: audioPlayerStatus !== "stopped"
-                            
-                            // Material Design elevation shadow
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -2
-                                color: "transparent"
-                                border.color: Qt.rgba(0, 0, 0, 0.15)
-                                border.width: 2
-                                z: -1
-                            }
-                            
-                            Column {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                width: parent.width - 32
-                                
-                                // Track Info
-                                Column {
-                                    width: parent.width
-                                    spacing: 5
-                                    
-                                    Text {
-                                        text: audioPlayerTitle || "No track"
-                                        font.pixelSize: 9
-                                        font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        elide: Text.ElideRight
-                                        width: parent.width
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    
-                                    Text {
-                                        text: audioPlayerArtist || ""
-                                        font.pixelSize: 9
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        elide: Text.ElideRight
-                                        width: parent.width
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                                
-                                // Player Controls
-                                Row {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: 5
-                                    
-                                    // Previous
-                                    Rectangle {
-                                        width: 32
-                                        height: 32
-                                        radius: 0
-                                        color: prevButtonMouseArea.containsMouse ?
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                                        
-                                        Text {
-                                            text: "󰒮"
-                                            font.pixelSize: 10
-                                            anchors.centerIn: parent
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        }
-                                        
-                                        MouseArea {
-                                            id: prevButtonMouseArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['playerctl', 'previous'], getAudioPlayerInfo)
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Play/Pause
-                                    Rectangle {
-                                        width: 35
-                                        height: 25
-                                        radius: 0
-                                        color: playPauseButtonMouseArea.containsMouse ?
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
-                                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff")
-                                        
-                                        Text {
-                                            text: audioPlayerStatus === "playing" ? "󰏤" : "󰐊"
-                                            font.pixelSize: 19
-                                            anchors.centerIn: parent
-                                            color: playPauseButtonMouseArea.containsMouse ?
-                                                ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") :
-                                                ((sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a")
-                                        }
-                                        
-                                        MouseArea {
-                                            id: playPauseButtonMouseArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['playerctl', 'play-pause'])
-                                                getAudioPlayerInfo()
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Next
-                                    Rectangle {
-                                        width: 32
-                                        height: 32
-                                        radius: 0
-                                        color: nextButtonMouseArea.containsMouse ?
-                                            ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") :
-                                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                                        
-                                        Text {
-                                            text: "󰒭"
-                                            font.pixelSize: 10
-                                            anchors.centerIn: parent
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        }
-                                        
-                                        MouseArea {
-                                            id: nextButtonMouseArea
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                if (sharedData && sharedData.runCommand) sharedData.runCommand(['playerctl', 'next'])
-                                                getAudioPlayerInfo()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Application Mixer Section
-                        Rectangle {
-                            width: parent.width
-                            height: Math.min(320, audioApplicationsModel.count * 56 + 48)
-                            radius: 0
-                            color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                            
-                            // Material Design elevation shadow
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -2
-                                color: "transparent"
-                                border.color: Qt.rgba(0, 0, 0, 0.15)
-                                border.width: 2
-                                z: -1
-                            }
-                            
-                            Column {
-                                anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 5
-                                
-                                // Mixer Header
-                                Text {
-                                    text: "󰓃 Mixer"
-                                    font.pixelSize: 9
-                                    font.family: "sans-serif"
-                                    font.weight: Font.Bold
-                                    color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                }
-                                
-                                // Applications List
-                                ListView {
-                                    id: applicationsListView
-                                    width: parent.width
-                                    height: parent.height - 32
-                                    model: audioApplicationsModel
-                                    spacing: 5
-                                    clip: true
-                                    
-                                    delegate: Rectangle {
-                                        width: applicationsListView.width
-                                        height: 48
-                                        radius: 0
-                                        color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a"
-                                        
-                                        Row {
-                                            x: 12
-                                            y: 12
-                                            width: parent.width - 24
-                                            height: parent.height - 24
-                                            spacing: 5
-                                            
-                                            // Application Name
-                                            Text {
-                                                text: appName || "Unknown"
-                                                font.pixelSize: 8
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                width: parent.width * 0.35
-                                                elide: Text.ElideRight
-                                            }
-                                            
-                                            // Volume Slider
-                                            Item {
-                                                width: parent.width * 0.50
-                                                height: parent.height
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                
-                                                // Track
-                                                Rectangle {
-                                                    id: appVolumeTrack
-                                                    anchors.centerIn: parent
-                                                    width: parent.width
-                                                    height: 4
-                                                    color: (sharedData && sharedData.colorBackground) ? sharedData.colorBackground : "#0a0a0a"
-                                                    radius: 2
-                                                }
-                                                
-                                                // Fill
-                                                Rectangle {
-                                                    anchors.left: appVolumeTrack.left
-                                                    anchors.verticalCenter: appVolumeTrack.verticalCenter
-                                                    height: appVolumeTrack.height
-                                                    width: appVolumeTrack.width * (appVolume / 100)
-                                                    color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
-                                                    radius: 2
-                                                    
-                                                    Behavior on width {
-                                                        NumberAnimation {
-                                                            duration: 150
-                                                            easing.type: Easing.OutQuart
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    
-                                                    function setVolumeFromMouse(mouse) {
-                                                        var newVolume = Math.round((mouse.x / parent.width) * 100)
-                                                        if (newVolume < 0) newVolume = 0
-                                                        if (newVolume > 100) newVolume = 100
-                                                        setApplicationVolume(sinkInputIndex, newVolume)
-                                                    }
-                                                    
-                                                    onClicked: function(mouse) {
-                                                        setVolumeFromMouse(mouse)
-                                                    }
-                                                    
-                                                    onPositionChanged: function(mouse) {
-                                                        if (pressed) {
-                                                            setVolumeFromMouse(mouse)
-                                                        }
-                                                    }
-                                                    
-                                                    onWheel: function(wheel) {
-                                                        var delta = wheel.angleDelta.y > 0 ? 5 : -5
-                                                        var newVolume = appVolume + delta
-                                                        if (newVolume < 0) newVolume = 0
-                                                        if (newVolume > 100) newVolume = 100
-                                                        setApplicationVolume(sinkInputIndex, newVolume)
-                                                        wheel.accepted = true
-                                                    }
-                                                }
-                                            }
-                                            
-                                            // Volume Percentage
-                                            Text {
-                                                text: Math.round(appVolume) + "%"
-                                                font.pixelSize: 9
-                                                font.family: "sans-serif"
-                                                color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                width: 32
-                                                horizontalAlignment: Text.AlignRight
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                // Empty state
-                                Text {
-                                    visible: audioApplicationsModel.count === 0
-                                    text: "Brak aktywnych aplikacji audio"
-                                    font.pixelSize: 9
-                                    font.family: "sans-serif"
-                                    color: (sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#888888"
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Load applications when tab becomes visible
-                    Connections {
-                        target: dashboardRoot
-                        function onCurrentTabChanged() {
-                            if (currentTab === 1) {
-                                getAudioApplications()
-                            }
-                        }
-                    }
-                    
-                    Component.onCompleted: {
-                        if (currentTab === 1) {
-                            getAudioApplications()
-                        }
-                    }
-                }
+
 
                 // ============ TAB 2: CLIPBOARD ============
                 Item {
                     id: clipboardTab
                     anchors.fill: parent
-                    visible: currentTab === 2
-                    opacity: currentTab === 2 ? 1.0 : 0.0
-                    x: currentTab === 2 ? 0 : (currentTab < 2 ? -parent.width * 0.3 : parent.width * 0.3)
-                    scale: currentTab === 2 ? 1.0 : 0.95
+                    visible: currentTab === 1
+                    opacity: currentTab === 1 ? 1.0 : 0.0
+                    x: currentTab === 1 ? 0 : (currentTab < 1 ? -parent.width * 0.3 : parent.width * 0.3)
+                    scale: currentTab === 1 ? 1.0 : 0.95
                     
                     Behavior on opacity {
                         NumberAnimation { 
@@ -1944,10 +1581,10 @@ PanelWindow {
                 Item {
                     id: notificationsTab
                     anchors.fill: parent
-                    visible: currentTab === 3
-                    opacity: currentTab === 3 ? 1.0 : 0.0
-                    x: currentTab === 3 ? 0 : (currentTab < 3 ? -parent.width * 0.3 : parent.width * 0.3)
-                    scale: currentTab === 3 ? 1.0 : 0.95
+                    visible: currentTab === 2
+                    opacity: currentTab === 2 ? 1.0 : 0.0
+                    x: currentTab === 2 ? 0 : (currentTab < 2 ? -parent.width * 0.3 : parent.width * 0.3)
+                    scale: currentTab === 2 ? 1.0 : 0.95
                     
                     Behavior on opacity {
                         NumberAnimation { 
@@ -2247,16 +1884,7 @@ PanelWindow {
     property real mpPosition: 0
     property int mpLength: 0
     
-    // Audio tab properties
-    property real audioVolumeValue: 50
-    property bool audioMuted: false
-    property string audioPlayerStatus: "stopped"  // "playing", "paused", "stopped"
-    property string audioPlayerTitle: ""
-    property string audioPlayerArtist: ""
-    
-    // Audio mixer properties
-    property var audioApplications: []
-    property var audioApplicationsModel: ListModel { id: audioApplicationsModel }
+
     
     // Calendar days model
     property var calendarDays: []
@@ -2293,7 +1921,7 @@ PanelWindow {
     Timer {
         id: dashboardClipboardMonitorTimer
         interval: 500
-        running: (sharedData && sharedData.menuVisible) && (currentTab === 2)
+        running: (sharedData && sharedData.menuVisible) && (currentTab === 1)
         repeat: true
         onTriggered: dashboardRoot.checkClipboard()
     }
@@ -2564,151 +2192,7 @@ PanelWindow {
         if (sharedData && sharedData.runCommand) sharedData.runCommand(["playerctl", "previous"], updatePlayerMetadata)
     }
     
-    // ============ AUDIO TAB FUNCTIONS ============
-    function getSystemVolume() {
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','pactl get-sink-volume @DEFAULT_SINK@ | head -1 | awk "{print $5}" | tr -d % > /tmp/quickshell_volume'], readSystemVolume)
-    }
-    
-    function readSystemVolume() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_volume")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                var vol = parseInt(xhr.responseText.trim())
-                if (!isNaN(vol) && vol >= 0 && vol <= 100) {
-                    audioVolumeValue = vol
-                }
-            }
-        }
-        xhr.send()
-    }
-    
-    function setSystemVolume(value) {
-        audioVolumeValue = Math.round(value)
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl','set-sink-volume','@DEFAULT_SINK@',Math.round(value) + '%'], getSystemVolume)
-    }
-    
-    function toggleMute() {
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl','set-sink-mute','@DEFAULT_SINK@','toggle'], checkMuteStatus)
-    }
-    
-    function checkMuteStatus() {
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','pactl get-sink-mute @DEFAULT_SINK@ | grep -q yes && echo 1 > /tmp/quickshell_audio_muted || echo 0 > /tmp/quickshell_audio_muted'], readMuteStatus)
-    }
-    
-    function readMuteStatus() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_audio_muted")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                audioMuted = xhr.responseText.trim() === "1"
-            }
-        }
-        xhr.send()
-    }
-    
-    // ============ AUDIO MIXER FUNCTIONS ============
-    function getAudioApplications() {
-        var scriptPath = projectPath ? (projectPath + "/scripts/get-audio-applications.sh") : ("/home/iartwik/.config/alloy/spark/scripts/get-audio-applications.sh")
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'bash "' + scriptPath + '" > /tmp/quickshell_audio_apps'], readAudioApplications)
-    }
-    
-    function readAudioApplications() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_audio_apps")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                var lines = xhr.responseText.trim().split('\n')
-                audioApplicationsModel.clear()
-                
-                for (var i = 0; i < lines.length; i++) {
-                    var line = lines[i].trim()
-                    if (line === "") continue
-                    
-                    var parts = line.split('\t')
-                    if (parts.length >= 2) {
-                        var sinkInputIndex = parts[0]
-                        var appName = parts[1]
-                        var volume = parts.length >= 3 ? parseInt(parts[2]) : 50
-                        
-                        if (!isNaN(volume) && volume >= 0 && volume <= 100) {
-                            audioApplicationsModel.append({
-                                sinkInputIndex: sinkInputIndex,
-                                appName: appName,
-                                appVolume: volume
-                            })
-                        }
-                    }
-                }
-            }
-        }
-        xhr.send()
-    }
-    
-    function setApplicationVolume(sinkInputIndex, volume) {
-        var volumePercent = Math.round(volume)
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['pactl', 'set-sink-input-volume', sinkInputIndex, volumePercent + '%'])
-        
-        // Update the model immediately for responsive UI
-        for (var i = 0; i < audioApplicationsModel.count; i++) {
-            if (audioApplicationsModel.get(i).sinkInputIndex === sinkInputIndex) {
-                audioApplicationsModel.setProperty(i, "appVolume", volumePercent)
-                break
-            }
-        }
-        
-        // Refresh after a delay to sync with actual system state
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh', '-c', 'sleep 0.5'], getAudioApplications)
-    }
-    
-    function getAudioPlayerInfo() {
-        // Get player status
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','playerctl status 2>/dev/null | head -1 > /tmp/quickshell_player_status || echo stopped > /tmp/quickshell_player_status'], readAudioPlayerStatus)
-        
-        // Get track title
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','playerctl metadata title 2>/dev/null | head -1 > /tmp/quickshell_player_title || echo > /tmp/quickshell_player_title'], readAudioPlayerTitle)
-        
-        // Get artist
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(['sh','-c','playerctl metadata artist 2>/dev/null | head -1 > /tmp/quickshell_player_artist || echo > /tmp/quickshell_player_artist'], readAudioPlayerArtist)
-    }
-    
-    function readAudioPlayerStatus() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_player_status")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                var status = xhr.responseText.trim().toLowerCase()
-                if (status === "playing" || status === "paused" || status === "stopped") {
-                    audioPlayerStatus = status
-                } else {
-                    audioPlayerStatus = "stopped"
-                }
-            }
-        }
-        xhr.send()
-    }
-    
-    function readAudioPlayerTitle() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_player_title")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                audioPlayerTitle = xhr.responseText.trim()
-            }
-        }
-        xhr.send()
-    }
-    
-    function readAudioPlayerArtist() {
-        var xhr = new XMLHttpRequest()
-        xhr.open("GET", "file:///tmp/quickshell_player_artist")
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.responseText) {
-                audioPlayerArtist = xhr.responseText.trim()
-            }
-        }
-        xhr.send()
-    }
+
 
     // ============ TIMERS ============
     Timer {
@@ -2742,19 +2226,12 @@ PanelWindow {
         id: playerMetadataTimer
         interval: 3000
         repeat: true
-        running: (sharedData && sharedData.menuVisible) && (currentTab === 1)
+        running: (sharedData && sharedData.menuVisible)
         onTriggered: updatePlayerMetadata()
         Component.onCompleted: if (sharedData && sharedData.menuVisible) updatePlayerMetadata()
     }
 
-    Timer {
-        id: playerPositionTimer
-        interval: 500
-        repeat: true
-        running: (sharedData && sharedData.menuVisible) && (currentTab === 1)
-        onTriggered: updatePlayerPosition()
-        Component.onCompleted: if (sharedData && sharedData.menuVisible) updatePlayerPosition()
-    }
+
 
     Timer {
         id: ramTimer
@@ -3158,54 +2635,10 @@ PanelWindow {
         }
     }
 
-    // Audio tab timers
-    Timer {
-        id: audioApplicationsTimer
-        interval: 2000  // Refresh every 2 seconds
-        repeat: true
-        running: currentTab === 1  // Only run when audio tab is active
-        onTriggered: {
-            getAudioApplications()
-        }
-        Component.onCompleted: {
-            // Initial sync when timer starts
-            if (currentTab === 1) {
-                getAudioApplications()
-            }
-        }
-    }
-    
-    Timer {
-        id: audioVolumeTimer
-        interval: 1000
-        repeat: true
-        running: true
-        onTriggered: {
-            getSystemVolume()
-            checkMuteStatus()
-        }
-        Component.onCompleted: {
-            getSystemVolume()
-            checkMuteStatus()
-        }
-    }
-    
-    Timer {
-        id: audioPlayerInfoTimer
-        interval: 2000
-        repeat: true
-        running: true
-        onTriggered: {
-            getAudioPlayerInfo()
-        }
-        Component.onCompleted: {
-            getAudioPlayerInfo()
-        }
-    }
+
+
     
     Component.onCompleted: {
-        // Synchronize audio applications on startup
-        getAudioApplications()
         
         // Initialize weatherCity from sharedData if available
         if (sharedData && sharedData.weatherCity !== undefined) {
