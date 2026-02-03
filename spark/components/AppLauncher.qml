@@ -2597,45 +2597,32 @@ PanelWindow {
                             property string packageName: model.name || "Unknown"
                             property string packageDescription: model.description || ""
                             
-                            Row {
+                            Column {
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.leftMargin: 16
                                 anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 12
-                                
+                                spacing: 2
+                                width: parent.width - 32
                                 Text {
-                                    text: "󰏖"
-                                    font.pixelSize: 20
+                                    text: packageItem.packageName
+                                    font.pixelSize: 15
+                                    font.family: "sans-serif"
+                                    font.weight: selectedIndex === index ? Font.Bold : Font.Normal
                                     color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                    width: 24
-                                    horizontalAlignment: Text.AlignLeft
-                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width
+                                    elide: Text.ElideRight
                                 }
-                                Column {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 2
-                                    width: parent.width - 36
-                                    Text {
-                                        text: packageItem.packageName
-                                        font.pixelSize: 15
-                                        font.family: "sans-serif"
-                                        font.weight: selectedIndex === index ? Font.Bold : Font.Normal
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                        width: parent.width
-                                        elide: Text.ElideRight
-                                    }
-                                    Text {
-                                        text: packageItem.packageDescription
-                                        font.pixelSize: 12
-                                        font.family: "sans-serif"
-                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                        opacity: 0.7
-                                        width: parent.width
-                                        elide: Text.ElideRight
-                                        visible: packageItem.packageDescription && packageItem.packageDescription.length > 0
-                                    }
+                                Text {
+                                    text: packageItem.packageDescription
+                                    font.pixelSize: 12
+                                    font.family: "sans-serif"
+                                    color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
+                                    opacity: 0.7
+                                    width: parent.width
+                                    elide: Text.ElideRight
+                                    visible: packageItem.packageDescription && packageItem.packageDescription.length > 0
                                 }
                             }
                             
@@ -2834,25 +2821,14 @@ PanelWindow {
                             property string packageName: model.name || "Unknown"
                             property string packageDescription: model.description || ""
                             
-                            Row {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.leftMargin: 16
-                                anchors.rightMargin: 16
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 12
-                                Text {
-                                    text: "󰣇"
-                                    font.pixelSize: 20
-                                    color: (sharedData && sharedData.colorText) ? sharedData.colorText : colorText
-                                    width: 24
-                                    horizontalAlignment: Text.AlignLeft
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
                                 Column {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.leftMargin: 16
+                                    anchors.rightMargin: 16
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 2
-                                    width: parent.width - 36
+                                    width: parent.width - 32
                                     Text {
                                         text: aurPackageItem.packageName
                                         font.pixelSize: 15
@@ -2873,7 +2849,6 @@ PanelWindow {
                                         visible: aurPackageItem.packageDescription && aurPackageItem.packageDescription.length > 0
                                     }
                                 }
-                            }
                             
                             MouseArea {
                                 id: aurPackageItemMouseArea
