@@ -517,34 +517,139 @@ impl IndexWindow {
                 let file_view_clone_final = file_view_clone.clone();
                 let clipboard_clone_final = clipboard_clone.clone();
                 
-                // Create channel for completion signal
-                let (tx, rx) = async_channel::unbounded::<ClipboardMode>();
+                // Communication definitions
+                #[derive(Debug, Clone)]
+                enum ConflictResolution {
+                    Replace,
+                    Rename(String),
+                    Cancel,
+                }
+
+                #[derive(Debug, Clone)]
+                enum PasteEvent {
+                    Conflict(PathBuf),
+                    Finished(ClipboardMode),
+                }
                 
-                // Listen for completion on UI thread (before spawning worker thread)
+                // Worker -> UI (Events)
+                let (event_tx, event_rx) = async_channel::unbounded::<PasteEvent>();
+                // UI -> Worker (Resolution)
+                let (resolve_tx, resolve_rx) = async_channel::unbounded::<ConflictResolution>();
+                
+                // Listen for events on UI thread
+                let window_weak = window_clone.downgrade();
+                
                 glib::spawn_future_local(async move {
-                    if let Ok(mode) = rx.recv().await {
-                        // Clear clipboard after cut (on UI thread)
-                        if mode == ClipboardMode::Cut {
-                            clipboard_clone_final.borrow_mut().clear();
-                        }
-                        
-                        if let Some(progress_bar) = progress_bar_weak_final.upgrade() {
-                            if let Some(dialog) = progress_bar.parent().and_then(|p| p.parent()) {
-                                if let Some(dialog) = dialog.downcast_ref::<adw::Window>() {
-                                    dialog.close();
+                    while let Ok(event) = event_rx.recv().await {
+                        match event {
+                            PasteEvent::Finished(mode) => {
+                                // Completed
+                                if mode == ClipboardMode::Cut {
+                                    clipboard_clone_final.borrow_mut().clear();
+                                }
+                                
+                                if let Some(progress_bar) = progress_bar_weak_final.upgrade() {
+                                    if let Some(dialog) = progress_bar.parent().and_then(|p| p.parent()) {
+                                        if let Some(dialog) = dialog.downcast_ref::<adw::Window>() {
+                                            dialog.close();
+                                        }
+                                    }
+                                }
+                                
+                                glib::timeout_add_local(Duration::from_millis(500), move || {
+                                    file_view_clone_final.refresh();
+                                    glib::ControlFlow::Break
+                                });
+                                break;
+                            }
+                            PasteEvent::Conflict(conflicting_path) => {
+                                // Handle conflict
+                                if let Some(window) = window_weak.upgrade() {
+                                    let file_name = conflicting_path.file_name()
+                                        .map(|n| n.to_string_lossy().to_string())
+                                        .unwrap_or_else(|| "file".to_string());
+                                    
+                                    let (response_tx, response_rx) = async_channel::bounded(1);
+                                    
+                                    let dialog = adw::AlertDialog::builder()
+                                        .heading("File Conflict")
+                                        .body(&format!("\"{}\" already exists. What do you want to do?", file_name))
+                                        .build();
+                                    
+                                    dialog.add_response("cancel", "Cancel");
+                                    dialog.add_response("rename", "Rename");
+                                    dialog.add_response("replace", "Replace");
+                                    
+                                    dialog.set_response_appearance("replace", adw::ResponseAppearance::Destructive);
+                                    dialog.set_default_response(Some("rename"));
+                                    dialog.set_close_response("cancel");
+                                    
+                                    let window_for_dialog = window.clone();
+                                    let response_tx_clone = response_tx.clone();
+                                    let file_name_clone = file_name.clone();
+                                    
+                                    dialog.connect_response(None, move |dialog, response| {
+                                        if response == "replace" {
+                                            let _ = response_tx_clone.send_blocking(ConflictResolution::Replace);
+                                        } else if response == "rename" {
+                                            // Show rename input dialog
+                                            let rename_dialog = adw::AlertDialog::builder()
+                                                .heading("Rename")
+                                                .body("Enter new name for the destination file")
+                                                .build();
+                                            
+                                            let entry = gtk4::Entry::builder()
+                                                .text(&file_name_clone)
+                                                .activates_default(true)
+                                                .build();
+                                            entry.add_css_class("nautilus-entry");
+                                            
+                                            rename_dialog.set_extra_child(Some(&entry));
+                                            rename_dialog.add_response("cancel", "Cancel");
+                                            rename_dialog.add_response("apply", "Rename");
+                                            rename_dialog.set_response_appearance("apply", adw::ResponseAppearance::Suggested);
+                                            rename_dialog.set_default_response(Some("apply"));
+                                            rename_dialog.set_close_response("cancel");
+                                            
+                                            let response_tx_inner = response_tx_clone.clone();
+                                            
+                                            rename_dialog.connect_response(None, move |d, res| {
+                                                if res == "apply" {
+                                                    if let Some(entry) = d.extra_child().and_downcast::<gtk4::Entry>() {
+                                                        let new_name = entry.text().to_string();
+                                                        if !new_name.is_empty() {
+                                                            let _ = response_tx_inner.send_blocking(ConflictResolution::Rename(new_name));
+                                                            return;
+                                                        }
+                                                    }
+                                                }
+                                                let _ = response_tx_inner.send_blocking(ConflictResolution::Cancel);
+                                            });
+                                            
+                                            rename_dialog.present(Some(&window_for_dialog));
+                                            
+                                        } else {
+                                            let _ = response_tx_clone.send_blocking(ConflictResolution::Cancel);
+                                        }
+                                    });
+                                    
+                                    dialog.present(Some(&window));
+                                    
+                                    // Wait for user response
+                                    if let Ok(res) = response_rx.recv().await {
+                                        let _ = resolve_tx.send(res).await;
+                                    } else {
+                                        let _ = resolve_tx.send(ConflictResolution::Cancel).await;
+                                    }
+                                } else {
+                                    let _ = resolve_tx.send(ConflictResolution::Cancel).await;
                                 }
                             }
                         }
-                        
-                        // Defer refresh to avoid blocking - use a small delay to let filesystem settle
-                        glib::timeout_add_local(Duration::from_millis(500), move || {
-                            file_view_clone_final.refresh();
-                            glib::ControlFlow::Break
-                        });
                     }
                 });
                 
-                // Spawn worker thread (without any GTK objects)
+                // Spawn worker thread
                 thread::spawn(move || {
                     for source in &paths_clone {
                         let file_name: String = match source.file_name() {
@@ -553,22 +658,35 @@ impl IndexWindow {
                         };
                         
                         let mut dest_path = dest_clone.join(&file_name);
-                        
-                        // Handle duplicate names
-                        let mut counter = 1;
-                        while dest_path.exists() {
-                            let stem = source
-                                .file_stem()
-                                .map(|s: &std::ffi::OsStr| s.to_string_lossy().to_string())
-                                .unwrap_or_default();
-                            let extension = source
-                                .extension()
-                                .map(|e: &std::ffi::OsStr| format!(".{}", e.to_string_lossy()))
-                                .unwrap_or_default();
+                        let mut skip_file = false;
+
+                        // Resolve conflicts
+                        loop {
+                            if !dest_path.exists() {
+                                break;
+                            }
                             
-                            let new_name = format!("{} ({}){}", stem, counter, extension);
-                            dest_path = dest_clone.join(new_name);
-                            counter += 1;
+                            // Ask UI for help
+                            if event_tx.send_blocking(PasteEvent::Conflict(dest_path.clone())).is_err() {
+                                return;
+                            }
+                            
+                            match resolve_rx.recv_blocking() {
+                                Ok(ConflictResolution::Replace) => break,
+                                Ok(ConflictResolution::Rename(new_name)) => {
+                                    dest_path = dest_clone.join(new_name);
+                                },
+                                Ok(ConflictResolution::Cancel) | Err(_) => {
+                                    skip_file = true;
+                                    break; 
+                                }
+                            }
+                        }
+                        
+                        if skip_file {
+                            // Cancel operation (or just this file? User intent usually implies Abort)
+                            let _ = event_tx.send_blocking(PasteEvent::Finished( mode_clone));
+                            return; 
                         }
                         
                         match mode_clone {
@@ -595,7 +713,7 @@ impl IndexWindow {
                     }
                     
                     // Signal completion
-                    let _ = tx.send_blocking(mode_clone);
+                    let _ = event_tx.send_blocking(PasteEvent::Finished(mode_clone));
                 });
             });
         }
