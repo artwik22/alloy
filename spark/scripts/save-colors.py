@@ -61,10 +61,17 @@ if "presets" in existing_data:
 if "uiScale" in existing_data:
     colors["uiScale"] = existing_data["uiScale"]
 if "dashboardTileLeft" in existing_data:
-if "dashboardTileLeft" in existing_data:
     colors["dashboardTileLeft"] = existing_data["dashboardTileLeft"]
 if "dashboardPosition" in existing_data:
     colors["dashboardPosition"] = existing_data["dashboardPosition"]
+if "scriptsAutostartBattery" in existing_data:
+    colors["scriptsAutostartBattery"] = existing_data["scriptsAutostartBattery"]
+if "scriptsAutostartScreensaver" in existing_data:
+    colors["scriptsAutostartScreensaver"] = existing_data["scriptsAutostartScreensaver"]
+if "batteryThreshold" in existing_data:
+    colors["batteryThreshold"] = existing_data["batteryThreshold"]
+if "screensaverTimeout" in existing_data:
+    colors["screensaverTimeout"] = existing_data["screensaverTimeout"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled
@@ -111,6 +118,33 @@ if len(sys.argv) > 18 and sys.argv[18]:
 if len(sys.argv) > 19 and sys.argv[19]:
     colors["dashboardPosition"] = sys.argv[19]
 
+# Argument 20: scriptsAutostartBattery (true/false)
+if len(sys.argv) > 20 and sys.argv[20]:
+    colors["scriptsAutostartBattery"] = sys.argv[20] == "true"
+
+# Argument 21: scriptsAutostartScreensaver (true/false)
+if len(sys.argv) > 21 and sys.argv[21]:
+    colors["scriptsAutostartScreensaver"] = sys.argv[21] == "true"
+
+# Argument 22: batteryThreshold (int 0-100)
+if len(sys.argv) > 22 and sys.argv[22]:
+    try:
+        colors["batteryThreshold"] = int(sys.argv[22])
+    except ValueError:
+        pass
+
+# Argument 23: screensaverTimeout (int seconds)
+if len(sys.argv) > 23 and sys.argv[23]:
+    try:
+        colors["screensaverTimeout"] = int(sys.argv[23])
+    except ValueError:
+        pass
+
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)
+
+# Apply settings immediately
+apply_script = os.path.join(os.path.expanduser("~"), ".config/alloy/scripts/apply-settings.sh")
+if os.path.exists(apply_script):
+    os.system(f'"{apply_script}" &')
 

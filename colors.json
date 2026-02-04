@@ -7,13 +7,16 @@
   "lastWallpaper": "/home/igora/Pictures/Wallpapers/wallhaven-83qo22.jpg",
   "colorPreset": "Midnight (Mono)",
   "sidebarPosition": "left",
-  "notificationsEnabled": true,
   "sidebarVisible": true,
+  "sidepanelContent": "github",
+  "githubUsername": "artwik22",
+  "notificationsEnabled": true,
   "rounding": "rounded",
   "showHiddenFiles": true,
   "uiScale": 100,
   "dashboardTileLeft": "battery",
-  "sidepanelContent": "github",
-  "githubUsername": "artwik22",
-  "dashboardPosition": "right"
+  "dashboardPosition": "right",
+  "scriptsAutostartBattery": true,
+  "scriptsAutostartScreensaver": true,
+  "screensaverTimeout": 60
 }

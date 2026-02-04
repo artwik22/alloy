@@ -12,7 +12,7 @@ use gtk4::glib;
 
 use crate::core::config::ColorConfig;
 use crate::tabs::{appearance::AppearanceTab,
-                  system::SystemTab, audio::AudioTab, index::IndexTab, bluetooth::BluetoothTab, network::NetworkTab, notifications::NotificationsTab, about::AboutTab, quickshell::QuickshellTab};
+                  system::SystemTab, audio::AudioTab, index::IndexTab, bluetooth::BluetoothTab, network::NetworkTab, notifications::NotificationsTab, about::AboutTab, quickshell::QuickshellTab, scripts::ScriptsTab};
 
 const LAZY_TAB_NAMES: &[&str] = &["network", "appearance", "system"];
 
@@ -203,6 +203,14 @@ fn on_visible_child_maybe_build_lazy(
             lazy_system.borrow_mut().replace(t);
             built.borrow_mut().insert("system".into());
         }
+        "scripts" => {
+            // Not strictly lazy in same way but good to keep pattern if we want
+            // For now, let's just do nothing here as we don't treat it as lazy heavy tab yet?
+            // Actually, `schedule_build_tab` handles the initial build loop.
+            // If we want it to be built in that loop, we need to update `build_one_tab`.
+            // But if we want it lazy, we add it here.
+            // Let's assume consistent pattern: update build_one_tab instead.
+        }
         _ => {}
     }
 }
@@ -219,7 +227,7 @@ fn schedule_build_tab(
     let placeholders_clone = Rc::clone(&placeholders);
     glib::source::idle_add_local_once(move || {
         build_one_tab(&stack_clone, &config_clone, index, &placeholders_clone);
-        if index + 1 < 9 {
+        if index + 1 < 10 {
             schedule_build_tab(stack_clone, config_clone, index + 1, placeholders_clone);
         } else {
             if let Some(loading) = stack_clone.child_by_name("loading") {
@@ -269,11 +277,15 @@ fn build_one_tab(
             stack.add_titled(t.widget(), Some("quickshell"), "󰍜 QuickShell");
         }
         7 => {
+            let t = ScriptsTab::new(c);
+            stack.add_titled(t.widget(), Some("scripts"), "󰒓 Scripts");
+        }
+        8 => {
             if let Some(ref ph) = placeholders.borrow().2 {
                 stack.add_titled(ph, Some("system"), "󰍛 System");
             }
         }
-        8 => {
+        9 => {
             let t = AboutTab::new(c);
             stack.add_titled(t.widget(), Some("about"), "󰋼 About");
         }
@@ -346,7 +358,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     };
     
     // Store page names in order (excluding separators)
-    let page_names = vec!["network", "bluetooth", "appearance", "audio", "index", "notifications", "quickshell", "system", "about"];
+    let page_names = vec!["network", "bluetooth", "appearance", "audio", "index", "notifications", "quickshell", "scripts", "system", "about"];
     
     // Add Network and Bluetooth at the top
     let network_row = create_row("Network", "󰤨", "network").0;
@@ -383,6 +395,9 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
     
     let quickshell_row = create_row("QuickShell", "󰍜", "quickshell").0;
     list_box.append(&quickshell_row);
+
+    let scripts_row = create_row("Scripts", "󰒓", "scripts").0;
+    list_box.append(&scripts_row);
     
     // Add separator before System and About
     let separator2 = Separator::new(Orientation::Horizontal);
@@ -415,7 +430,7 @@ fn create_custom_sidebar(stack: &Stack) -> GtkBox {
             // Sidebar: 0=Network, 1=Bluetooth, 2=Separator, 3=Appearance, 4=Audio, 5=Index, 6=Notifications, 7=QuickShell, 8=Separator, 9=System, 10=About
             let page_idx = if row_index < 2 { 
                 row_index as usize
-            } else if row_index < 8 {
+            } else if row_index < 9 {
                 (row_index - 1) as usize
             } else {
                 (row_index - 2) as usize

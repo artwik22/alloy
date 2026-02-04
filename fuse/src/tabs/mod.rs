@@ -7,3 +7,4 @@ pub mod network;
 pub mod notifications;
 pub mod about;
 pub mod quickshell;
+pub mod scripts;

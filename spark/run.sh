@@ -26,4 +26,7 @@ fi
 # Ścieżka do colors.json (Alloy) – Spark ładuje stąd kolory = preset z Fuse
 [ -f "${HOME}/.config/alloy/colors.json" ] && echo "${HOME}/.config/alloy/colors.json" > /tmp/quickshell_colors_path
 
+# Apply script settings
+[ -x "${HOME}/.config/alloy/scripts/apply-settings.sh" ] && "${HOME}/.config/alloy/scripts/apply-settings.sh"
+
 exec quickshell --path "$QUICKSHELL_PROJECT_PATH"

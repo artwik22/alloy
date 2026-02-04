@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Arguments:
+# $1 = Critical Threshold (default 10)
+CRITICAL_THRESHOLD="${1:-10}"
+WARNING_THRESHOLD=$((CRITICAL_THRESHOLD + 5))
+
 # Function to check and notify status
 check_status() {
     # Get current status of AC power
@@ -27,8 +32,8 @@ check_status() {
              notify-send "Power" "Charger connected ($BAT_PERCENT)" -i battery-charging
              
              # Reset low battery notification flags
-             NOTIFIED_10="false"
-             NOTIFIED_5="false"
+             NOTIFIED_WARNING="false"
+             NOTIFIED_CRITICAL="false"
              
         elif [ "$ONLINE" = "no" ]; then
              notify-send "Power" "Charger disconnected" -i battery-missing
@@ -42,16 +47,16 @@ check_status() {
         
         # Ensure we have a number
         if [[ "$CURRENT_PERCENT" =~ ^[0-9]+$ ]]; then
-            if [ "$CURRENT_PERCENT" -le 5 ]; then
-                if [ "$NOTIFIED_5" != "true" ]; then
+            if [ "$CURRENT_PERCENT" -le "$CRITICAL_THRESHOLD" ]; then
+                if [ "$NOTIFIED_CRITICAL" != "true" ]; then
                     notify-send "Low Battery" "Battery critical ($CURRENT_PERCENT%). Please connect charger!" -i battery-caution
-                    NOTIFIED_5="true"
-                    NOTIFIED_10="true" # logic implies we passed 10
+                    NOTIFIED_CRITICAL="true"
+                    NOTIFIED_WARNING="true" # logic implies we passed warning
                 fi
-            elif [ "$CURRENT_PERCENT" -le 10 ]; then
-                if [ "$NOTIFIED_10" != "true" ]; then
+            elif [ "$CURRENT_PERCENT" -le "$WARNING_THRESHOLD" ]; then
+                if [ "$NOTIFIED_WARNING" != "true" ]; then
                     notify-send "Low Battery" "Battery low ($CURRENT_PERCENT%). Please connect charger." -i battery-low
-                    NOTIFIED_10="true"
+                    NOTIFIED_WARNING="true"
                 fi
             fi
         fi
@@ -60,8 +65,8 @@ check_status() {
 
 # Initialize
 LAST_STATUS=""
-NOTIFIED_10="false"
-NOTIFIED_5="false"
+NOTIFIED_WARNING="false"
+NOTIFIED_CRITICAL="false"
 
 # Run an initial check
 check_status

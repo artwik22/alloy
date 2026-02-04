@@ -37,6 +37,14 @@ pub struct ColorConfig {
     pub github_username: Option<String>,
     #[serde(rename = "dashboardPosition", skip_serializing_if = "Option::is_none")]
     pub dashboard_position: Option<String>,
+    #[serde(rename = "scriptsAutostartBattery", skip_serializing_if = "Option::is_none")]
+    pub scripts_autostart_battery: Option<bool>,
+    #[serde(rename = "scriptsAutostartScreensaver", skip_serializing_if = "Option::is_none")]
+    pub scripts_autostart_screensaver: Option<bool>,
+    #[serde(rename = "batteryThreshold", skip_serializing_if = "Option::is_none")]
+    pub battery_threshold: Option<u8>,
+    #[serde(rename = "screensaverTimeout", skip_serializing_if = "Option::is_none")]
+    pub screensaver_timeout: Option<u32>,
 }
 
 impl Default for ColorConfig {
@@ -60,6 +68,10 @@ impl Default for ColorConfig {
             sidepanel_content: Some("calendar".to_string()),
             github_username: None,
             dashboard_position: Some("right".to_string()), // Default to right like sidebar
+            scripts_autostart_battery: Some(false),
+            scripts_autostart_screensaver: Some(false),
+            battery_threshold: Some(10),
+            screensaver_timeout: Some(30),
         }
     }
 }
@@ -282,9 +294,36 @@ impl ColorConfig {
             cmd.arg("");
         }
 
-        // Argument 19: dashboardPosition (string)
         if let Some(ref pos) = self.dashboard_position {
             cmd.arg(pos);
+        } else {
+            cmd.arg("");
+        }
+
+        // Argument 20: scriptsAutostartBattery
+        if let Some(enabled) = self.scripts_autostart_battery {
+            cmd.arg(if enabled { "true" } else { "false" });
+        } else {
+            cmd.arg("");
+        }
+
+        // Argument 21: scriptsAutostartScreensaver
+        if let Some(enabled) = self.scripts_autostart_screensaver {
+            cmd.arg(if enabled { "true" } else { "false" });
+        } else {
+            cmd.arg("");
+        }
+
+        // Argument 22: batteryThreshold
+        if let Some(val) = self.battery_threshold {
+            cmd.arg(val.to_string());
+        } else {
+            cmd.arg("");
+        }
+
+        // Argument 23: screensaverTimeout
+        if let Some(val) = self.screensaver_timeout {
+            cmd.arg(val.to_string());
         } else {
             cmd.arg("");
         }
@@ -379,6 +418,22 @@ impl ColorConfig {
 
     pub fn set_dashboard_position(&mut self, value: &str) {
         self.dashboard_position = Some(value.to_string());
+    }
+
+    pub fn set_scripts_autostart_battery(&mut self, enabled: bool) {
+        self.scripts_autostart_battery = Some(enabled);
+    }
+
+    pub fn set_scripts_autostart_screensaver(&mut self, enabled: bool) {
+        self.scripts_autostart_screensaver = Some(enabled);
+    }
+
+    pub fn set_battery_threshold(&mut self, value: u8) {
+        self.battery_threshold = Some(value);
+    }
+
+    pub fn set_screensaver_timeout(&mut self, value: u32) {
+        self.screensaver_timeout = Some(value);
     }
 
     /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.
