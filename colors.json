@@ -18,5 +18,8 @@
   "dashboardPosition": "right",
   "scriptsAutostartBattery": true,
   "scriptsAutostartScreensaver": true,
-  "screensaverTimeout": 60
+  "screensaverTimeout": 60,
+  "scriptsAutostartAutofloat": true,
+  "autofloatWidth": 980,
+  "autofloatHeight": 620
 }

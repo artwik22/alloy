@@ -1,6 +1,7 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Entry};
+use gtk4::{Box as GtkBox, Orientation, Label, ScrolledWindow, Switch, Entry, Button};
 use std::sync::{Arc, Mutex};
+use std::process::Command;
 
 use crate::core::config::ColorConfig;
 use crate::core::quickshell;
@@ -71,6 +72,10 @@ impl ScriptsTab {
         screensaver_card.append(&create_screensaver_timeout_row(Arc::clone(&config)));
 
         content.append(&screensaver_card);
+
+        // --- Auto Float Window ---
+        add_group_header(&content, "Auto Float Window");
+        content.append(&create_autofloat_card(Arc::clone(&config)));
 
         scrolled.set_child(Some(&content));
 
@@ -215,4 +220,127 @@ fn create_screensaver_timeout_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     });
 
     create_card_row("Idle Timeout (seconds)", entry)
+}
+
+fn create_autofloat_card(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let card = GtkBox::new(Orientation::Vertical, 0);
+    card.add_css_class("card");
+
+    // --- 1. Enable Switch ---
+    let switch = Switch::new();
+    let current_autostart = config.lock().unwrap().scripts_autostart_autofloat.unwrap_or(false);
+    switch.set_active(current_autostart);
+    switch.set_valign(gtk4::Align::Center);
+
+    {
+        let config = config.clone();
+        switch.connect_active_notify(move |s| {
+            let active = s.is_active();
+            // Get current saved width/height to update autostart file correctly
+            let width = config.lock().unwrap().autofloat_width.unwrap_or(1000);
+            let height = config.lock().unwrap().autofloat_height.unwrap_or(700);
+            
+            // 1. Update Autostart File
+            let args = format!("{} {}", width, height);
+            let _ = autostart::update_script("auto-float.sh", Some(args), active);
+
+            // 2. Update Config
+            let mut cfg = ColorConfig::load();
+            cfg.set_scripts_autostart_autofloat(active);
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                schedule_notify_color_change_ms(500);
+            }
+
+            // 3. Reset/Manage Process
+            // Always kill existing first to avoid duplicates
+            let _ = Command::new("pkill").arg("-f").arg("alloy/scripts/auto-float.sh").output();
+
+            if active {
+                if let Ok(home) = std::env::var("HOME") {
+                    let script = format!("{}/.config/alloy/scripts/auto-float.sh", home);
+                    let _ = Command::new(script)
+                        .arg(width.to_string())
+                        .arg(height.to_string())
+                        .spawn();
+                }
+            }
+        });
+    }
+    card.append(&create_card_row("Enable Auto Float", switch));
+
+    // --- 2. Width Entry ---
+    let width_entry = Entry::new();
+    let current_width = config.lock().unwrap().autofloat_width.unwrap_or(1000);
+    width_entry.set_text(&current_width.to_string());
+    width_entry.set_placeholder_text(Some("1000"));
+    width_entry.set_width_chars(5);
+    width_entry.set_valign(gtk4::Align::Center);
+    card.append(&create_card_row("Window Width", width_entry.clone()));
+
+    // --- 3. Height Entry ---
+    let height_entry = Entry::new();
+    let current_height = config.lock().unwrap().autofloat_height.unwrap_or(700);
+    height_entry.set_text(&current_height.to_string());
+    height_entry.set_placeholder_text(Some("700"));
+    height_entry.set_width_chars(5);
+    height_entry.set_valign(gtk4::Align::Center);
+    card.append(&create_card_row("Window Height", height_entry.clone()));
+
+    // --- 4. Save Button ---
+    let save_btn = Button::with_label("Save & Apply");
+    save_btn.add_css_class("suggested-action"); 
+    save_btn.set_halign(gtk4::Align::End); 
+    save_btn.set_margin_top(12);
+    save_btn.set_margin_bottom(12);
+    save_btn.set_margin_end(12); // Add some right margin so it's not flush with edge
+
+    {
+        let config = config.clone();
+        save_btn.connect_clicked(move |_| {
+            let width_str = width_entry.text();
+            let height_str = height_entry.text();
+
+            if let (Ok(w), Ok(h)) = (width_str.parse::<u32>(), height_str.parse::<u32>()) {
+                // 1. Save Config
+                let mut cfg = ColorConfig::load();
+                cfg.set_autofloat_width(w);
+                cfg.set_autofloat_height(h);
+                
+                if cfg.save().is_ok() {
+                    *config.lock().unwrap() = cfg.clone();
+                    schedule_notify_color_change_ms(500);
+
+                    // 2. Check if enabled
+                    let enabled = config.lock().unwrap().scripts_autostart_autofloat.unwrap_or(false);
+
+                    // 3. Update Autostart File
+                    let args = format!("{} {}", w, h);
+                    let _ = autostart::update_script("auto-float.sh", Some(args), enabled);
+
+                    // 4. Reset Process
+                    let _ = Command::new("pkill").arg("-f").arg("alloy/scripts/auto-float.sh").output();
+
+                    if enabled {
+                        if let Ok(home) = std::env::var("HOME") {
+                            let script = format!("{}/.config/alloy/scripts/auto-float.sh", home);
+                            let _ = Command::new(script)
+                                .arg(w.to_string())
+                                .arg(h.to_string())
+                                .spawn();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Wrap button in a box for layout
+    let btn_box = GtkBox::new(Orientation::Horizontal, 0);
+    btn_box.set_halign(gtk4::Align::End);
+    btn_box.append(&save_btn);
+
+    card.append(&btn_box);
+
+    card
 }

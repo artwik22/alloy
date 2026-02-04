@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import QtQuick.Particles
 
 PanelWindow {
     id: root
@@ -23,7 +24,7 @@ PanelWindow {
     property color colorAccent: "#c0c0c0"
     property color colorSecondary: "#080808"
 
-    color: "transparent" 
+    color: "transparent"
 
     // Explicit solid background
     Rectangle {
@@ -32,10 +33,32 @@ PanelWindow {
         z: -100
     }
 
-    // --- Color Loading (Backup) ---
+    // --- Color Loading & Entry Animation ---
     Component.onCompleted: {
         root.contentItem.forceActiveFocus()
         loadColors()
+        // entryAnim.start()
+    }
+    
+    NumberAnimation {
+        id: entryAnim
+        target: root
+        property: "opacity"
+        to: 1
+        duration: 600
+        easing.type: Easing.OutQuad
+    }
+    
+    function quitSafely() {
+        if (!exitAnim.running) {
+            exitAnim.start()
+        }
+    }
+    
+    SequentialAnimation {
+        id: exitAnim
+        NumberAnimation { target: root; property: "opacity"; to: 0; duration: 400; easing.type: Easing.InQuad }
+        ScriptAction { script: Qt.quit() }
     }
     
     function loadColors() {
@@ -55,7 +78,7 @@ PanelWindow {
         xhr.send()
     }
 
-    // --- Background Grid ---
+
     Item {
         anchors.fill: parent
         opacity: 0.15
@@ -78,6 +101,45 @@ PanelWindow {
         }
     }
 
+    // --- Ambient Particles ---
+    ParticleSystem {
+        id: sys
+        anchors.fill: parent
+        z: -50 // Behind everything
+
+        Emitter {
+            anchors.fill: parent
+            emitRate: 15
+            lifeSpan: 10000
+            lifeSpanVariation: 2000
+            size: 10
+            endSize: 0
+            
+            velocity: AngleDirection {
+                angle: 270 // Upwards
+                angleVariation: 45
+                magnitude: 20
+                magnitudeVariation: 10
+            }
+        }
+
+        ItemParticle {
+            delegate: Rectangle {
+                width: 6; height: 6
+                radius: 3
+                color: root.colorAccent
+                opacity: 0.15
+            }
+        }
+        
+        // Turbulence for natural drift
+        Wander {
+            xVariance: 50
+            yVariance: 50
+            pace: 100
+        }
+    }
+
     // --- Main Layout ---
     Item {
         id: mainContainer
@@ -90,10 +152,11 @@ PanelWindow {
             text: Qt.formatTime(new Date(), "HH")
             font.family: "Inter, Roboto, sans-serif"
             font.weight: Font.Black
-            font.pixelSize: 200
+            font.pixelSize: 400
             color: root.colorText
             anchors.left: parent.left
             anchors.top: parent.top
+            anchors.topMargin: -80
         }
         
         // 2. Minutes
@@ -102,11 +165,11 @@ PanelWindow {
             text: Qt.formatTime(new Date(), "mm")
             font.family: "Inter, Roboto, sans-serif"
             font.weight: Font.Black
-            font.pixelSize: 200
+            font.pixelSize: 400
             color: root.colorText
             anchors.left: parent.left
             anchors.top: hourText.bottom
-            anchors.topMargin: -20
+            anchors.topMargin: -40
         }
         
         // 3. Date
@@ -122,6 +185,21 @@ PanelWindow {
             horizontalAlignment: Text.AlignRight
         }
 
+        // --- Brand Watermark ---
+        Text {
+            text: "Alloy"
+            font.family: "Inter, Roboto, sans-serif"
+            font.weight: Font.Bold
+            font.pixelSize: 120
+            font.letterSpacing: 4
+            color: root.colorText
+            opacity: 0.1
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: -15
+            anchors.rightMargin: 20
+        }
+
         // --- Focus Ring ---
         Rectangle {
             id: focusRing
@@ -129,25 +207,34 @@ PanelWindow {
             border.color: root.colorAccent
             border.width: 4
             
-            x: hourText.x - 20; y: hourText.y
-            width: hourText.contentWidth + 40; height: hourText.contentHeight
+            // Initial State
+            x: hourText.x - 20
+            y: hourText.y + 10
+            width: hourText.contentWidth + 40
+            height: hourText.contentHeight
             
             SequentialAnimation {
                 running: true; loops: Animation.Infinite
+                
+                // To Hour (Full Size)
                 ParallelAnimation {
                     NumberAnimation { target: focusRing; property: "x"; to: hourText.x - 20; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "y"; to: hourText.y + 15; duration: 800; easing.type: Easing.InOutQuart }
+                    NumberAnimation { target: focusRing; property: "y"; to: hourText.y + 10; duration: 800; easing.type: Easing.InOutQuart }
                     NumberAnimation { target: focusRing; property: "width"; to: hourText.contentWidth + 40; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "height"; to: hourText.contentHeight - 20; duration: 800; easing.type: Easing.InOutQuart }
+                    NumberAnimation { target: focusRing; property: "height"; to: hourText.contentHeight; duration: 800; easing.type: Easing.InOutQuart }
                 }
                 PauseAnimation { duration: 4000 }
+                
+                // To Minute (Full Size)
                 ParallelAnimation {
                     NumberAnimation { target: focusRing; property: "x"; to: minText.x - 20; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "y"; to: minText.y + 15; duration: 800; easing.type: Easing.InOutQuart }
+                    NumberAnimation { target: focusRing; property: "y"; to: minText.y + 10; duration: 800; easing.type: Easing.InOutQuart }
                     NumberAnimation { target: focusRing; property: "width"; to: minText.contentWidth + 40; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "height"; to: minText.contentHeight - 20; duration: 800; easing.type: Easing.InOutQuart }
+                    NumberAnimation { target: focusRing; property: "height"; to: minText.contentHeight; duration: 800; easing.type: Easing.InOutQuart }
                 }
                 PauseAnimation { duration: 4000 }
+                
+                // To Date (Standard bounds)
                 ParallelAnimation {
                     NumberAnimation { target: focusRing; property: "x"; to: dateText.x - 20; duration: 800; easing.type: Easing.InOutQuart }
                     NumberAnimation { target: focusRing; property: "y"; to: dateText.y - 10; duration: 800; easing.type: Easing.InOutQuart }
@@ -183,10 +270,24 @@ PanelWindow {
 
     MouseArea {
         anchors.fill: parent; cursorShape: Qt.BlankCursor
-        onClicked: Qt.quit()
+        hoverEnabled: true 
+
+        // Grace period to prevent immediate exit on launch
+        Timer {
+            id: graceTimer
+            interval: 1000
+            running: true
+        }
+
+        onClicked: {
+            if (!graceTimer.running) root.quitSafely()
+        }
+        onPositionChanged: {
+            if (!graceTimer.running) root.quitSafely()
+        }
     }
     Item {
         focus: true
-        Keys.onPressed: event => Qt.quit()
+        Keys.onPressed: event => root.quitSafely()
     }
 }

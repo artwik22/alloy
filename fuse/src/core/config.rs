@@ -49,6 +49,12 @@ pub struct ColorConfig {
     pub dashboard_resource_1: Option<String>,
     #[serde(rename = "dashboardResource2", skip_serializing_if = "Option::is_none")]
     pub dashboard_resource_2: Option<String>,
+    #[serde(rename = "scriptsAutostartAutofloat", skip_serializing_if = "Option::is_none")]
+    pub scripts_autostart_autofloat: Option<bool>,
+    #[serde(rename = "autofloatWidth", skip_serializing_if = "Option::is_none")]
+    pub autofloat_width: Option<u32>,
+    #[serde(rename = "autofloatHeight", skip_serializing_if = "Option::is_none")]
+    pub autofloat_height: Option<u32>,
 }
 
 impl Default for ColorConfig {
@@ -78,6 +84,9 @@ impl Default for ColorConfig {
             screensaver_timeout: Some(30),
             dashboard_resource_1: Some("cpu".to_string()),
             dashboard_resource_2: Some("ram".to_string()),
+            scripts_autostart_autofloat: Some(false),
+            autofloat_width: Some(1000),
+            autofloat_height: Some(700),
         }
     }
 }
@@ -348,6 +357,27 @@ impl ColorConfig {
             cmd.arg("");
         }
         
+        // Argument 26: scriptsAutostartAutofloat
+        if let Some(enabled) = self.scripts_autostart_autofloat {
+            cmd.arg(if enabled { "true" } else { "false" });
+        } else {
+            cmd.arg("");
+        }
+
+        // Argument 27: autofloatWidth
+        if let Some(val) = self.autofloat_width {
+            cmd.arg(val.to_string());
+        } else {
+            cmd.arg("");
+        }
+
+        // Argument 28: autofloatHeight
+        if let Some(val) = self.autofloat_height {
+            cmd.arg(val.to_string());
+        } else {
+            cmd.arg("");
+        }
+        
         let output = cmd.output()?;
         if !output.status.success() {
             // Fallback to direct save on error
@@ -462,6 +492,18 @@ impl ColorConfig {
 
     pub fn set_dashboard_resource_2(&mut self, value: &str) {
         self.dashboard_resource_2 = Some(value.to_string());
+    }
+
+    pub fn set_scripts_autostart_autofloat(&mut self, enabled: bool) {
+        self.scripts_autostart_autofloat = Some(enabled);
+    }
+
+    pub fn set_autofloat_width(&mut self, value: u32) {
+        self.autofloat_width = Some(value);
+    }
+
+    pub fn set_autofloat_height(&mut self, value: u32) {
+        self.autofloat_height = Some(value);
     }
 
     /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.

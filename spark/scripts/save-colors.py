@@ -72,6 +72,12 @@ if "batteryThreshold" in existing_data:
     colors["batteryThreshold"] = existing_data["batteryThreshold"]
 if "screensaverTimeout" in existing_data:
     colors["screensaverTimeout"] = existing_data["screensaverTimeout"]
+if "scriptsAutostartAutofloat" in existing_data:
+    colors["scriptsAutostartAutofloat"] = existing_data["scriptsAutostartAutofloat"]
+if "autofloatWidth" in existing_data:
+    colors["autofloatWidth"] = existing_data["autofloatWidth"]
+if "autofloatHeight" in existing_data:
+    colors["autofloatHeight"] = existing_data["autofloatHeight"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled
@@ -147,6 +153,24 @@ if len(sys.argv) > 24 and sys.argv[24]:
 # Argument 25: dashboardResource2 ("cpu", "ram", "gpu", "network")
 if len(sys.argv) > 25 and sys.argv[25]:
     colors["dashboardResource2"] = sys.argv[25]
+
+# Argument 26: scriptsAutostartAutofloat (true/false)
+if len(sys.argv) > 26 and sys.argv[26]:
+    colors["scriptsAutostartAutofloat"] = sys.argv[26] == "true"
+
+# Argument 27: autofloatWidth (int)
+if len(sys.argv) > 27 and sys.argv[27]:
+    try:
+        colors["autofloatWidth"] = int(sys.argv[27])
+    except ValueError:
+        pass
+
+# Argument 28: autofloatHeight (int)
+if len(sys.argv) > 28 and sys.argv[28]:
+    try:
+        colors["autofloatHeight"] = int(sys.argv[28])
+    except ValueError:
+        pass
 
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)
