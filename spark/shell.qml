@@ -339,6 +339,10 @@ ShellRoot {
                     root.openClipboardManager()
                 } else if (cmd === "openSettings") {
                     root.openSettings()
+                } else if (cmd === "hideSidebar") {
+                    sharedData.sidebarVisible = false
+                } else if (cmd === "showSidebar") {
+                    sharedData.sidebarVisible = true
                 }
                 processHelperClear.runCommand(['sh', '-c', ': > /tmp/quickshell_command'], function() {
                     root.commandHandlerBusy = false

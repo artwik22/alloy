@@ -1,158 +1,112 @@
 # Alloy
 
-A collection of modern desktop applications for Linux built with Rust and GTK4/libadwaita.
+**Alloy** is a modern, modular desktop environment suite designed for Linux systems. It combines a high-performance shell overlay, a native settings manager, and a lightweight file explorer to provide a cohesive and aesthetically pleasing user experience.
 
-## 📦 Components
+Alloy is composed of three main components: **Spark**, **Fuse**, and **Index**.
 
-### 🎛️ **Fuse** - Settings Manager
-System settings application with tabs for:
-- Network & Bluetooth
-- Appearance (colors, wallpapers, theme, rounding)
-- Audio
-- Index (file manager settings)
-- Notifications
-- System
-- About
+---
 
-### 📁 **Index** - File Explorer
-Lightweight file manager with minimalist design.
+## ⚡ Spark (Shell)
 
-### 📊 **Vitals** - System Monitor
-System resource monitor with comprehensive performance tracking.
+**Spark** is the visual heart of Alloy. It is a shell built with [Quickshell](https://github.com/outfoxxed/quickshell) that provides the desktop interface elements.
 
-### ⚡ **Spark** - Shell/Launcher
-Quickshell-based launcher and shell system for Wayland.
+### Key Features
 
-## 🚀 Quick Start
+*   **Advanced Launcher**:
+    *   Fast, keyboard-centric application search.
+    *   **Package Management**: Search for packages (AUR/Pacman) and install or remove them directly from the launcher interface.
+*   **Custom Wallpaper System**:
+    *   Supports distinct wallpapers per screen.
 
-### Requirements
+*   **Notification Center**:
+    *   Fully custom notification server implementation.
+    *   History view to review past notifications.
+    *   "Do Not Disturb" mode and sound toggles.
+*   **Screensaver**:
+    *   Aesthetics-first screensaver with large clock and widgets.
+    *   Automatically activates on system idle.
+*   **Interactive Dashboard**:
+    *   Global dashboard with tile-based widgets.
+    *   **Swappable Tiles**: Customize layout (e.g., switch the main view between **Calendar** and **GitHub Activity**).
+    *   Quick access to system stats (CPU/RAM, Network etc.).
+*   **Dynamic Sidebar**:
+    *   Toggleable visibility (can auto-hide).
+    *   Flexible positioning: Left, Top, Right, or Bottom.
+*   **Clipboard Manager**:
+    *   Retains clipboard history for quick access to previous copies.
+*   **Volume Control**:
+    *   Edge-activated slider for quick volume adjustments.
 
-**Basic:**
-- Rust (edition 2021)
-- GTK4 and libadwaita development libraries
-
-**For Spark:**
-- Quickshell
-- Wayland compositor (tested with Hyprland)
-
-### Installing Dependencies
-
-**Arch Linux / CachyOS:**
+### Usage
+To start the Spark shell:
 ```bash
-sudo pacman -S rust gtk4 libadwaita
+cd spark
+./run.sh
 ```
 
-**Ubuntu / Debian:**
+---
+
+## ⚙️ Fuse (Settings Manager)
+
+**Fuse** is the configuration center for Alloy. It is a native application written in **Rust** using **GTK4** and **Libadwaita**.
+
+### Features
+*   **Theme Engine & Presets**:
+    *   Create, save, and load **Color Presets**.
+    *   Instantly switch themes across the entire suite (Spark, Index, Fuse).
+*   **Appearance**:
+    *   Fine-tune colors (Background, Primary, Accent, etc.).
+    *   Manage the wallpaper library.
+*   **System Customization**:
+    *   **UI Scale**: Adjust scaling (75%, 100%, 125%) for different displays.
+    *   **Sidebar**: Configure position and default visibility.
+    *   **Notifications**: Toggle popups and sounds.
+
+### Build & Run
 ```bash
-sudo apt install rustc libgtk-4-dev libadwaita-1-dev
+cd fuse
+cargo run --release
 ```
 
-**Fedora:**
+---
+
+## 📂 Index (File Explorer)
+
+**Index** is a lightweight, fast file explorer designed to fit perfectly with the Alloy aesthetic. It is built with **Rust**, **GTK4**, and **Libadwaita**.
+
+### Features
+*   **Minimalist Interface**: Clean and focused design.
+*   **Fast Navigation**: Optimized for speed.
+*   **Essential Operations**: Tailored for common file management tasks.
+
+### Build & Run
 ```bash
-sudo dnf install rust gtk4-devel libadwaita-devel
+cd index
+cargo run --release
 ```
 
-### Building & Installing
+---
 
-Each project has its own `install.sh` script:
+## 🛠️ Scripts & UX Utilities
 
+Alloy includes global automation scripts located in `scripts/`:
+
+*   `battery_monitor.sh`: Monitors battery status and sends low battery notifications.
+*   `idle-screensaver.sh`: Manages idle time detection to automatically launch the screensaver.
+
+Note: Internal scripts for Spark (like package management and screenshot tools) are located in `spark/scripts/`.
+
+## 📸 Gallery
+
+i am to lazy to do pretty screenshots today
+
+## 🎨 Configuration
+
+Configuration is centralized in `~/.config/alloy/colors.json`. While **Fuse** is the recommended editor, you can manually verify settings here.
+
+**Low Performance Mode**:
+If you are running on older hardware, you can disable blur effects and complex animations:
 ```bash
-# Fuse
-cd fuse && ./install.sh
-
-# Index
-cd index && ./install.sh
-
-# Vitals
-cd Vitals && ./install.sh
-
-# Spark
-cd spark && ./install.sh
+touch ~/.config/alloy/low-perf
 ```
-
-Installation scripts automatically:
-- Check and configure Rust toolchain
-- Build the project in release mode
-- Install binaries to `/usr/local/bin` (requires sudo) or `~/.local/bin`
-
-### Running
-
-After installation, you can run applications directly from the terminal:
-
-```bash
-# Fuse
-fuse
-
-# Index
-index
-
-# Vitals
-vitals
-
-# Spark
-cd spark && ./run.sh
-```
-
-Or directly from project directories:
-
-```bash
-# Fuse
-cd fuse && ./target/release/fuse
-
-# Index
-cd index && ./target/release/index
-
-# Vitals
-cd Vitals && ./target/release/vitals
-
-# Spark
-cd spark && ./run.sh
-```
-
-## ⚙️ Configuration
-
-**Main configuration:**
-- `~/.config/alloy/colors.json` - Colors, wallpapers, theme settings
-- Fallback: `~/.config/sharpshell/colors.json`
-
-Settings are automatically synchronized between applications.
-
-## 🏗️ Architecture
-
-The project consists of several independent applications:
-
-- **Fuse** - System settings application
-- **Index** - File manager
-- **Vitals** - System monitor (uses the `core` library from the main directory)
-- **Spark** - Quickshell-based launcher (QML)
-
-Each component can be built and installed independently.
-
-## 🔧 Troubleshooting
-
-**Build issues:**
-```bash
-# Check target directory permissions
-sudo chown -R $USER:$USER ~/.config/alloy/*/target/
-
-# Clean and rebuild
-cd <project> && cargo clean && ./install.sh
-```
-
-**Spark not working:**
-- Check Quickshell installation
-- Verify keyboard shortcuts in compositor
-- Run `cd spark && ./run.sh` to test
-- Spark requires a Wayland compositor
-
-**Dependency issues:**
-- Make sure you have all required development libraries installed
-- On Arch Linux, Quickshell may require installation from AUR (use `yay` or `paru`)
-
-## 📄 License
-
-MIT License
-
-## 👥 Authors
-
-Alloy Team
+Restart Spark for changes to take effect.
