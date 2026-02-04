@@ -45,6 +45,10 @@ pub struct ColorConfig {
     pub battery_threshold: Option<u8>,
     #[serde(rename = "screensaverTimeout", skip_serializing_if = "Option::is_none")]
     pub screensaver_timeout: Option<u32>,
+    #[serde(rename = "dashboardResource1", skip_serializing_if = "Option::is_none")]
+    pub dashboard_resource_1: Option<String>,
+    #[serde(rename = "dashboardResource2", skip_serializing_if = "Option::is_none")]
+    pub dashboard_resource_2: Option<String>,
 }
 
 impl Default for ColorConfig {
@@ -72,6 +76,8 @@ impl Default for ColorConfig {
             scripts_autostart_screensaver: Some(false),
             battery_threshold: Some(10),
             screensaver_timeout: Some(30),
+            dashboard_resource_1: Some("cpu".to_string()),
+            dashboard_resource_2: Some("ram".to_string()),
         }
     }
 }
@@ -327,6 +333,20 @@ impl ColorConfig {
         } else {
             cmd.arg("");
         }
+
+        // Argument 24: dashboardResource1
+        if let Some(ref val) = self.dashboard_resource_1 {
+            cmd.arg(val);
+        } else {
+            cmd.arg("");
+        }
+        
+        // Argument 25: dashboardResource2
+        if let Some(ref val) = self.dashboard_resource_2 {
+            cmd.arg(val);
+        } else {
+            cmd.arg("");
+        }
         
         let output = cmd.output()?;
         if !output.status.success() {
@@ -434,6 +454,14 @@ impl ColorConfig {
 
     pub fn set_screensaver_timeout(&mut self, value: u32) {
         self.screensaver_timeout = Some(value);
+    }
+
+    pub fn set_dashboard_resource_1(&mut self, value: &str) {
+        self.dashboard_resource_1 = Some(value.to_string());
+    }
+
+    pub fn set_dashboard_resource_2(&mut self, value: &str) {
+        self.dashboard_resource_2 = Some(value.to_string());
     }
 
     /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.

@@ -103,6 +103,8 @@ impl QuickshellTab {
 
         dashboard_card.append(&create_dashboard_position_row(Arc::clone(&config)));
         dashboard_card.append(&create_dashboard_tile_row(Arc::clone(&config)));
+        dashboard_card.append(&create_dashboard_resource_row("Resource 1", true, Arc::clone(&config)));
+        dashboard_card.append(&create_dashboard_resource_row("Resource 2", false, Arc::clone(&config)));
 
         content.append(&dashboard_card);
 
@@ -547,4 +549,77 @@ fn create_dashboard_tile_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     box_.append(&btn_net);
 
     create_card_row("Info Tile", box_)
+}
+
+fn create_dashboard_resource_row(label: &str, is_res1: bool, config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let box_ = GtkBox::new(Orientation::Horizontal, 6);
+    let current = if is_res1 {
+        config.lock().unwrap().dashboard_resource_1.clone().unwrap_or_else(|| "cpu".to_string())
+    } else {
+        config.lock().unwrap().dashboard_resource_2.clone().unwrap_or_else(|| "ram".to_string())
+    };
+
+    let resources = vec!["CPU", "RAM", "GPU", "Network"];
+    let mut buttons = Vec::new();
+
+    for res in &resources {
+        let btn = Button::with_label(res);
+        if current.eq_ignore_ascii_case(res) {
+            btn.add_css_class("suggested-action");
+        }
+        buttons.push(btn.clone());
+        box_.append(&btn);
+    }
+
+    let btn_cpu = buttons[0].clone();
+    let btn_ram = buttons[1].clone();
+    let btn_gpu = buttons[2].clone();
+    let btn_net = buttons[3].clone();
+
+    let update_visuals = {
+        let bc = btn_cpu.clone();
+        let br = btn_ram.clone();
+        let bg = btn_gpu.clone();
+        let bn = btn_net.clone();
+        move |new_val: &str| {
+            bc.remove_css_class("suggested-action");
+            br.remove_css_class("suggested-action");
+            bg.remove_css_class("suggested-action");
+            bn.remove_css_class("suggested-action");
+            match new_val.to_lowercase().as_str() {
+                "cpu" => bc.add_css_class("suggested-action"),
+                "ram" => br.add_css_class("suggested-action"),
+                "gpu" => bg.add_css_class("suggested-action"),
+                "network" => bn.add_css_class("suggested-action"),
+                _ => {}
+            }
+        }
+    };
+
+    let bind_click = |btn: &Button, val: &'static str, is_r1: bool, config: Arc<Mutex<ColorConfig>>, updater: Box<dyn Fn(&str)>| {
+        btn.connect_clicked(move |_| {
+            let mut cfg = ColorConfig::load();
+            if is_r1 {
+                cfg.set_dashboard_resource_1(val.to_lowercase().as_str());
+            } else {
+                cfg.set_dashboard_resource_2(val.to_lowercase().as_str());
+            }
+            if cfg.save().is_ok() {
+                if is_r1 {
+                   config.lock().unwrap().dashboard_resource_1 = Some(val.to_lowercase());
+                } else {
+                   config.lock().unwrap().dashboard_resource_2 = Some(val.to_lowercase());
+                }
+                updater(val);
+                schedule_notify_color_change_ms(200);
+            }
+        });
+    };
+
+    bind_click(&btn_cpu, "CPU", is_res1, config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_ram, "RAM", is_res1, config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_gpu, "GPU", is_res1, config.clone(), Box::new(update_visuals.clone()));
+    bind_click(&btn_net, "Network", is_res1, config.clone(), Box::new(update_visuals.clone()));
+
+    create_card_row(label, box_)
 }

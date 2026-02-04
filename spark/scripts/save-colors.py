@@ -140,6 +140,14 @@ if len(sys.argv) > 23 and sys.argv[23]:
     except ValueError:
         pass
 
+# Argument 24: dashboardResource1 ("cpu", "ram", "gpu", "network")
+if len(sys.argv) > 24 and sys.argv[24]:
+    colors["dashboardResource1"] = sys.argv[24]
+
+# Argument 25: dashboardResource2 ("cpu", "ram", "gpu", "network")
+if len(sys.argv) > 25 and sys.argv[25]:
+    colors["dashboardResource2"] = sys.argv[25]
+
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)
 

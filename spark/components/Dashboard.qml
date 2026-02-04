@@ -11,6 +11,65 @@ PanelWindow {
     id: dashboardRoot
 
     signal perfUpdated()
+    
+    // Resource History Arrays
+    property var cpuHistory: []
+    property var ramHistory: []
+    property var gpuHistory: []
+    property var networkHistory: []
+    
+    // Resource Current Values (Implicitly defined by usage in timers, but declaring for clarity/safety)
+    property int cpuUsageValue: 0
+    property int ramUsageValue: 0
+    property int gpuUsageValue: 0
+    property real networkRxMBs: 0
+    property real networkTxMBs: 0
+    property int ramTotalGB: 0
+    property int cpuTempValue: 0
+    property int gpuTempValue: 0
+    
+    // Helper to push to history
+    function pushHistory(arr, val) {
+        if (!arr) arr = []
+        arr.push(val)
+        if (arr.length > 60) arr.shift()
+        return arr
+    }
+
+    function getResourceHistory(res) {
+        if (res === "ram") return ramHistory
+        if (res === "gpu") return gpuHistory
+        if (res === "network") return networkHistory
+        return cpuHistory
+    }
+    
+    function getResourceLabel(res) {
+        if (res === "ram") return "RAM Usage"
+        if (res === "gpu") return "GPU Usage"
+        if (res === "network") return "Network"
+        return "CPU Usage"
+    }
+    
+    function getResourceIcon(res) {
+        if (res === "ram") return "󰍛"
+        if (res === "gpu") return "󰢮"
+        if (res === "network") return "󰇚"
+        return "󰻠"
+    }
+    
+    function getResourceValueText(res) {
+        if (res === "ram") return ramUsageValue + "%"
+        if (res === "gpu") return gpuUsageValue + "%"
+        if (res === "network") return (networkRxMBs + networkTxMBs).toFixed(1) + " MB/s"
+        return cpuUsageValue + "%"
+    }
+    
+    function getResourceSubText(res) {
+        if (res === "ram") return (ramTotalGB > 0 ? ramTotalGB + " GB Total" : "")
+        if (res === "gpu") return (gpuTempValue > 0 ? gpuTempValue + "°C" : "")
+        if (res === "network") return "↓ " + networkRxMBs.toFixed(1) + " ↑ " + networkTxMBs.toFixed(1)
+        return (cpuTempValue > 0 ? cpuTempValue + "°C" : "")
+    }
 
     property string panelPos: (sharedData && sharedData.dashboardPosition) ? sharedData.dashboardPosition : "right"
     property bool isHorizontal: panelPos === "top" || panelPos === "bottom"
@@ -786,7 +845,7 @@ PanelWindow {
                             }
                         }
                         
-                        // CPU Usage Card – rozciąga się
+                        // Resource 1 Card
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -794,7 +853,9 @@ PanelWindow {
                             Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
-                                    
+                            
+                            property string resource: (sharedData && sharedData.dashboardResource1) ? sharedData.dashboardResource1 : "cpu"
+                            
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
                             transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
@@ -818,42 +879,47 @@ PanelWindow {
                                 }
                             }
                                     
-                                    Column {
+                            Column {
                                 anchors.fill: parent
                                 anchors.margins: 12
-                                        spacing: 5
-                                        
+                                spacing: 5
+                                
                                 Row {
                                     spacing: 5
-                                        Text {
-                                        text: "󰻠"
+                                    Text {
+                                        text: getResourceIcon(parent.parent.resource)
                                         font.pixelSize: 12
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        
-                                        Text {
-                                        text: "CPU"
-                                        font.pixelSize: 11
-                                            font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                            color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        
-                                        Text {
-                                        text: cpuUsageValue + "%"
-                                        font.pixelSize: 11
-                                            font.family: "sans-serif"
-                                        font.weight: Font.Bold
-                                            color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
-                                        }
-                                        
-                                // Line chart
+                                    Text {
+                                        text: getResourceLabel(parent.parent.resource)
+                                        font.pixelSize: 11
+                                        font.family: "sans-serif"
+                                        font.weight: Font.Bold
+                                        color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Text {
+                                        text: getResourceValueText(parent.parent.resource)
+                                        font.pixelSize: 11
+                                        font.family: "sans-serif"
+                                        font.weight: Font.Bold
+                                        color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Text {
+                                        text: getResourceSubText(parent.parent.resource)
+                                        font.pixelSize: 10
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#888888"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: text !== ""
+                                    }
+                                }
+                                
                                 Canvas {
-                                    id: cpuChart
+                                    id: res1Chart
                                     width: parent.width
                                     height: 128
                                     
@@ -861,11 +927,17 @@ PanelWindow {
                                         var ctx = getContext("2d")
                                         ctx.clearRect(0, 0, width, height)
                                         
-                                        if (cpuHistory.length < 2) return
+                                        var hist = getResourceHistory(parent.parent.resource)
+                                        if (!hist || hist.length < 2) return
                                         
                                         var chartWidth = width
                                         var chartHeight = height
                                         var maxValue = 100
+                                        if (parent.parent.resource === "network") {
+                                            var max = 1.0 
+                                            for(var k=0; k<hist.length; k++) if(hist[k] > max) max = hist[k]
+                                            maxValue = max * 1.2
+                                        }
                                         
                                         // Draw background
                                         ctx.fillStyle = (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
@@ -882,33 +954,29 @@ PanelWindow {
                                             ctx.stroke()
                                         }
                                         
-                                        // Draw line chart using Bezier curves for maximum smoothness
+                                        // Draw graph
                                         ctx.strokeStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         ctx.lineWidth = 2
                                         ctx.beginPath()
                                         
-                                        var stepX = chartWidth / (cpuHistory.length - 1)
-                                        
-                                        // Helper for calculating Y
+                                        var stepX = chartWidth / (Math.max(hist.length, 2) - 1)
                                         function getY(val) { return chartHeight - (val / maxValue) * chartHeight }
                                         
-                                        ctx.moveTo(0, getY(cpuHistory[0]))
-                                        
-                                        for (var j = 1; j < cpuHistory.length - 2; j++) {
+                                        ctx.moveTo(0, getY(hist[0]))
+                                        for (var j = 1; j < hist.length - 2; j++) {
                                             var xc = (j * stepX + (j + 1) * stepX) / 2
-                                            var yc = (getY(cpuHistory[j]) + getY(cpuHistory[j+1])) / 2
-                                            ctx.quadraticCurveTo(j * stepX, getY(cpuHistory[j]), xc, yc)
+                                            var yc = (getY(hist[j]) + getY(hist[j+1])) / 2
+                                            ctx.quadraticCurveTo(j * stepX, getY(hist[j]), xc, yc)
                                         }
-                                        
-                                        // For the last two points
-                                        if (cpuHistory.length > 2) {
-                                            var lastIdx = cpuHistory.length - 2
-                                            ctx.quadraticCurveTo(lastIdx * stepX, getY(cpuHistory[lastIdx]), (lastIdx+1) * stepX, getY(cpuHistory[lastIdx+1]))
+                                        if (hist.length > 2) {
+                                            var lastIdx = hist.length - 2
+                                            ctx.quadraticCurveTo(lastIdx * stepX, getY(hist[lastIdx]), (lastIdx+1) * stepX, getY(hist[lastIdx+1]))
+                                        } else if (hist.length === 2) {
+                                            ctx.lineTo(stepX, getY(hist[1]))
                                         }
                                         
                                         ctx.stroke()
                                         
-                                        // Fill area under line
                                         ctx.lineTo(chartWidth, chartHeight)
                                         ctx.lineTo(0, chartHeight)
                                         ctx.closePath()
@@ -918,34 +986,17 @@ PanelWindow {
                                         ctx.globalAlpha = 1.0
                                     }
                                     
-                                    function updateHistory() {
-                                        cpuUsageEMA = (cpuUsageValue * smoothingFactor) + (cpuUsageEMA * (1.0 - smoothingFactor))
-                                        cpuHistory.push(cpuUsageEMA)
-                                        if (cpuHistory.length > maxHistoryLength) {
-                                            cpuHistory.shift()
-                                        }
-                                        requestPaint()
-                                    }
-                                    
                                     Connections {
                                         target: dashboardRoot
                                         function onPerfUpdated() {
-                                            cpuChart.updateHistory()
+                                            res1Chart.requestPaint()
                                         }
-                                    }
-                                    
-                                    Component.onCompleted: {
-                                        // Initialize with current value
-                                        for (var i = 0; i < maxHistoryLength; i++) {
-                                            cpuHistory.push(cpuUsageValue)
-                                        }
-                                        requestPaint()
                                     }
                                 }
                             }
                         }
                         
-                        // RAM Usage Card – rozciąga się
+                        // Resource 2 Card
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -953,6 +1004,8 @@ PanelWindow {
                             Layout.minimumHeight: 165
                             radius: 0
                             color: (sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#1a1a1a"
+                            
+                            property string resource: (sharedData && sharedData.dashboardResource2) ? sharedData.dashboardResource2 : "ram"
                             
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
@@ -985,34 +1038,39 @@ PanelWindow {
                                 Row {
                                     spacing: 5
                                     Text {
-                                        text: "󰍛"
+                                        text: getResourceIcon(parent.parent.resource)
                                         font.pixelSize: 12
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
-                                }
-                                    
+                                    }
                                     Text {
-                                        text: "RAM"
+                                        text: getResourceLabel(parent.parent.resource)
                                         font.pixelSize: 11
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
-                                    
                                     Text {
-                                        text: ramUsageValue + "%"
+                                        text: getResourceValueText(parent.parent.resource)
                                         font.pixelSize: 11
                                         font.family: "sans-serif"
                                         font.weight: Font.Bold
                                         color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
+                                    Text {
+                                        text: getResourceSubText(parent.parent.resource)
+                                        font.pixelSize: 10
+                                        font.family: "sans-serif"
+                                        color: (sharedData && sharedData.colorText) ? Qt.lighter(sharedData.colorText, 1.5) : "#888888"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: text !== ""
+                                    }
                                 }
                                 
-                                // Line chart
                                 Canvas {
-                                    id: ramChart
+                                    id: res2Chart
                                     width: parent.width
                                     height: 128
                                     
@@ -1020,11 +1078,17 @@ PanelWindow {
                                         var ctx = getContext("2d")
                                         ctx.clearRect(0, 0, width, height)
                                         
-                                        if (ramHistory.length < 2) return
+                                        var hist = getResourceHistory(parent.parent.resource)
+                                        if (!hist || hist.length < 2) return
                                         
                                         var chartWidth = width
                                         var chartHeight = height
                                         var maxValue = 100
+                                        if (parent.parent.resource === "network") {
+                                            var max = 1.0 
+                                            for(var k=0; k<hist.length; k++) if(hist[k] > max) max = hist[k]
+                                            maxValue = max * 1.2
+                                        }
                                         
                                         // Draw background
                                         ctx.fillStyle = (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#141414"
@@ -1041,33 +1105,29 @@ PanelWindow {
                                             ctx.stroke()
                                         }
                                         
-                                        // Draw line chart using Bezier curves for maximum smoothness
+                                        // Draw graph
                                         ctx.strokeStyle = (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                                         ctx.lineWidth = 2
                                         ctx.beginPath()
                                         
-                                        var stepX = chartWidth / (ramHistory.length - 1)
-                                        
-                                        // Helper for calculating Y
+                                        var stepX = chartWidth / (Math.max(hist.length, 2) - 1)
                                         function getY(val) { return chartHeight - (val / maxValue) * chartHeight }
                                         
-                                        ctx.moveTo(0, getY(ramHistory[0]))
-                                        
-                                        for (var j = 1; j < ramHistory.length - 2; j++) {
+                                        ctx.moveTo(0, getY(hist[0]))
+                                        for (var j = 1; j < hist.length - 2; j++) {
                                             var xc = (j * stepX + (j + 1) * stepX) / 2
-                                            var yc = (getY(ramHistory[j]) + getY(ramHistory[j+1])) / 2
-                                            ctx.quadraticCurveTo(j * stepX, getY(ramHistory[j]), xc, yc)
+                                            var yc = (getY(hist[j]) + getY(hist[j+1])) / 2
+                                            ctx.quadraticCurveTo(j * stepX, getY(hist[j]), xc, yc)
                                         }
-                                        
-                                        // For the last two points
-                                        if (ramHistory.length > 2) {
-                                            var lastIdx = ramHistory.length - 2
-                                            ctx.quadraticCurveTo(lastIdx * stepX, getY(ramHistory[lastIdx]), (lastIdx+1) * stepX, getY(ramHistory[lastIdx+1]))
+                                        if (hist.length > 2) {
+                                            var lastIdx = hist.length - 2
+                                            ctx.quadraticCurveTo(lastIdx * stepX, getY(hist[lastIdx]), (lastIdx+1) * stepX, getY(hist[lastIdx+1]))
+                                        } else if (hist.length === 2) {
+                                            ctx.lineTo(stepX, getY(hist[1]))
                                         }
                                         
                                         ctx.stroke()
                                         
-                                        // Fill area under line
                                         ctx.lineTo(chartWidth, chartHeight)
                                         ctx.lineTo(0, chartHeight)
                                         ctx.closePath()
@@ -1077,28 +1137,11 @@ PanelWindow {
                                         ctx.globalAlpha = 1.0
                                     }
                                     
-                                    function updateHistory() {
-                                        ramUsageEMA = (ramUsageValue * smoothingFactor) + (ramUsageEMA * (1.0 - smoothingFactor))
-                                        ramHistory.push(ramUsageEMA)
-                                        if (ramHistory.length > maxHistoryLength) {
-                                            ramHistory.shift()
-                                        }
-                                        requestPaint()
-                                    }
-                                    
                                     Connections {
                                         target: dashboardRoot
                                         function onPerfUpdated() {
-                                            ramChart.updateHistory()
+                                            res2Chart.requestPaint()
                                         }
-                                    }
-                                    
-                                    Component.onCompleted: {
-                                        // Initialize with current value
-                                        for (var i = 0; i < maxHistoryLength; i++) {
-                                            ramHistory.push(ramUsageValue)
-                                        }
-                                        requestPaint()
                                     }
                                 }
                             }
@@ -1857,20 +1900,10 @@ PanelWindow {
     }
 
     // ============ PROPERTIES ============
-    property int cpuUsageValue: 0
     Behavior on cpuUsageValue { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-    property int ramUsageValue: 0
     Behavior on ramUsageValue { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-    property int ramTotalGB: 16  // Will be calculated
-    property int gpuUsageValue: 0
     Behavior on gpuUsageValue { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-    property int cpuTempValue: 0
-    property int gpuTempValue: 0
     
-    // History arrays for line charts
-    property var cpuHistory: []
-    property var ramHistory: []
-    property var gpuHistory: []
     property real cpuUsageEMA: 0
     property real ramUsageEMA: 0
     property real gpuUsageEMA: 0
@@ -1884,8 +1917,6 @@ PanelWindow {
     property real mpPosition: 0
     property int mpLength: 0
     
-
-    
     // Calendar days model
     property var calendarDays: []
     
@@ -1894,10 +1925,6 @@ PanelWindow {
     
     // Battery
     property int batteryPercent: -1
-    
-    // Network (download/upload MB/s for dashboard tile)
-    property real networkRxMBs: 0
-    property real networkTxMBs: 0
     
     // Performance tab models
     property var diskUsageModel: []
@@ -2005,6 +2032,10 @@ PanelWindow {
                     var rx1 = parseFloat(parts[2]) || 0, tx1 = parseFloat(parts[3]) || 0
                     networkRxMBs = Math.max(0, (rx1 - rx0) / 1048576)
                     networkTxMBs = Math.max(0, (tx1 - tx0) / 1048576)
+                    
+                    // Update History
+                    networkHistory = pushHistory(networkHistory, networkRxMBs + networkTxMBs) // Total bandwidth for chart
+                    dashboardRoot.perfUpdated()
                 }
             }
         }
@@ -2253,6 +2284,8 @@ PanelWindow {
                     if (memTotal > 0) {
                         ramUsageValue = 100 - Math.round((memAvailable / memTotal) * 100)
                         ramTotalGB = Math.round(memTotal / 1024 / 1024)  // Convert from KB to GB
+                        
+                        ramHistory = pushHistory(ramHistory, ramUsageValue)
                     }
                     dashboardRoot.perfUpdated()
                 }
@@ -2288,6 +2321,7 @@ PanelWindow {
                             var total = user + nice + system + idle
                             if (cpuTimer.lastTotal > 0) {
                                 cpuUsageValue = Math.round((total - cpuTimer.lastTotal - (idle - cpuTimer.lastIdle)) / (total - cpuTimer.lastTotal) * 100)
+                                cpuHistory = pushHistory(cpuHistory, cpuUsageValue)
                             }
                             cpuTimer.lastTotal = total
                             cpuTimer.lastIdle = idle
@@ -2334,6 +2368,10 @@ PanelWindow {
                     } else {
                         gpuUsageValue = 0
                     }
+                    
+                    // Update History
+                    gpuHistory = pushHistory(gpuHistory, gpuUsageValue)
+                    dashboardRoot.perfUpdated()
                 } else {
                     gpuUsageValue = 0
                 }

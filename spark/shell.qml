@@ -43,6 +43,8 @@ ShellRoot {
         property bool lowPerformanceMode: false  // true gdy ~/.config/alloy/low-perf istnieje – mniejsze zacinki na słabszym PC
         property string dashboardTileLeft: "battery"  // "battery" | "network" – co pokazywać na lewym kafelku dashboardu
         property string dashboardPosition: "right"  // "right", "left", "top", "bottom"
+        property string dashboardResource1: "cpu" // "cpu", "ram", "gpu", "network"
+        property string dashboardResource2: "ram" // "cpu", "ram", "gpu", "network"
     }
     
     // Color config file path - dynamically determined
@@ -248,6 +250,12 @@ ShellRoot {
                             sharedData.sidepanelContent = json.sidepanelContent
                         } else {
                             sharedData.sidepanelContent = "calendar"
+                        }
+                        if (json.dashboardResource1) {
+                            sharedData.dashboardResource1 = json.dashboardResource1
+                        }
+                        if (json.dashboardResource2) {
+                            sharedData.dashboardResource2 = json.dashboardResource2
                         }
                         if (json.githubUsername && String(json.githubUsername).length > 0) {
                             sharedData.githubUsername = String(json.githubUsername)
@@ -459,6 +467,14 @@ ShellRoot {
                                         sharedData.sidepanelContent = json.sidepanelContent
                                         changed = true
                                     }
+                                }
+                                if (json.dashboardResource1 && json.dashboardResource1 !== sharedData.dashboardResource1) {
+                                    sharedData.dashboardResource1 = json.dashboardResource1
+                                    changed = true
+                                }
+                                if (json.dashboardResource2 && json.dashboardResource2 !== sharedData.dashboardResource2) {
+                                    sharedData.dashboardResource2 = json.dashboardResource2
+                                    changed = true
                                 }
                                 if (json.githubUsername && String(json.githubUsername) !== sharedData.githubUsername) {
                                     sharedData.githubUsername = String(json.githubUsername)
