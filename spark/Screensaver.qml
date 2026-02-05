@@ -193,57 +193,14 @@ PanelWindow {
             font.pixelSize: 120
             font.letterSpacing: 4
             color: root.colorText
-            opacity: 0.1
+            opacity: 0.03
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.topMargin: -15
             anchors.rightMargin: 20
         }
 
-        // --- Focus Ring ---
-        Rectangle {
-            id: focusRing
-            color: "transparent"
-            border.color: root.colorAccent
-            border.width: 4
-            
-            // Initial State
-            x: hourText.x - 20
-            y: hourText.y + 10
-            width: hourText.contentWidth + 40
-            height: hourText.contentHeight
-            
-            SequentialAnimation {
-                running: true; loops: Animation.Infinite
-                
-                // To Hour (Full Size)
-                ParallelAnimation {
-                    NumberAnimation { target: focusRing; property: "x"; to: hourText.x - 20; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "y"; to: hourText.y + 10; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "width"; to: hourText.contentWidth + 40; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "height"; to: hourText.contentHeight; duration: 800; easing.type: Easing.InOutQuart }
-                }
-                PauseAnimation { duration: 4000 }
-                
-                // To Minute (Full Size)
-                ParallelAnimation {
-                    NumberAnimation { target: focusRing; property: "x"; to: minText.x - 20; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "y"; to: minText.y + 10; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "width"; to: minText.contentWidth + 40; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "height"; to: minText.contentHeight; duration: 800; easing.type: Easing.InOutQuart }
-                }
-                PauseAnimation { duration: 4000 }
-                
-                // To Date (Standard bounds)
-                ParallelAnimation {
-                    NumberAnimation { target: focusRing; property: "x"; to: dateText.x - 20; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "y"; to: dateText.y - 10; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "width"; to: dateText.contentWidth + 40; duration: 800; easing.type: Easing.InOutQuart }
-                    NumberAnimation { target: focusRing; property: "height"; to: dateText.contentHeight + 20; duration: 800; easing.type: Easing.InOutQuart }
-                }
-                PauseAnimation { duration: 3000 }
-            }
-        }
+
     }
 
     // --- Seconds Bar ---

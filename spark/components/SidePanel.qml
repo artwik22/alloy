@@ -157,9 +157,9 @@ PanelWindow {
             Text {
                 id: sidePanelHoursDisplay
                 text: "00"
-                font.pixelSize: 20
+                font.pixelSize: 26
                 font.family: "sans-serif"
-                font.weight: Font.Bold
+                font.weight: Font.Black
                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                 horizontalAlignment: Text.AlignHCenter
                 
@@ -174,9 +174,9 @@ PanelWindow {
             Text {
                 id: sidePanelMinutesDisplay
                 text: "00"
-                font.pixelSize: 20
+                font.pixelSize: 26
                 font.family: "sans-serif"
-                font.weight: Font.Bold
+                font.weight: Font.Black
                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                 horizontalAlignment: Text.AlignHCenter
                 
@@ -233,9 +233,9 @@ PanelWindow {
             Text {
                 id: sidePanelHoursDisplayTop
                 text: "00"
-                font.pixelSize: 20
+                font.pixelSize: 24
                 font.family: "sans-serif"
-                font.weight: Font.Bold
+                font.weight: Font.Black
                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                 verticalAlignment: Text.AlignVCenter
                 
@@ -249,9 +249,9 @@ PanelWindow {
             
             Text {
                 text: ":"
-                font.pixelSize: 20
+                font.pixelSize: 24
                 font.family: "sans-serif"
-                font.weight: Font.Bold
+                font.weight: Font.Black
                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                 verticalAlignment: Text.AlignVCenter
             }
@@ -259,9 +259,9 @@ PanelWindow {
             Text {
                 id: sidePanelMinutesDisplayTop
                 text: "00"
-                font.pixelSize: 20
+                font.pixelSize: 24
                 font.family: "sans-serif"
-                font.weight: Font.Bold
+                font.weight: Font.Black
                 color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
                 verticalAlignment: Text.AlignVCenter
                 
@@ -372,39 +372,31 @@ PanelWindow {
                     
                     Component.onCompleted: wasActive = isActive
                     
-                    // Pionowa linia z lepszymi wskaźnikami - NOWY DESIGN
+                    // Bar Indicator - Abstract Style
                     Rectangle {
                         id: workspaceLine
                         anchors.centerIn: parent
-                        width: workspaceItem.isActive ? 4 : (workspaceItem.hasWindows ? 3 : 2.5)
-                        height: workspaceItem.isActive ? 70 : (workspaceItem.hasWindows ? 65 : 60)
+                        width: workspaceItem.isActive ? 3 : (workspaceItem.hasWindows ? 3 : 3)
+                        height: workspaceItem.isActive ? 64 : (workspaceItem.hasWindows ? 32 : 16)
+                        radius: 0
+                        
                         color: workspaceItem.isActive ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                             workspaceItem.hasWindows ? 
-                            ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
-                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                        radius: 0
-                        opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 0.9 : 0.7)
-                        
-                        Behavior on width {
-                            NumberAnimation { 
-                                duration: 400
-                                easing.type: Easing.OutCubic
-                            }
-                        }
+                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                            ((sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#666666")
+                            
+                        opacity: workspaceItem.isActive ? 1.0 : (workspaceItem.hasWindows ? 0.8 : 0.4)
                         
                         Behavior on height {
                             NumberAnimation { 
-                                duration: 400
-                                easing.type: Easing.OutCubic
+                                duration: 300
+                                easing.type: Easing.OutBack
                             }
                         }
                         
                         Behavior on color {
-                            ColorAnimation { 
-                                duration: 400
-                                easing.type: Easing.OutCubic
-                            }
+                            ColorAnimation { duration: 200 }
                         }
                         
                         Behavior on opacity {
@@ -573,41 +565,33 @@ PanelWindow {
                     
                     Component.onCompleted: wasActive = isActive
                     
-                    // Pozioma linia z lepszymi wskaźnikami - NOWY DESIGN
+                    // Bar Indicator Horizontal - Abstract Style
                     Rectangle {
                         id: workspaceLineTop
                         anchors.centerIn: parent
-                        height: workspaceItemTop.isActive ? 4 : (workspaceItemTop.hasWindows ? 3 : 2.5)
-                        width: workspaceItemTop.isActive ? 70 : (workspaceItemTop.hasWindows ? 65 : 60)
+                        height: workspaceItemTop.isActive ? 3 : (workspaceItemTop.hasWindows ? 3 : 3)
+                        width: workspaceItemTop.isActive ? 64 : (workspaceItemTop.hasWindows ? 32 : 16)
+                        radius: 0
+                        
                         color: workspaceItemTop.isActive ? 
                             ((sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff") : 
                             workspaceItemTop.hasWindows ? 
-                            ((sharedData && sharedData.colorPrimary) ? sharedData.colorPrimary : "#3a3a3a") : 
-                            ((sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#2a2a2a")
-                        radius: 0
-                        opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 0.9 : 0.7)
+                            ((sharedData && sharedData.colorText) ? sharedData.colorText : "#ffffff") : 
+                            ((sharedData && sharedData.colorSubtext) ? sharedData.colorSubtext : "#666666")
+                            
+                        opacity: workspaceItemTop.isActive ? 1.0 : (workspaceItemTop.hasWindows ? 0.8 : 0.4)
                         
                         Behavior on width {
                             NumberAnimation { 
-                                duration: 400
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                        
-                        Behavior on height {
-                            NumberAnimation { 
-                                duration: 400
-                                easing.type: Easing.OutCubic
+                                duration: 300
+                                easing.type: Easing.OutBack
                             }
                         }
                         
                         Behavior on color {
-                            ColorAnimation { 
-                                duration: 400
-                                easing.type: Easing.OutCubic
-                            }
+                            ColorAnimation { duration: 200 }
                         }
-                        
+
                         Behavior on opacity {
                             NumberAnimation { 
                                 duration: 400
@@ -704,6 +688,7 @@ PanelWindow {
                 }
             }
         }
+
         
         // Music Visualizer - PIONOWY dla pozycji left (mniejszy)
         Item {
@@ -958,8 +943,9 @@ PanelWindow {
             }
 
             Text {
-                text: "󰹑"
-                font.pixelSize: 13
+                text: "󰄀"
+                font.pixelSize: 14
+                font.family: "sans-serif"
                 anchors.centerIn: parent
                 color: screenshotButtonMouseArea.containsMouse
                     ? screenshotButtonContainer.btnIconHover

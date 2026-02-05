@@ -55,6 +55,8 @@ pub struct ColorConfig {
     pub autofloat_width: Option<u32>,
     #[serde(rename = "autofloatHeight", skip_serializing_if = "Option::is_none")]
     pub autofloat_height: Option<u32>,
+    #[serde(rename = "scriptsUseLockscreen", skip_serializing_if = "Option::is_none")]
+    pub scripts_use_lockscreen: Option<bool>,
 }
 
 impl Default for ColorConfig {
@@ -87,6 +89,7 @@ impl Default for ColorConfig {
             scripts_autostart_autofloat: Some(false),
             autofloat_width: Some(1000),
             autofloat_height: Some(700),
+            scripts_use_lockscreen: Some(false),
         }
     }
 }
@@ -378,6 +381,13 @@ impl ColorConfig {
             cmd.arg("");
         }
         
+        // Argument 29: scriptsUseLockscreen
+        if let Some(enabled) = self.scripts_use_lockscreen {
+            cmd.arg(if enabled { "true" } else { "false" });
+        } else {
+            cmd.arg("");
+        }
+        
         let output = cmd.output()?;
         if !output.status.success() {
             // Fallback to direct save on error
@@ -504,6 +514,10 @@ impl ColorConfig {
 
     pub fn set_autofloat_height(&mut self, value: u32) {
         self.autofloat_height = Some(value);
+    }
+
+    pub fn set_scripts_use_lockscreen(&mut self, enabled: bool) {
+        self.scripts_use_lockscreen = Some(enabled);
     }
 
     /// Set GTK_SCALE_FACTOR from ui_scale (75 -> 0.75, 100 -> 1.0, 125 -> 1.25). Call before gtk_init.

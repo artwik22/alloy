@@ -78,6 +78,8 @@ if "autofloatWidth" in existing_data:
     colors["autofloatWidth"] = existing_data["autofloatWidth"]
 if "autofloatHeight" in existing_data:
     colors["autofloatHeight"] = existing_data["autofloatHeight"]
+if "scriptsUseLockscreen" in existing_data:
+    colors["scriptsUseLockscreen"] = existing_data["scriptsUseLockscreen"]
 
 # Override with provided values if they exist
 # Argument 10: notificationsEnabled
@@ -171,6 +173,10 @@ if len(sys.argv) > 28 and sys.argv[28]:
         colors["autofloatHeight"] = int(sys.argv[28])
     except ValueError:
         pass
+
+# Argument 29: scriptsUseLockscreen (true/false)
+if len(sys.argv) > 29 and sys.argv[29]:
+    colors["scriptsUseLockscreen"] = sys.argv[29] == "true"
 
 with open(sys.argv[6], 'w') as f:
     json.dump(colors, f, indent=2)

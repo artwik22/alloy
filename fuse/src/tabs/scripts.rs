@@ -70,6 +70,8 @@ impl ScriptsTab {
         screensaver_card.append(&create_screensaver_autostart_row(Arc::clone(&config)));
         // Timeout
         screensaver_card.append(&create_screensaver_timeout_row(Arc::clone(&config)));
+        // Lockscreen Toggle
+        screensaver_card.append(&create_screensaver_lockscreen_row(Arc::clone(&config)));
 
         content.append(&screensaver_card);
 
@@ -220,6 +222,47 @@ fn create_screensaver_timeout_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
     });
 
     create_card_row("Idle Timeout (seconds)", entry)
+}
+
+fn create_screensaver_lockscreen_row(config: Arc<Mutex<ColorConfig>>) -> GtkBox {
+    let switch = Switch::new();
+    let current = config.lock().unwrap().scripts_use_lockscreen.unwrap_or(false);
+    switch.set_active(current);
+    switch.set_valign(gtk4::Align::Center);
+
+    {
+        let config = config.clone();
+        switch.connect_active_notify(move |s| {
+            let active = s.is_active();
+            // 1. Update Hyprland Autostart (Args might change, but apply-settings handles logic)
+            // Just ensure it triggers update
+            let timeout = config.lock().unwrap().screensaver_timeout.unwrap_or(30);
+            
+            // We pass active to update_script mainly to ensure it's still enabled/disabled correctly
+            // But here we are changing internal mode. 
+            // The autostart helper might not support specific args update easily without toggling.
+            // However, apply-settings.sh reads config.json. So saving config is enough for apply-settings.
+            
+            // 2. Update ColorConfig
+            let mut cfg = ColorConfig::load();
+            cfg.set_scripts_use_lockscreen(active);
+            if cfg.save().is_ok() {
+                *config.lock().unwrap() = cfg.clone();
+                schedule_notify_color_change_ms(500);
+
+                 // Update Autostart args if enabled
+                 let enabled = config.lock().unwrap().scripts_autostart_screensaver.unwrap_or(false);
+                 if enabled {
+                     // We need to trigger a restart of the script to pick up new lockscreen setting
+                     // updating script with same args usually does nothing in helper unless we force it
+                     // asking helper to update might be enough
+                     let _ = autostart::update_script("idle-screensaver.sh", Some(timeout.to_string()), true);
+                 }
+            }
+        });
+    }
+
+    create_card_row("Use Lockscreen instead of Screensaver", switch)
 }
 
 fn create_autofloat_card(config: Arc<Mutex<ColorConfig>>) -> GtkBox {

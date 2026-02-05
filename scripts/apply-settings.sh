@@ -26,20 +26,24 @@ try:
     ss_auto = data.get('scriptsAutostartScreensaver', False)
     bat_thresh = data.get('batteryThreshold', 10)
     ss_time = data.get('screensaverTimeout', 30)
+    ss_lock = data.get('scriptsUseLockscreen', False)
     
     print(f'BAT_AUTO={str(bat_auto).lower()}')
     print(f'SS_AUTO={str(ss_auto).lower()}')
     print(f'BAT_THRESH={bat_thresh}')
     print(f'SS_TIME={ss_time}')
+    print(f'SS_LOCK={str(ss_lock).lower()}')
 except:
     print('BAT_AUTO=false')
     print('SS_AUTO=false')
     print('BAT_THRESH=10')
     print('SS_TIME=30')
+    print('SS_LOCK=false')
 ")
 
 echo "Battery: Auto=$BAT_AUTO, Threshold=$BAT_THRESH" >> "$LOG"
-echo "Screensaver: Auto=$SS_AUTO, Timeout=$SS_TIME" >> "$LOG"
+echo "Battery: Auto=$BAT_AUTO, Threshold=$BAT_THRESH" >> "$LOG"
+echo "Screensaver: Auto=$SS_AUTO, Timeout=$SS_TIME, Lock=$SS_LOCK" >> "$LOG"
 
 # 2. Manage Battery Monitor
 # Kill existing
@@ -57,6 +61,7 @@ pkill -f "idle-screensaver.sh" || true
 pkill -f "swayidle.*Alloy Screensaver" || true 
 
 if [ "$SS_AUTO" = "true" ]; then
+if [ "$SS_AUTO" = "true" ]; then
     echo "Starting Screensaver Idle Monitor..." >> "$LOG"
-    "$SCRIPTS_DIR/idle-screensaver.sh" "$SS_TIME" >> "/tmp/alloy-screensaver.log" 2>&1 &
+    "$SCRIPTS_DIR/idle-screensaver.sh" "$SS_TIME" "$SS_LOCK" >> "/tmp/alloy-screensaver.log" 2>&1 &
 fi
