@@ -89,18 +89,17 @@ PanelWindow {
 
         
         opacity: sidePanel.panelProgress
+        Behavior on opacity {
+            NumberAnimation { duration: 350; easing.type: Easing.OutCubic }
+        }
         transform: Translate {
             x: panelPosition === "left" && !panelActive ? -implicitWidth : 
                (panelPosition === "right" && !panelActive ? implicitWidth : 0)
             y: panelPosition === "top" && !panelActive ? -implicitHeight : 
                (panelPosition === "bottom" && !panelActive ? implicitHeight : 0)
-        }
-        
-        Behavior on opacity {
-            NumberAnimation { duration: 350; easing.type: Easing.OutCubic }
-        }
-        Behavior on transform {
-            NumberAnimation { duration: 450; easing.type: Easing.OutBack }
+
+            Behavior on x { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+            Behavior on y { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
         }
     }
 
@@ -125,13 +124,7 @@ PanelWindow {
             // Smooth fade when switching panel positions
             opacity: visible && panelActive ? 1.0 : 0.0
             scale: panelActive ? 1.0 : 0.85
-            transform: Translate {
-                x: panelPosition === "left" && !panelActive ? -40 :
-                   (panelPosition === "right" && !panelActive ? 40 : 0)
-                y: panelPosition === "top" && !panelActive ? -40 :
-                   (panelPosition === "bottom" && !panelActive ? 40 : 0)
-            }
-
+            
             Behavior on opacity {
                 SequentialAnimation {
                     PauseAnimation { duration: 50 }
@@ -144,12 +137,22 @@ PanelWindow {
                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
                 }
             }
-            Behavior on transform {
-                SequentialAnimation {
-                    PauseAnimation { duration: 50 }
-                    ParallelAnimation {
-                        NumberAnimation { property: "x"; duration: 700; easing.type: Easing.OutBack }
-                        NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+            transform: Translate {
+                x: panelPosition === "left" && !panelActive ? -40 :
+                   (panelPosition === "right" && !panelActive ? 40 : 0)
+                y: panelPosition === "top" && !panelActive ? -40 :
+                   (panelPosition === "bottom" && !panelActive ? 40 : 0)
+
+                Behavior on x {
+                    SequentialAnimation {
+                        PauseAnimation { duration: 50 }
+                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                    }
+                }
+                Behavior on y {
+                    SequentialAnimation {
+                        PauseAnimation { duration: 50 }
+                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
                     }
                 }
             }
@@ -201,13 +204,7 @@ PanelWindow {
             // Smooth fade when switching panel positions
             opacity: visible && panelActive ? 1.0 : 0.0
             scale: panelActive ? 1.0 : 0.85
-            transform: Translate {
-                x: panelPosition === "left" && !panelActive ? -40 :
-                   (panelPosition === "right" && !panelActive ? 40 : 0)
-                y: panelPosition === "top" && !panelActive ? -40 :
-                   (panelPosition === "bottom" && !panelActive ? 40 : 0)
-            }
-
+            
             Behavior on opacity {
                 SequentialAnimation {
                     PauseAnimation { duration: 50 }
@@ -220,12 +217,22 @@ PanelWindow {
                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
                 }
             }
-            Behavior on transform {
-                SequentialAnimation {
-                    PauseAnimation { duration: 50 }
-                    ParallelAnimation {
-                        NumberAnimation { property: "x"; duration: 700; easing.type: Easing.OutBack }
-                        NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+            transform: Translate {
+                x: panelPosition === "left" && !panelActive ? -40 :
+                   (panelPosition === "right" && !panelActive ? 40 : 0)
+                y: panelPosition === "top" && !panelActive ? -40 :
+                   (panelPosition === "bottom" && !panelActive ? 40 : 0)
+
+                Behavior on x {
+                    SequentialAnimation {
+                        PauseAnimation { duration: 50 }
+                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                    }
+                }
+                Behavior on y {
+                    SequentialAnimation {
+                        PauseAnimation { duration: 50 }
+                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
                     }
                 }
             }
@@ -315,10 +322,6 @@ PanelWindow {
 
             opacity: panelActive ? 1.0 : 0.0
             scale: panelActive ? 1.0 : 0.85
-            transform: Translate {
-                x: panelPosition === "left" && !panelActive ? -40 :
-                   (panelPosition === "right" && !panelActive ? 40 : 0)
-            }
 
             Behavior on opacity {
                 SequentialAnimation {
@@ -332,10 +335,15 @@ PanelWindow {
                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
                 }
             }
-            Behavior on transform {
-                SequentialAnimation {
-                    PauseAnimation { duration: 100 }
-                    NumberAnimation { property: "x"; duration: 700; easing.type: Easing.OutBack }
+            transform: Translate {
+                x: panelPosition === "left" && !panelActive ? -40 :
+                   (panelPosition === "right" && !panelActive ? 40 : 0)
+
+                Behavior on x {
+                    SequentialAnimation {
+                        PauseAnimation { duration: 100 }
+                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                    }
                 }
             }
             
@@ -525,18 +533,18 @@ PanelWindow {
                         NumberAnimation { duration: 600; easing.type: Easing.OutBack }
                     }
                 }
-                Behavior on transform {
-                    SequentialAnimation {
-                        PauseAnimation { duration: 100 }
-                        NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
-                    }
-                }
-                
                 opacity: panelActive ? 1.0 : 0.0
                 scale: panelActive ? 1.0 : 0.85
                 transform: Translate {
                     y: panelPosition === "top" && !panelActive ? -40 :
                        (panelPosition === "bottom" && !panelActive ? 40 : 0)
+
+                    Behavior on y {
+                        SequentialAnimation {
+                            PauseAnimation { duration: 100 }
+                            NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                        }
+                    }
                 }
                 
                 Repeater {
@@ -709,10 +717,6 @@ PanelWindow {
 
                 opacity: parent.visible && panelActive ? 1.0 : 0.0
                 scale: panelActive ? 1.0 : 0.85
-                transform: Translate {
-                    x: panelPosition === "left" && !panelActive ? -40 :
-                       (panelPosition === "right" && !panelActive ? 40 : 0)
-                }
 
                 Behavior on opacity {
                     SequentialAnimation {
@@ -726,10 +730,15 @@ PanelWindow {
                         NumberAnimation { duration: 600; easing.type: Easing.OutBack }
                     }
                 }
-                Behavior on transform {
-                    SequentialAnimation {
-                        PauseAnimation { duration: 150 }
-                        NumberAnimation { property: "x"; duration: 700; easing.type: Easing.OutBack }
+                transform: Translate {
+                    x: panelPosition === "left" && !panelActive ? -40 :
+                       (panelPosition === "right" && !panelActive ? 40 : 0)
+
+                    Behavior on x {
+                        SequentialAnimation {
+                            PauseAnimation { duration: 150 }
+                            NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                        }
                     }
                 }
                 
@@ -785,10 +794,6 @@ PanelWindow {
 
                 opacity: parent.visible && panelActive ? 1.0 : 0.0
                 scale: panelActive ? 1.0 : 0.85
-                transform: Translate {
-                    y: panelPosition === "top" && !panelActive ? -40 :
-                       (panelPosition === "bottom" && !panelActive ? 40 : 0)
-                }
 
                 Behavior on opacity {
                     SequentialAnimation {
@@ -802,10 +807,15 @@ PanelWindow {
                         NumberAnimation { duration: 600; easing.type: Easing.OutBack }
                     }
                 }
-                Behavior on transform {
-                    SequentialAnimation {
-                        PauseAnimation { duration: 150 }
-                        NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+                transform: Translate {
+                    y: panelPosition === "top" && !panelActive ? -40 :
+                       (panelPosition === "bottom" && !panelActive ? 40 : 0)
+
+                    Behavior on y {
+                        SequentialAnimation {
+                            PauseAnimation { duration: 150 }
+                            NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                        }
                     }
                 }
                 
@@ -861,12 +871,6 @@ PanelWindow {
 
         opacity: panelActive ? 1.0 : 0.0
         scale: panelActive ? 1.0 : 0.7
-        transform: Translate {
-            x: panelPosition === "left" && !panelActive ? -40 :
-               (panelPosition === "right" && !panelActive ? 40 : 0)
-            y: panelPosition === "top" && !panelActive ? -40 :
-               (panelPosition === "bottom" && !panelActive ? 40 : 0)
-        }
 
         Behavior on opacity {
             SequentialAnimation {
@@ -880,12 +884,22 @@ PanelWindow {
                 NumberAnimation { duration: 600; easing.type: Easing.OutBack }
             }
         }
-        Behavior on transform {
-            SequentialAnimation {
-                PauseAnimation { duration: 200 }
-                ParallelAnimation {
-                    NumberAnimation { property: "x"; duration: 700; easing.type: Easing.OutBack }
-                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
+        transform: Translate {
+            x: panelPosition === "left" && !panelActive ? -40 :
+               (panelPosition === "right" && !panelActive ? 40 : 0)
+            y: panelPosition === "top" && !panelActive ? -40 :
+               (panelPosition === "bottom" && !panelActive ? 40 : 0)
+
+            Behavior on x {
+                SequentialAnimation {
+                    PauseAnimation { duration: 200 }
+                    NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                }
+            }
+            Behavior on y {
+                SequentialAnimation {
+                    PauseAnimation { duration: 200 }
+                    NumberAnimation { duration: 700; easing.type: Easing.OutBack }
                 }
             }
         }

@@ -1,9 +1,9 @@
 [package]
-name = "index"
+name = "blink"
 version = "0.1.0"
 edition = "2021"
 description = "Lightweight file explorer"
-authors = ["Index Team"]
+authors = ["Blink Team"]
 
 [dependencies]
 gtk4 = { version = "0.9", features = ["v4_12"] }

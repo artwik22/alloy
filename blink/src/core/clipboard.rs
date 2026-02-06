@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use super::FileOperations;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ClipboardMode {
     None,
     Copy,

@@ -1,6 +1,6 @@
 use std::fs;
 use std::io;
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 

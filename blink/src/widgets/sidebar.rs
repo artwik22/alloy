@@ -1,7 +1,7 @@
 use gtk4::glib::{self, clone};
 use gtk4::prelude::*;
 use gtk4::{
-    gio, Box as GtkBox, DropTarget, GestureClick, Image, Label, ListBox, ListBoxRow, 
+    gio, Box as GtkBox, DropTarget, EventControllerKey, GestureClick, Image, Label, ListBox, ListBoxRow, 
     Orientation, PopoverMenu, ScrolledWindow, SelectionMode, Separator,
 };
 use std::cell::RefCell;
@@ -119,6 +119,30 @@ impl NautilusSidebar {
             Rc::new(RefCell::new(None));
         
         Self::bind_pinned_store(&pinned_list_box, &pinned_store, on_location_selected.clone());
+
+        // Keyboard shortcuts for Pinned List (F2 to rename)
+        {
+            let pinned_store_clone = pinned_store.clone();
+            let key_controller = EventControllerKey::new();
+            
+            key_controller.connect_key_pressed(move |controller, keyval, _, _| {
+                if keyval == gtk4::gdk::Key::F2 {
+                    if let Some(widget) = controller.widget() {
+                        if let Ok(list_box) = widget.downcast::<ListBox>() {
+                            if let Some(row) = list_box.selected_row() {
+                                if let Some(path) = Self::get_row_path(&row) {
+                                    Self::show_rename_dialog(&path, &row, &pinned_store_clone);
+                                    return gtk4::glib::Propagation::Stop;
+                                }
+                            }
+                        }
+                    }
+                }
+                gtk4::glib::Propagation::Proceed
+            });
+            pinned_list_box.add_controller(key_controller);
+        }
+
         pinned_section.append(&pinned_list_box);
         main_box.append(&pinned_section);
 

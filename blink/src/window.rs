@@ -33,11 +33,11 @@ fn debug_log(hypothesis_id: &str, location: &str, message: &str, data: serde_jso
 }
 // #endregion
 
-pub struct IndexWindow {
+pub struct BlinkWindow {
     pub window: adw::ApplicationWindow,
 }
 
-impl IndexWindow {
+impl BlinkWindow {
     pub fn new(app: &adw::Application) -> Self {
         // Create main window - Nautilus style
         let window = adw::ApplicationWindow::builder()
@@ -123,6 +123,12 @@ impl IndexWindow {
                 // Key 'o' to unpin selected item in sidebar
                 if keyval == gtk4::gdk::Key::o {
                     sidebar_clone.unpin_selected();
+                    return gtk4::glib::Propagation::Stop;
+                }
+
+                // F2 to rename selected file
+                if keyval == gtk4::gdk::Key::F2 {
+                    file_view_clone.rename_selected();
                     return gtk4::glib::Propagation::Stop;
                 }
                 
@@ -588,7 +594,7 @@ impl IndexWindow {
                                     let response_tx_clone = response_tx.clone();
                                     let file_name_clone = file_name.clone();
                                     
-                                    dialog.connect_response(None, move |dialog, response| {
+                                    dialog.connect_response(None, move |_dialog, response| {
                                         if response == "replace" {
                                             let _ = response_tx_clone.send_blocking(ConflictResolution::Replace);
                                         } else if response == "rename" {

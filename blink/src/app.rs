@@ -4,18 +4,18 @@ use libadwaita as adw;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::window::IndexWindow;
+use crate::window::BlinkWindow;
 use crate::core::ColorConfig;
 
-const APP_ID: &str = "com.index.fileexplorer";
+const APP_ID: &str = "com.blink.fileexplorer";
 
-pub struct IndexApp {
+pub struct BlinkApp {
     app: adw::Application,
     _css_provider: Rc<RefCell<Option<CssProvider>>>,
     _monitors: Vec<gio::FileMonitor>,
 }
 
-impl IndexApp {
+impl BlinkApp {
     pub fn new() -> Self {
         let app = adw::Application::builder().application_id(APP_ID).build();
         let css_provider = Rc::new(RefCell::new(None));
@@ -26,7 +26,7 @@ impl IndexApp {
         });
 
         app.connect_activate(|app| {
-            let window = IndexWindow::new(app);
+            let window = BlinkWindow::new(app);
             window.present();
         });
 

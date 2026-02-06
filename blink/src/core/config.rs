@@ -34,7 +34,7 @@ impl KeybindConfig {
     fn config_path() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("index")
+            .join("blink")
             .join(CONFIG_FILE)
     }
 
@@ -177,7 +177,7 @@ impl KeybindConfig {
             fs::create_dir_all(parent)?;
         }
         
-        let mut content = String::from("# Index keybinds configuration\n");
+        let mut content = String::from("# Blink keybinds configuration\n");
         content.push_str("# Format: action=key:modifier1,modifier2\n");
         content.push_str("# Modifiers: Control, Shift, Alt, Super\n");
         content.push_str("# Special keys: F1-F12, Up, Down, Left, Right, Home, End, Delete, etc.\n");

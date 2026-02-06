@@ -6,7 +6,7 @@ use std::cell::RefCell;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const PINNED_FILE: &str = ".index_pinned";
+const PINNED_FILE: &str = ".blink_pinned";
 
 // ============================================================================
 // PinnedFolderObject - GObject wrapper for use in gio::ListStore
@@ -23,7 +23,7 @@ mod imp {
 
     #[glib::object_subclass]
     impl ObjectSubclass for PinnedFolderObject {
-        const NAME: &'static str = "IndexPinnedFolderObject";
+        const NAME: &'static str = "BlinkPinnedFolderObject";
         type Type = super::PinnedFolderObject;
         type ParentType = Object;
     }
@@ -88,7 +88,7 @@ impl PinnedFolderStore {
     fn config_path() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("index")
+            .join("blink")
             .join(PINNED_FILE)
     }
 
@@ -162,7 +162,7 @@ impl PinnedFolderStore {
             fs::create_dir_all(parent)?;
         }
         
-        let mut content = String::from("# Index pinned folders\n");
+        let mut content = String::from("# Blink pinned folders\n");
         
         for i in 0..self.store.n_items() {
             if let Some(obj) = self.store.item(i) {

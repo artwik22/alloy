@@ -1321,6 +1321,27 @@ impl FileGridView {
     pub fn connect_open_micro<F: Fn(PathBuf) + 'static>(&self, callback: F) {
         *self.on_open_micro.borrow_mut() = Some(Box::new(callback));
     }
+
+    pub fn rename_selected(&self) {
+        // Helper to get selected paths (logic duplicated closely from key controller)
+        let mut selected_paths = Vec::new();
+        let n_items = self.selection.n_items();
+        for i in 0..n_items {
+            if self.selection.is_selected(i) {
+                if let Some(item) = self.selection.item(i) {
+                    if let Ok(file_obj) = item.downcast::<FileObject>() {
+                        selected_paths.push(file_obj.path());
+                    }
+                }
+            }
+        }
+
+        if selected_paths.len() == 1 {
+            if let Some(ref callback) = *self.on_rename.borrow() {
+                callback(selected_paths[0].clone());
+            }
+        }
+    }
 }
 
 impl Default for FileGridView {

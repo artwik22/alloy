@@ -98,7 +98,7 @@ PanelWindow {
         value: (sharedData && sharedData.menuVisible) ? 1.0 : 0.0
     }
     Behavior on showProgress {
-        NumberAnimation { duration: 380; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: 450; easing.type: Easing.OutExpo }
     }
     visible: true
     color: "transparent"
@@ -302,7 +302,15 @@ PanelWindow {
                             
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
-                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            transform: Translate {
+                                y: showProgress > 0.01 ? 0 : 40
+                                Behavior on y {
+                                    SequentialAnimation {
+                                        PauseAnimation { duration: 50 }
+                                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                                    }
+                                }
+                            }
                             
                             Behavior on opacity {
                                 SequentialAnimation {
@@ -314,12 +322,6 @@ PanelWindow {
                                 SequentialAnimation {
                                     PauseAnimation { duration: 50 }
                                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
-                                }
-                            }
-                            Behavior on transform {
-                                SequentialAnimation {
-                                    PauseAnimation { duration: 50 }
-                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
                                 }
                             }
 
@@ -710,7 +712,15 @@ PanelWindow {
 
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
-                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            transform: Translate {
+                                y: showProgress > 0.01 ? 0 : 40
+                                Behavior on y {
+                                    SequentialAnimation {
+                                        PauseAnimation { duration: 100 }
+                                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                                    }
+                                }
+                            }
                             
                             Behavior on opacity {
                                 SequentialAnimation {
@@ -722,12 +732,6 @@ PanelWindow {
                                 SequentialAnimation {
                                     PauseAnimation { duration: 100 }
                                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
-                                }
-                            }
-                            Behavior on transform {
-                                SequentialAnimation {
-                                    PauseAnimation { duration: 100 }
-                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
                                 }
                             }
 
@@ -826,7 +830,15 @@ PanelWindow {
                             
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
-                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            transform: Translate {
+                                y: showProgress > 0.01 ? 0 : 40
+                                Behavior on y {
+                                    SequentialAnimation {
+                                        PauseAnimation { duration: 150 }
+                                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                                    }
+                                }
+                            }
                             
                             Behavior on opacity {
                                 SequentialAnimation {
@@ -838,12 +850,6 @@ PanelWindow {
                                 SequentialAnimation {
                                     PauseAnimation { duration: 150 }
                                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
-                                }
-                            }
-                            Behavior on transform {
-                                SequentialAnimation {
-                                    PauseAnimation { duration: 150 }
-                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
                                 }
                             }
                                     
@@ -977,7 +983,15 @@ PanelWindow {
                             
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
-                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            transform: Translate {
+                                y: showProgress > 0.01 ? 0 : 40
+                                Behavior on y {
+                                    SequentialAnimation {
+                                        PauseAnimation { duration: 200 }
+                                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                                    }
+                                }
+                            }
                             
                             Behavior on opacity {
                                 SequentialAnimation {
@@ -989,12 +1003,6 @@ PanelWindow {
                                 SequentialAnimation {
                                     PauseAnimation { duration: 200 }
                                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
-                                }
-                            }
-                            Behavior on transform {
-                                SequentialAnimation {
-                                    PauseAnimation { duration: 200 }
-                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
                                 }
                             }
                             
@@ -1126,7 +1134,15 @@ PanelWindow {
                             
                             opacity: showProgress > 0.01 ? 1.0 : 0.0
                             scale: showProgress > 0.01 ? 1.0 : 0.9
-                            transform: Translate { y: showProgress > 0.01 ? 0 : 40 }
+                            transform: Translate {
+                                y: showProgress > 0.01 ? 0 : 40
+                                Behavior on y {
+                                    SequentialAnimation {
+                                        PauseAnimation { duration: 250 }
+                                        NumberAnimation { duration: 700; easing.type: Easing.OutBack }
+                                    }
+                                }
+                            }
                             
                             Behavior on opacity {
                                 SequentialAnimation {
@@ -1138,12 +1154,6 @@ PanelWindow {
                                 SequentialAnimation {
                                     PauseAnimation { duration: 250 }
                                     NumberAnimation { duration: 600; easing.type: Easing.OutBack }
-                                }
-                            }
-                            Behavior on transform {
-                                SequentialAnimation {
-                                    PauseAnimation { duration: 250 }
-                                    NumberAnimation { property: "y"; duration: 700; easing.type: Easing.OutBack }
                                 }
                             }
                             
@@ -1225,8 +1235,27 @@ PanelWindow {
                                             width: parent.width
                                             horizontalAlignment: Text.AlignHCenter
                                         }
+
+                                        Item { width: 1; height: 4 } // Spacer
+
+                                        // Progress Bar (Inline)
+                                        Rectangle {
+                                            width: parent.width
+                                            height: 2
+                                            color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"
+                                            
+                                            Rectangle {
+                                                width: (dashboardRoot.mpLength > 0 ? (parent.width * (dashboardRoot.mpPosition / dashboardRoot.mpLength)) : 0)
+                                                height: parent.height
+                                                color: (sharedData && sharedData.colorAccent) ? sharedData.colorAccent : "#4a9eff"
+                                                
+                                                Behavior on width { NumberAnimation { duration: 200 } }
+                                            }
+                                        }
                                     }
                                     
+
+
                                     // Kontrolki prev | play | next – Swiss Block Style
                                     Row {
                                         anchors.horizontalCenter: parent.horizontalCenter
@@ -1237,7 +1266,12 @@ PanelWindow {
                                             height: 34
                                             radius: 0
                                             color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"
-                                            opacity: prevAreaCard.containsMouse ? 0.8 : 1.0
+                                            opacity: prevAreaCard.pressed ? 0.7 : (prevAreaCard.containsMouse ? 0.9 : 1.0)
+                                            scale: prevAreaCard.pressed ? 0.90 : (prevAreaCard.containsMouse ? 1.05 : 1.0)
+                                            z: prevAreaCard.containsMouse ? 2 : 1
+                                            
+                                            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
+                                            Behavior on opacity { NumberAnimation { duration: 150 } }
                                             
                                             Text {
                                                 text: "󰒮"
@@ -1260,7 +1294,12 @@ PanelWindow {
                                             height: 34
                                             radius: 0
                                             color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"
-                                            opacity: playAreaCard.containsMouse ? 0.8 : 1.0
+                                            opacity: playAreaCard.pressed ? 0.7 : (playAreaCard.containsMouse ? 0.9 : 1.0)
+                                            scale: playAreaCard.pressed ? 0.90 : (playAreaCard.containsMouse ? 1.05 : 1.0)
+                                            z: playAreaCard.containsMouse ? 2 : 1
+                                            
+                                            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
+                                            Behavior on opacity { NumberAnimation { duration: 150 } }
                                             
                                             Text {
                                                 text: mpPlaying ? "󰏤" : "󰐊"
@@ -1283,7 +1322,12 @@ PanelWindow {
                                             height: 34
                                             radius: 0
                                             color: (sharedData && sharedData.colorSecondary) ? sharedData.colorSecondary : "#1a1a1a"
-                                            opacity: nextAreaCard.containsMouse ? 0.8 : 1.0
+                                            opacity: nextAreaCard.pressed ? 0.7 : (nextAreaCard.containsMouse ? 0.9 : 1.0)
+                                            scale: nextAreaCard.pressed ? 0.90 : (nextAreaCard.containsMouse ? 1.05 : 1.0)
+                                            z: nextAreaCard.containsMouse ? 2 : 1
+                                            
+                                            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
+                                            Behavior on opacity { NumberAnimation { duration: 150 } }
                                             
                                             Text {
                                                 text: "󰒭"
@@ -2017,7 +2061,11 @@ PanelWindow {
     }
 
     function updatePlayerMetadata() {
-        if (sharedData && sharedData.runCommand) sharedData.runCommand(["sh", "-c", "playerctl metadata --format '{{artist}}\\n{{title}}\\n{{album}}\\n{{mpris:artUrl}}\\n{{mpris:length}}\\n{{status}}' > /tmp/quickshell_player_info 2>/tmp/quickshell_player_err || echo > /tmp/quickshell_player_info"], readPlayerMetadata)
+        // Delegate path resolution to shell to avoid QML ReferenceErrors
+        if (sharedData && sharedData.runCommand) {
+             var cmd = 'TARGET="${QUICKSHELL_PROJECT_PATH:-$HOME/.config/alloy/spark}/scripts/get-player-metadata.sh"; bash "$TARGET"'
+             sharedData.runCommand(["sh", "-c", cmd], readPlayerMetadata)
+        }
     }
     
     function readPlayerMetadata() {
@@ -2036,7 +2084,7 @@ PanelWindow {
                     mpLength = 0
                     return
                 }
-                var lines = txt.split("\n")
+                var lines = txt.split("|###|")
                 mpArtist = lines[0] ? lines[0].trim() : ""
                 mpTitle = lines[1] ? lines[1].trim() : ""
                 mpAlbum = lines[2] ? lines[2].trim() : ""
@@ -2131,6 +2179,14 @@ PanelWindow {
         running: (sharedData && sharedData.menuVisible)
         onTriggered: updatePlayerMetadata()
         Component.onCompleted: if (sharedData && sharedData.menuVisible) updatePlayerMetadata()
+    }
+    
+    Timer {
+        id: playerPositionTimer
+        interval: 1000
+        repeat: true
+        running: (sharedData && sharedData.menuVisible && mpPlaying)
+        onTriggered: updatePlayerPosition()
     }
 
 
